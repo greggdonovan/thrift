@@ -79,7 +79,11 @@ jobs:
           retention-days: 3
 
   compiler-macos:
-    runs-on: macos-14
+    strategy:
+      matrix:
+        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
 
@@ -106,7 +110,7 @@ jobs:
       - name: Archive built thrift compiler (macOS)
         uses: actions/upload-artifact@v5
         with:
-          name: thrift-compiler-macos
+          name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp/thrift
           retention-days: 3
 
@@ -527,7 +531,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: &python_versions ["3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -586,11 +590,12 @@ jobs:
 
   lib-python-macos:
     needs: compiler-macos
-    runs-on: macos-14
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        os: *macos_versions
+        python-version: *python_versions
       fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
 
@@ -618,7 +623,7 @@ jobs:
 
       - uses: actions/download-artifact@v6
         with:
-          name: thrift-compiler-macos
+          name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp
 
       - name: Run thrift-compiler
@@ -844,4 +849,3 @@ jobs:
           name: cross-test-log_${{ matrix.server_lang }}-${{ matrix.client_lang }}
           path: test/log/
           retention-days: 3
-
