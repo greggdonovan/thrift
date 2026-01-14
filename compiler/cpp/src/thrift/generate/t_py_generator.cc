@@ -63,7 +63,7 @@ public:
     gen_twisted_ = false;
     gen_dynamic_ = false;
     gen_enum_ = false;
-    gen_type_hints_ = false;
+    gen_type_hints_ = true;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -127,10 +127,9 @@ public:
       } else if( iter->first.compare("coding") == 0) {
         coding_ = iter->second;
       } else if (iter->first.compare("type_hints") == 0) {
-        if (!gen_enum_) {
-          throw "the type_hints py option requires the enum py option";
-        }
         gen_type_hints_ = true;
+      } else if (iter->first.compare("no_type_hints") == 0) {
+        gen_type_hints_ = false;
       } else {
         throw "unknown option py:" + iter->first;
       }
@@ -2859,7 +2858,7 @@ string t_py_generator::arg_hint(t_type* type) {
 string t_py_generator::member_hint(t_type* type, t_field::e_req req) {
   if (gen_type_hints_) {
     if (req != t_field::T_REQUIRED) {
-      return ": typing.Optional[" + type_to_py_type(type) + "]";
+      return ": " + type_to_py_type(type) + " | None";
     } else {
       return ": " + type_to_py_type(type);
     }
@@ -3023,5 +3022,6 @@ THRIFT_REGISTER_GENERATOR(
     "                     Package prefix for generated files.\n"
     "    old_style:       Deprecated. Generate old-style classes.\n"
     "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
-    "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
+    "    type_hints:      Generate type hints (enabled by default).\n"
+    "    no_type_hints:   Disable type hint generation.\n"
 )
