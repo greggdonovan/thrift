@@ -21,14 +21,11 @@ import logging
 import os
 import socket
 import ssl
-import sys
 import warnings
 
-from .sslcompat import _match_has_ipaddress
+from .sslcompat import _match_has_ipaddress, _match_hostname
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
-
-_match_hostname = lambda cert, hostname: True
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings(
@@ -36,48 +33,20 @@ warnings.filterwarnings(
 
 
 class TSSLBase(object):
-    # SSLContext is not available for Python < 2.7.9
-    _has_ssl_context = sys.hexversion >= 0x020709F0
-
-    # ciphers argument is not available for Python < 2.7.0
-    _has_ciphers = sys.hexversion >= 0x020700F0
-
-    # For python >= 2.7.9, use latest TLS that both client and server
-    # supports.
-    # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
-    # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
-    # unavailable.
-    # For python < 3.6, use SSLv23 since TLS is not available
-    if sys.version_info < (3, 6):
-        _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
-            ssl.PROTOCOL_TLSv1
-    else:
-        _default_protocol = ssl.PROTOCOL_TLS_CLIENT if _has_ssl_context else \
-            ssl.PROTOCOL_TLSv1
+    _default_protocol = ssl.PROTOCOL_TLS_CLIENT
 
     def _init_context(self, ssl_version):
-        if self._has_ssl_context:
-            self._context = ssl.SSLContext(ssl_version)
-            if self._context.protocol == ssl.PROTOCOL_SSLv23:
-                self._context.options |= ssl.OP_NO_SSLv2
-                self._context.options |= ssl.OP_NO_SSLv3
-        else:
-            self._context = None
-            self._ssl_version = ssl_version
+        self._context = ssl.SSLContext(ssl_version)
 
     @property
     def _should_verify(self):
-        if self._has_ssl_context:
+        if self._custom_context:
             return self._context.verify_mode != ssl.CERT_NONE
-        else:
-            return self.cert_reqs != ssl.CERT_NONE
+        return self.cert_reqs != ssl.CERT_NONE
 
     @property
     def ssl_version(self):
-        if self._has_ssl_context:
-            return self.ssl_context.protocol
-        else:
-            return self._ssl_version
+        return self.ssl_context.protocol
 
     @property
     def ssl_context(self):
@@ -137,12 +106,15 @@ class TSSLBase(object):
                 raise ValueError(
                     'Incompatible arguments: ssl_context and %s'
                     % ' '.join(ssl_opts.keys()))
-            if not self._has_ssl_context:
-                raise ValueError(
-                    'ssl_context is not available for this version of Python')
         else:
             self._custom_context = False
-            ssl_version = ssl_opts.pop('ssl_version', TSSLBase.SSL_VERSION)
+            if 'ssl_version' in ssl_opts:
+                ssl_version = ssl_opts.pop('ssl_version')
+            else:
+                if self._server_side and hasattr(ssl, 'PROTOCOL_TLS_SERVER'):
+                    ssl_version = ssl.PROTOCOL_TLS_SERVER
+                else:
+                    ssl_version = TSSLBase.SSL_VERSION
             self._init_context(ssl_version)
             self.cert_reqs = ssl_opts.pop('cert_reqs', ssl.CERT_REQUIRED)
             self.ca_certs = ssl_opts.pop('ca_certs', None)
@@ -176,35 +148,31 @@ class TSSLBase(object):
         self._certfile = certfile
 
     def _wrap_socket(self, sock):
-        if self._has_ssl_context:
-            if not self._custom_context:
-                self.ssl_context.verify_mode = self.cert_reqs
-                if self.certfile:
-                    self.ssl_context.load_cert_chain(self.certfile,
-                                                     self.keyfile)
-                if self.ciphers:
-                    self.ssl_context.set_ciphers(self.ciphers)
-                if self.ca_certs:
-                    self.ssl_context.load_verify_locations(self.ca_certs)
-            return self.ssl_context.wrap_socket(
-                sock, server_side=self._server_side,
-                server_hostname=self._server_hostname)
-        else:
-            ssl_opts = {
-                'ssl_version': self._ssl_version,
-                'server_side': self._server_side,
-                'ca_certs': self.ca_certs,
-                'keyfile': self.keyfile,
-                'certfile': self.certfile,
-                'cert_reqs': self.cert_reqs,
-            }
-            if self.ciphers:
-                if self._has_ciphers:
-                    ssl_opts['ciphers'] = self.ciphers
+        if not self._custom_context:
+            if hasattr(self.ssl_context, 'check_hostname'):
+                if self._server_side:
+                    # Server contexts never perform hostname checks.
+                    self.ssl_context.check_hostname = False
                 else:
-                    logger.warning(
-                        'ciphers is specified but ignored due to old Python version')
-            return ssl.wrap_socket(sock, **ssl_opts)
+                    # For client sockets, use OpenSSL hostname checking when we
+                    # require a verified server certificate. OpenSSL handles
+                    # hostname validation in Python 3.12+ (ssl.match_hostname was
+                    # removed), and it must be disabled for CERT_NONE/OPTIONAL or
+                    # when no server_hostname is provided.
+                    self.ssl_context.check_hostname = (
+                        self.cert_reqs == ssl.CERT_REQUIRED and
+                        bool(self._server_hostname)
+                    )
+            self.ssl_context.verify_mode = self.cert_reqs
+            if self.certfile:
+                self.ssl_context.load_cert_chain(self.certfile, self.keyfile)
+            if self.ciphers:
+                self.ssl_context.set_ciphers(self.ciphers)
+            if self.ca_certs:
+                self.ssl_context.load_verify_locations(self.ca_certs)
+        return self.ssl_context.wrap_socket(
+            sock, server_side=self._server_side,
+            server_hostname=self._server_hostname)
 
 
 class TSSLSocket(TSocket.TSocket, TSSLBase):
@@ -227,11 +195,10 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
 
         Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``,
                            ``ssl_version``, ``ca_certs``,
-                           ``ciphers`` (Python 2.7.0 or later),
-                           ``server_hostname`` (Python 2.7.9 or later)
+                           ``ciphers``, ``server_hostname``
         Passed to ssl.wrap_socket. See ssl.wrap_socket documentation.
 
-        Alternative keyword arguments: (Python 2.7.9 or later)
+        Alternative keyword arguments:
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
           ``server_hostname``: Passed to SSLContext.wrap_socket
 
@@ -274,6 +241,8 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
                                  socket_keepalive=socket_keepalive)
 
     def close(self):
+        if not self.handle:
+            return
         try:
             self.handle.settimeout(0.001)
             self.handle = self.handle.unwrap()
@@ -332,10 +301,10 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         """Positional arguments: ``host``, ``port``, ``unix_socket``
 
         Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``, ``ssl_version``,
-                           ``ca_certs``, ``ciphers`` (Python 2.7.0 or later)
+                           ``ca_certs``, ``ciphers``
         See ssl.wrap_socket documentation.
 
-        Alternative keyword arguments: (Python 2.7.9 or later)
+        Alternative keyword arguments:
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
           ``server_hostname``: Passed to SSLContext.wrap_socket
 
