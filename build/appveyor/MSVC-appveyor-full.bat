@@ -108,7 +108,7 @@ IF "%PYTHON_VERSION%" == "" (
   IF /i "%PLATFORM%" == "x64" (SET PTEXT=-x64)
   SET PYTHON_ROOT=C:\Python%PYTHON_VERSION:.=%!PTEXT!
   SET PATH=!PYTHON_ROOT!\scripts;!PYTHON_ROOT!;!PATH!
-  SET CMAKE_PYTHON_OPTS=-DPython3_FIND_STRATEGY=LOCATION -DPython3_ROOT=!PYTHON_ROOT!
+  SET CMAKE_PYTHON_OPTS=-DPython3_FIND_STRATEGY=LOCATION -DPython3_ROOT=!PYTHON_ROOT! -DPython3_EXECUTABLE=!PYTHON_ROOT!\python.exe
 )
 
 IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
@@ -137,6 +137,11 @@ IF "%APPVEYOR_BUILD_ID%" == "" (
 choco install -y jdk8 || EXIT /B
 choco install -y winflexbison3 || EXIT /B
 
+:: TEMP: diagnostic logging for Chocolatey package availability
+ECHO Chocolatey search for zlib/libevent:
+choco search zlib --limit-output || ECHO choco search zlib failed
+choco search libevent --limit-output || ECHO choco search libevent failed
+
 :: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
 call build-zlib.bat || EXIT /B
@@ -145,12 +150,25 @@ call build-zlib.bat || EXIT /B
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
 call build-libevent.bat || EXIT /B
 
-:: python packages (correct path to pip set above)
-pip.exe ^
-    install backports.ssl_match_hostname ^
-            ipaddress ^
-            tornado ^
-            twisted || EXIT /B
+:: python packages (ensure we use the configured Python)
+IF "%WITH_PYTHON%" == "ON" (
+  ECHO Python sanity check:
+  ECHO PYTHON_ROOT=!PYTHON_ROOT!
+  ECHO PATH=!PATH!
+  where python || ECHO where python: not found on PATH
+  where pip || ECHO where pip: not found on PATH
+  where py || ECHO where py: not found on PATH
+  "!PYTHON_ROOT!\python.exe" -c "import sys; print(sys.executable); print(sys.version)" || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m ensurepip --upgrade || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m pip install --upgrade pip setuptools wheel || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m pip --version || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -c "import setuptools, pip; print('setuptools', setuptools.__version__); print('pip', pip.__version__)" || EXIT /B
+  "!PYTHON_ROOT!\python.exe" -m pip ^
+      install backports.ssl_match_hostname ^
+              ipaddress ^
+              tornado ^
+              twisted || EXIT /B
+)
 
 :: Adobe Flex SDK 4.6 for ActionScript
 MKDIR "C:\Adobe\Flex\SDK\4.6" || EXIT /B
