@@ -17,8 +17,9 @@
 # under the License.
 #
 
+import ipaddress
 import logging
-import sys
+import ssl
 
 from thrift.transport.TTransport import TTransportException
 
@@ -64,29 +65,48 @@ def legacy_validate_callback(cert, hostname):
         % (hostname, cert))
 
 
-def _optional_dependencies():
-    try:
-        import ipaddress  # noqa
-        logger.debug('ipaddress module is available')
-        ipaddr = True
-    except ImportError:
-        logger.warning('ipaddress module is unavailable')
-        ipaddr = False
+def _fallback_match_hostname(cert, hostname):
+    if not cert:
+        raise ssl.CertificateError('no peer certificate available')
 
-    if sys.hexversion < 0x030500F0:
-        try:
-            from backports.ssl_match_hostname import match_hostname, __version__ as ver
-            ver = list(map(int, ver.split('.')))
-            logger.debug('backports.ssl_match_hostname module is available')
-            match = match_hostname
-            if ver[0] * 10 + ver[1] >= 35:
-                return ipaddr, match
-            else:
-                logger.warning('backports.ssl_match_hostname module is too old')
-                ipaddr = False
-        except ImportError:
-            logger.warning('backports.ssl_match_hostname is unavailable')
-            ipaddr = False
+    try:
+        host_ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        host_ip = None
+
+    dnsnames = []
+    san = cert.get('subjectAltName', ())
+    for key, value in san:
+        if key == 'DNS':
+            if host_ip is None and ssl._dnsname_match(value, hostname):
+                return
+            dnsnames.append(value)
+        elif key == 'IP Address':
+            if host_ip is not None and ssl._ipaddress_match(value, host_ip.packed):
+                return
+            dnsnames.append(value)
+
+    if not dnsnames:
+        for sub in cert.get('subject', ()):
+            for key, value in sub:
+                if key == 'commonName':
+                    if ssl._dnsname_match(value, hostname):
+                        return
+                    dnsnames.append(value)
+
+    if dnsnames:
+        raise ssl.CertificateError(
+            "hostname %r doesn't match %s"
+            % (hostname, ', '.join(repr(dn) for dn in dnsnames)))
+
+    raise ssl.CertificateError(
+        "no appropriate subjectAltName fields were found")
+
+
+def _optional_dependencies():
+    # ipaddress is always available in Python 3.3+
+    ipaddr = True
+
     try:
         from ssl import match_hostname
         logger.debug('ssl.match_hostname is available')
@@ -95,12 +115,11 @@ def _optional_dependencies():
         # https://docs.python.org/3/whatsnew/3.12.html:
         # "Remove the ssl.match_hostname() function. It was deprecated in Python
         # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
-        # longer uses the ssl.match_hostname() function.""
-        if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
-            match = lambda cert, hostname: True
-        else:
-            logger.warning('using legacy validation callback')
-            match = legacy_validate_callback
+        # longer uses the ssl.match_hostname() function."
+        # For Python 3.12+, OpenSSL handles hostname matching for clients when
+        # check_hostname is enabled, but we still need a fallback for server-side
+        # peer checks.
+        match = _fallback_match_hostname
     return ipaddr, match
 
 

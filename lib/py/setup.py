@@ -93,9 +93,6 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
-    ssl_deps = []
-    if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
     tornado_deps = ['tornado>=4.0']
     twisted_deps = ['twisted']
 
@@ -109,10 +106,9 @@ def run_setup(with_binary):
           url='http://thrift.apache.org',
           license='Apache License 2.0',
           extras_require={
-              'ssl': ssl_deps,
               'tornado': tornado_deps,
               'twisted': twisted_deps,
-              'all': ssl_deps + tornado_deps + twisted_deps,
+              'all': tornado_deps + twisted_deps,
           },
           packages=[
               'thrift',
