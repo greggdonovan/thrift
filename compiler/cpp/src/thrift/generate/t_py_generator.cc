@@ -76,9 +76,6 @@ public:
         gen_enum_ = true;
       } else if( iter->first.compare("new_style") == 0) {
         pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
-      } else if( iter->first.compare("old_style") == 0) {
-        gen_newstyle_ = false;
-        pwarning(0, "old_style is deprecated and may be removed in the future.\n");
       } else if( iter->first.compare("utf8strings") == 0) {
         pwarning(0, "utf8strings is enabled by default, so the option will be removed in the near future.\n");
       } else if( iter->first.compare("no_utf8strings") == 0) {
@@ -1745,10 +1742,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
     py_autogen_comment() << '\n' <<
     "import sys" << '\n' <<
     "import pprint" << '\n' <<
-    "if sys.version_info[0] > 2:" << '\n' <<
-    indent_str() << "from urllib.parse import urlparse" << '\n' <<
-    "else:" << '\n' <<
-    indent_str() << "from urlparse import urlparse" << '\n' <<
+    "from urllib.parse import urlparse" << '\n' <<
     "from thrift.transport import TTransport, TSocket, TSSLSocket, THttpClient" << '\n' <<
     "from thrift.protocol.TBinaryProtocol import TBinaryProtocol" << '\n' << '\n';
 

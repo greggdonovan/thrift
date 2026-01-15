@@ -295,8 +295,8 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
   `# Static Code Analysis dependencies` \
   cppcheck \
-  sloccount 
-  
+  sloccount
+
 #RUN pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
