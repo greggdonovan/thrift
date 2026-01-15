@@ -286,11 +286,17 @@ fi
 AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 
 # Find python regardless of with_python value, because it's needed by make cross
-AM_PATH_PYTHON(2.6,, :)
+AM_PATH_PYTHON(3.10,, :)
 AX_THRIFT_LIB(python, [Python], yes)
+AX_THRIFT_LIB(py3, [Py3], yes)
+have_py3="no"
 if test "$with_python" = "yes";  then
   if test -n "$PYTHON"; then
     have_python="yes"
+    if test "$with_py3" = "yes"; then
+      have_py3="yes"
+      PYTHON3=$PYTHON
+    fi
   fi
   AC_PATH_PROG([TRIAL], [trial])
   if test -n "$TRIAL"; then
@@ -299,24 +305,6 @@ if test "$with_python" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
-
-# Find "python3" executable.
-# It's distro specific and far from ideal but needed to cross test py2-3 at once.
-# TODO: find "python2" if it's 3.x
-have_py3="no"
-AX_THRIFT_LIB(py3, [Py3], yes)
-if test "$with_py3" = "yes"; then
-  # if $PYTHON is 2.x then search for python 3. otherwise, $PYTHON is already 3.x
-  if $PYTHON --version 2>&1 | grep -q "Python 2"; then
-    AC_PATH_PROGS([PYTHON3], [python3 python3.8 python38 python3.7 python37 python3.6 python36 python3.5 python35 python3.4 python34])
-    if test -n "$PYTHON3"; then
-      have_py3="yes"
-    fi
-  elif $PYTHON --version 2>&1 | grep -q "Python 3"; then
-    have_py3="yes"
-    PYTHON3=$PYTHON
-  fi
-fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
 
 AX_THRIFT_LIB(perl, [Perl], yes)
