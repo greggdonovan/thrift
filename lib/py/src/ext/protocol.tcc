@@ -158,8 +158,7 @@ inline ProtocolBase<Impl>::~ProtocolBase() {
 
 template <typename Impl>
 inline bool ProtocolBase<Impl>::isUtf8(PyObject* typeargs) {
-  // while condition for py2 is "arg == 'UTF8'", it should be "arg != 'BINARY'" for py3.
-  // HACK: check the length and don't bother reading the value
+  // Check if encoding is not 'BINARY' (length 6) - if so, treat as UTF-8
   return !PyUnicode_Check(typeargs) || PyUnicode_GET_LENGTH(typeargs) != 6;
 }
 
