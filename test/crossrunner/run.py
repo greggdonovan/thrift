@@ -361,7 +361,6 @@ class TestDispatcher(object):
         self.testdir = testdir
         self._report = SummaryReporter(basedir, logdir_rel, concurrency > 1)
         self.logdir = self._report.testdir
-        # seems needed for python 2.x to handle keyboard interrupt
         self._stop = multiprocessing.Event()
         self._async = concurrency > 1
         if not self._async:
