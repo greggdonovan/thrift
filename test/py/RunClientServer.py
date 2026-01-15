@@ -254,7 +254,7 @@ class TestCases(object):
                             if self.verbose > 0:
                                 print('\nTest run #%d:  (includes %s) Server=%s,  Proto=%s,  zlib=%s,  SSL=%s'
                                       % (test_count, genpydir, try_server, try_proto, with_zlib, with_ssl))
-                            runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl)
+                            runServiceTest(self.libdir, self.genbase, genpydir, try_server, try_proto, self.port, with_zlib, with_ssl, self.verbose)
                             if self.verbose > 0:
                                 print('OK: Finished (includes %s)  %s / %s proto / zlib=%s / SSL=%s.   %d combinations tested.'
                                       % (genpydir, try_server, try_proto, with_zlib, with_ssl, test_count))
@@ -284,9 +284,6 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
-        if gp_dir == 'type_hints' and (sys.version_info < (3,7)):
-            print('Skipping \'type_hints\' test since python 3.7 or later is required')
-            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]
