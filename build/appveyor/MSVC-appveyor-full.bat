@@ -153,7 +153,7 @@ IF "%WITH_PYTHON%" == "ON" (
       install backports.ssl_match_hostname ^
               ipaddress ^
               tornado>=6.3.0 ^
-              twisted || EXIT /B
+              twisted>=24.3.0 || EXIT /B
 )
 
 :: Adobe Flex SDK 4.6 for ActionScript

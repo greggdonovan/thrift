@@ -283,7 +283,7 @@ RUN apt-get install -y --no-install-recommends \
       setuptools \
       wheel \
       "tornado>=6.3.0" \
-      twisted \
+      "twisted>=24.3.0" \
       zope.interface
 
 RUN apt-get install -y --no-install-recommends \
