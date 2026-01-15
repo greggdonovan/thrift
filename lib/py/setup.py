@@ -117,12 +117,18 @@ def run_setup(with_binary):
               'thrift.server',
           ],
           package_dir={'thrift': 'src'},
+          python_requires='>=3.10',
           classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
               'Programming Language :: Python :: 3',
+              'Programming Language :: Python :: 3.10',
+              'Programming Language :: Python :: 3.11',
+              'Programming Language :: Python :: 3.12',
+              'Programming Language :: Python :: 3.13',
+              'Programming Language :: Python :: 3.14',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],
