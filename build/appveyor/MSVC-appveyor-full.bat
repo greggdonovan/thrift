@@ -152,7 +152,7 @@ IF "%WITH_PYTHON%" == "ON" (
   "!PYTHON_ROOT!\python.exe" -m pip ^
       install backports.ssl_match_hostname ^
               ipaddress ^
-              tornado ^
+              tornado>=6.3.0 ^
               twisted || EXIT /B
 )
 

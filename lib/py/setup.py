@@ -92,7 +92,7 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
-    tornado_deps = ['tornado>=4.0']
+    tornado_deps = ['tornado>=6.3.0']
     twisted_deps = ['twisted']
 
     setup(name='thrift',

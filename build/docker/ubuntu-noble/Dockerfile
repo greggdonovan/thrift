@@ -253,10 +253,11 @@ RUN apt-get install -y --no-install-recommends \
   python3-all-dev \
   python3-pip \
   python3-setuptools \
-  python3-tornado \
   python3-twisted \
   python3-wheel \
   python3-zope.interface
+
+RUN python3 -m pip install --no-cache-dir --upgrade "tornado>=6.3.0"
 
 RUN apt-get install -y --no-install-recommends \
   `# Ruby dependencies` \
