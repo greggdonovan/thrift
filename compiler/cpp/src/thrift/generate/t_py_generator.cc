@@ -2341,10 +2341,8 @@ void t_py_generator::generate_deserialize_field(ostream& out,
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
           out << "readBinary()";
-        } else if(!gen_utf8strings_) {
-          out << "readString()";
         } else {
-          out << "readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()";
+          out << "readString()";
         }
         break;
       case t_base_type::TYPE_BOOL:
@@ -2536,10 +2534,8 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       case t_base_type::TYPE_STRING:
         if (type->is_binary()) {
           out << "writeBinary(" << name << ")";
-        } else if (!gen_utf8strings_) {
-          out << "writeString(" << name << ")";
         } else {
-          out << "writeString(" << name << ".encode('utf-8') if sys.version_info[0] == 2 else " << name << ")";
+          out << "writeString(" << name << ")";
         }
         break;
       case t_base_type::TYPE_BOOL:
@@ -3015,7 +3011,6 @@ THRIFT_REGISTER_GENERATOR(
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
-    "    old_style:       Deprecated. Generate old-style classes.\n"
     "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
     "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
 )

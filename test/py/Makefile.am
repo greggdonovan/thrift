@@ -33,10 +33,6 @@ thrift_gen =                                    \
         gen-py-slots/DebugProtoTest/__init__.py \
         gen-py-slots/DoubleConstantsTest/__init__.py \
         gen-py-slots/Recursive/__init__.py \
-        gen-py-oldstyle/ThriftTest/__init__.py \
-        gen-py-oldstyle/DebugProtoTest/__init__.py \
-        gen-py-oldstyle/DoubleConstantsTest/__init__.py \
-        gen-py-oldstyle/Recursive/__init__.py \
         gen-py-no_utf8strings/ThriftTest/__init__.py \
         gen-py-no_utf8strings/DebugProtoTest/__init__.py \
         gen-py-no_utf8strings/DoubleConstantsTest/__init__.py \
@@ -92,12 +88,6 @@ gen-py-slots/%/__init__.py: ../%.thrift $(THRIFT)
 	test ../v0.16/$(notdir $<) \
 	&& $(THRIFT) --gen py:slots -out gen-py-slots ../v0.16/$(notdir $<) \
 	|| $(THRIFT) --gen py:slots -out gen-py-slots $<
-
-gen-py-oldstyle/%/__init__.py: ../%.thrift $(THRIFT)
-	test -d gen-py-oldstyle || $(MKDIR_P) gen-py-oldstyle
-	test ../v0.16/$(notdir $<) \
-	&& $(THRIFT) --gen py:old_style -out gen-py-oldstyle ../v0.16/$(notdir $<) \
-	|| $(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
 
 gen-py-no_utf8strings/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-no_utf8strings || $(MKDIR_P) gen-py-no_utf8strings
