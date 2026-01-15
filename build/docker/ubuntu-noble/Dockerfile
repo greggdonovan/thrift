@@ -247,7 +247,7 @@ RUN apt-get install -y --no-install-recommends \
   composer
 
 RUN apt-get install -y --no-install-recommends \
-  `# Python3 dependencies` \
+  `# Python 3.12 dependencies` \
   python3-all \
   python3-all-dbg \
   python3-all-dev \
@@ -296,8 +296,8 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
   `# Static Code Analysis dependencies` \
   cppcheck \
-  sloccount 
-  
+  sloccount
+
 #RUN pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.

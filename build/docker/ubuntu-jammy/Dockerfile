@@ -248,7 +248,7 @@ RUN apt-get install -y --no-install-recommends \
   composer
 
 RUN apt-get install -y --no-install-recommends \
-  `# Python3 dependencies` \
+  `# Python 3.10 dependencies` \
   python3-all \
   python3-all-dbg \
   python3-all-dev \
