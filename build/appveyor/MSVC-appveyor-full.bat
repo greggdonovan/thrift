@@ -137,11 +137,6 @@ IF "%APPVEYOR_BUILD_ID%" == "" (
 choco install -y jdk8 || EXIT /B
 choco install -y winflexbison3 || EXIT /B
 
-:: TEMP: diagnostic logging for Chocolatey package availability
-ECHO Chocolatey search for zlib/libevent:
-choco search zlib --limit-output || ECHO choco search zlib failed
-choco search libevent --limit-output || ECHO choco search libevent failed
-
 :: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
 call build-zlib.bat || EXIT /B
@@ -152,17 +147,8 @@ call build-libevent.bat || EXIT /B
 
 :: python packages (ensure we use the configured Python)
 IF "%WITH_PYTHON%" == "ON" (
-  ECHO Python sanity check:
-  ECHO PYTHON_ROOT=!PYTHON_ROOT!
-  ECHO PATH=!PATH!
-  where python || ECHO where python: not found on PATH
-  where pip || ECHO where pip: not found on PATH
-  where py || ECHO where py: not found on PATH
-  "!PYTHON_ROOT!\python.exe" -c "import sys; print(sys.executable); print(sys.version)" || EXIT /B
   "!PYTHON_ROOT!\python.exe" -m ensurepip --upgrade || EXIT /B
   "!PYTHON_ROOT!\python.exe" -m pip install --upgrade pip setuptools wheel || EXIT /B
-  "!PYTHON_ROOT!\python.exe" -m pip --version || EXIT /B
-  "!PYTHON_ROOT!\python.exe" -c "import setuptools, pip; print('setuptools', setuptools.__version__); print('pip', pip.__version__)" || EXIT /B
   "!PYTHON_ROOT!\python.exe" -m pip ^
       install backports.ssl_match_hostname ^
               ipaddress ^
