@@ -117,7 +117,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_NODEJS "Build NodeJS library" ON
 
 # Python
 option(WITH_PYTHON "Build Python Thrift library" ON)
-find_package(Python3
+find_package(Python3 3.10
     COMPONENTS
         Interpreter # for Python executable
         Development # for Python.h
