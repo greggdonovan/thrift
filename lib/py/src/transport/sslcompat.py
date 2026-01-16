@@ -104,7 +104,7 @@ def _fallback_match_hostname(cert, hostname):
 
 
 def _optional_dependencies():
-    # ipaddress is always available in Python 3.3+
+    # ipaddress is always available in Python 3.10+
     ipaddr = True
 
     try:

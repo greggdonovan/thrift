@@ -25,9 +25,8 @@ from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactor
 class TBinaryProtocol(TProtocolBase):
     """Binary implementation of the Thrift protocol driver."""
 
-    # NastyHaxx. Python 2.4+ on 32-bit machines forces hex constants to be
-    # positive, converting this into a long. If we hardcode the int value
-    # instead it'll stay in 32 bit-land.
+    # NastyHaxx. On 32-bit builds, large hex constants can become long. Use
+    # negative values to keep them in 32-bit range.
 
     # VERSION_MASK = 0xffff0000
     VERSION_MASK = -65536

@@ -7,8 +7,8 @@ if [ -z $1 ]; then
   exit 1
 fi
 
-if [ -z $PYTHON]; then
-  PYTHON=python
+if [ -z "${PYTHON:-}" ]; then
+  PYTHON=python3
 fi
 
 TARGET_LANG=$1

@@ -28,15 +28,16 @@ rm -rf gen-py
 ../../../compiler/cpp/thrift --gen py:enum test5.thrift || exit 1
 mkdir -p ./gen-py/test5_slots
 ../../../compiler/cpp/thrift --gen py:enum,slots -out ./gen-py/test5_slots test5.thrift || exit 1
-PYTHONPATH=./gen-py python -c 'import foo.bar.baz' || exit 1
-PYTHONPATH=./gen-py python -c 'import test2' || exit 1
-PYTHONPATH=./gen-py python -c 'import test1' &>/dev/null && exit 1  # Should fail.
-PYTHONPATH=./gen-py python -c 'import test4.constants' || exit 1
-PYTHONPATH=./gen-py python EnumSerializationTest.py || exit 1
-PYTHONPATH=./gen-py python EnumSerializationTest.py slot|| exit 1
+PYTHON="${PYTHON:-python3}"
+PYTHONPATH=./gen-py $PYTHON -c 'import foo.bar.baz' || exit 1
+PYTHONPATH=./gen-py $PYTHON -c 'import test2' || exit 1
+PYTHONPATH=./gen-py $PYTHON -c 'import test1' &>/dev/null && exit 1  # Should fail.
+PYTHONPATH=./gen-py $PYTHON -c 'import test4.constants' || exit 1
+PYTHONPATH=./gen-py $PYTHON EnumSerializationTest.py || exit 1
+PYTHONPATH=./gen-py $PYTHON EnumSerializationTest.py slot|| exit 1
 cp -r gen-py simple
 ../../../compiler/cpp/thrift -r --gen py test2.thrift || exit 1
-PYTHONPATH=./gen-py python -c 'import test2' || exit 1
+PYTHONPATH=./gen-py $PYTHON -c 'import test2' || exit 1
 diff -ur simple gen-py > thediffs
 file thediffs | grep -s -q empty || exit 1
 rm -rf simple thediffs
