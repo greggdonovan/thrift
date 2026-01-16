@@ -25,8 +25,24 @@ _SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
 _ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(_SCRIPT_DIR)))
 _LIBDIR = os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
 
-for libpath in glob.glob(_LIBDIR):
-    if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
-        sys.path.insert(0, libpath)
+_candidates = list(glob.glob(_LIBDIR))
+_preferred_suffixes = [
+    '-%s' % sys.implementation.cache_tag,
+    '-%d.%d' % (sys.version_info[0], sys.version_info[1]),
+]
+_ordered = []
+for suffix in _preferred_suffixes:
+    _ordered.extend([path for path in _candidates if path.endswith(suffix)])
+_ordered.extend(_candidates)
+
+_seen = set()
+for libpath in _ordered:
+    if libpath in _seen:
+        continue
+    _seen.add(libpath)
+    sys.path.insert(0, libpath)
+    try:
         thrift = __import__('thrift')
         break
+    except Exception:
+        sys.path.pop(0)
