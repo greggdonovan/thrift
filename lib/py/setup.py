@@ -93,7 +93,7 @@ def run_setup(with_binary):
         extensions = dict()
 
     tornado_deps = ['tornado>=6.3.0']
-    twisted_deps = ['twisted>=24.3.0']
+    twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
     setup(name='thrift',
           version='0.23.0',
