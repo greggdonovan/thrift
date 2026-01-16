@@ -984,10 +984,28 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         t_type* type = (*m_iter)->get_type();
         if (type->is_enum()) {
-          out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << '\n'
-              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') or value is None else "
-              << type_name(type) << "(value))" << '\n'
-              << indent() << indent_str() << "return" << '\n';
+          out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << '\n';
+          indent_up();
+          out << indent() << "if hasattr(value, 'value') or value is None:" << '\n';
+          indent_up();
+          out << indent() << "super().__setattr__(name, value)" << '\n'
+              << indent() << "return" << '\n';
+          indent_down();
+          out << indent() << "try:" << '\n';
+          indent_up();
+          out << indent() << "enum_value = " << type_name(type) << "(value)" << '\n';
+          indent_down();
+          out << indent() << "except (ValueError, TypeError):" << '\n';
+          indent_up();
+          out << indent() << "enum_value = " << type_name(type) << ".__members__.get(value)" << '\n';
+          out << indent() << "if enum_value is None:" << '\n';
+          indent_up();
+          out << indent() << "raise" << '\n';
+          indent_down();
+          indent_down();
+          out << indent() << "super().__setattr__(name, enum_value)" << '\n'
+              << indent() << "return" << '\n';
+          indent_down();
         }
       }
       indent(out) << "super().__setattr__(name, value)" << '\n' << '\n';
