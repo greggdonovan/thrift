@@ -433,7 +433,7 @@ class SerializersTest(unittest.TestCase):
                 for num, name in enum_class._VALUES_TO_NAMES.items():
                     yield (num, name)
             else:
-                # assume Python 3.4+ IntEnum-based
+                # assume Python 3.10+ IntEnum-based
                 from enum import IntEnum
                 self.assertTrue((issubclass(enum_class, IntEnum)))
                 for num in enum_class:

@@ -330,7 +330,7 @@
     "workdir": "py"
   },
   {
-    "comment": "Using 'python3' executable to test py2 and 3 at once",
+    "comment": "Using 'python3' executable for py tests",
     "name": "py3",
     "server": {
       "extra_args": ["TSimpleServer"],
