@@ -3011,6 +3011,6 @@ THRIFT_REGISTER_GENERATOR(
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
-    "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
+    "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.10 and higher.\n"
     "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
 )
