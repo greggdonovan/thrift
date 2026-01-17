@@ -344,7 +344,13 @@ class TSSLSocketTest(unittest.TestCase):
             print('skipping PROTOCOL_TLSv1_1 (disabled in OpenSSL 3)')
         else:
             server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
-            self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
+            try:
+                self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
+            except TTransportException as exc:
+                inner = getattr(exc, 'inner', None)
+                if isinstance(inner, ssl.SSLError) and 'NO_CIPHERS_AVAILABLE' in str(inner):
+                    self.skipTest('PROTOCOL_TLSv1_1 is disabled (no ciphers available)')
+                raise
 
         if (not hasattr(ssl, 'PROTOCOL_TLSv1_1') or
                 not hasattr(ssl, 'PROTOCOL_TLSv1_2') or
