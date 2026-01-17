@@ -27,6 +27,7 @@ import tempfile
 import threading
 import unittest
 import warnings
+import gc
 from contextlib import contextmanager
 
 import _import_local_thrift  # noqa
@@ -223,6 +224,24 @@ class TSSLSocketTest(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    def test_unix_socket_listen_closes_probe_socket(self):
+        if platform.system() == 'Windows':
+            print('skipping test_unix_socket_listen_closes_probe_socket')
+            return
+        fd, path = tempfile.mkstemp()
+        os.close(fd)
+        os.unlink(path)
+        server = self._server_socket(unix_socket=path, keyfile=SERVER_KEY, certfile=SERVER_CERT)
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error', category=ResourceWarning)
+                server.listen()
+                gc.collect()
+        finally:
+            server.close()
+            if os.path.exists(path):
+                os.unlink(path)
+
     def test_server_cert(self):
         server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
@@ -334,6 +353,27 @@ class TSSLSocketTest(unittest.TestCase):
         else:
             server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
             self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
+
+    def test_tls12_context_no_deprecation_warning(self):
+        if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
+            print('PROTOCOL_TLSv1_2 is not available')
+            return
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'error',
+                category=DeprecationWarning,
+                module=r'thrift\.transport\.TSSLSocket',
+            )
+            server = self._server_socket(
+                keyfile=SERVER_KEY,
+                certfile=SERVER_CERT,
+                ssl_version=ssl.PROTOCOL_TLSv1_2,
+            )
+            self._assert_connection_success(
+                server,
+                ca_certs=SERVER_CERT,
+                ssl_version=ssl.PROTOCOL_TLSv1_2,
+            )
 
     def test_ssl_context(self):
         server_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)

@@ -234,6 +234,8 @@ class TServerSocket(TSocketBase, TServerTransportBase):
                 eno, message = err.args
                 if eno == errno.ECONNREFUSED:
                     os.unlink(res[4])
+            finally:
+                tmp.close()
 
         self.handle = s = socket.socket(res[0], res[1])
         if s.family is socket.AF_INET6:
