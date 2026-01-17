@@ -107,19 +107,10 @@ def _optional_dependencies():
     # ipaddress is always available in Python 3.10+
     ipaddr = True
 
-    try:
-        from ssl import match_hostname
-        logger.debug('ssl.match_hostname is available')
-        match = match_hostname
-    except ImportError:
-        # https://docs.python.org/3/whatsnew/3.12.html:
-        # "Remove the ssl.match_hostname() function. It was deprecated in Python
-        # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
-        # longer uses the ssl.match_hostname() function."
-        # For Python 3.12+, OpenSSL handles hostname matching for clients when
-        # check_hostname is enabled, but we still need a fallback for server-side
-        # peer checks.
-        match = _fallback_match_hostname
+    # ssl.match_hostname has been deprecated since Python 3.7 and removed in 3.12.
+    # Use the local fallback to avoid DeprecationWarning while preserving behavior
+    # for server-side peer checks.
+    match = _fallback_match_hostname
     return ipaddr, match
 
 
