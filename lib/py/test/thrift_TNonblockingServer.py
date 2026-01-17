@@ -64,7 +64,10 @@ class Client:
         protocol = TBinaryProtocol.TBinaryProtocol(trans)
         client = TestServer.Client(protocol)
         trans.open()
-        self.msg = client.add_and_get_msg("hello thrift")
+        try:
+            self.msg = client.add_and_get_msg("hello thrift")
+        finally:
+            trans.close()
 
     def get_message(self):
         try:
@@ -76,6 +79,11 @@ class Client:
 
 
 class TestNonblockingServer(unittest.TestCase):
+    def test_close_closes_socketpair(self):
+        serve = Server()
+        serve.close_server()
+        self.assertIsNone(serve.server._read)
+        self.assertIsNone(serve.server._write)
 
     def test_normalconnection(self):
         serve = Server()

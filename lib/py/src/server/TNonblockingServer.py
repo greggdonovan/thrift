@@ -403,6 +403,16 @@ class TNonblockingServer(object):
         for _ in range(self.threads):
             self.tasks.put([None, None, None, None, None])
         self.socket.close()
+        if self._read:
+            try:
+                self._read.close()
+            finally:
+                self._read = None
+        if self._write:
+            try:
+                self._write.close()
+            finally:
+                self._write = None
         self.prepared = False
 
     def serve(self):
