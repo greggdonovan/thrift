@@ -31,6 +31,11 @@ py-test: py-build
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/thrift_TSerializer.py
+py-security:
+	@command -v uv >/dev/null || { echo "uv is required for py-security"; exit 1; }
+	uv tool run bandit -r src --severity-level medium --confidence-level medium
+	uv tool run semgrep scan --config p/security-audit --config p/python \
+		--severity WARNING --severity ERROR --metrics off src test
 
 all-local: py-build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
@@ -43,7 +48,7 @@ all-local: py-build
 install-exec-hook:
 	$(PYTHON) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
-check-local: all py-test
+check-local: all py-test py-security
 
 
 clean-local:
