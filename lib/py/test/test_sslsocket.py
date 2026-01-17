@@ -316,49 +316,116 @@ class TSSLSocketTest(unittest.TestCase):
         if not hasattr(ssl, 'PROTOCOL_SSLv3'):
             print('PROTOCOL_SSLv3 is not available')
         else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv3)
-
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv3)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT)
+            with self._assert_raises(ValueError):
+                self._server_socket(
+                    keyfile=SERVER_KEY,
+                    certfile=SERVER_CERT,
+                    ssl_version=ssl.PROTOCOL_SSLv3,
+                )
+            with self._assert_raises(ValueError):
+                TSSLSocket(
+                    'localhost',
+                    0,
+                    cert_reqs=ssl.CERT_NONE,
+                    ssl_version=ssl.PROTOCOL_SSLv3,
+                )
 
         if not hasattr(ssl, 'PROTOCOL_SSLv2'):
             print('PROTOCOL_SSLv2 is not available')
         else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv2)
+            with self._assert_raises(ValueError):
+                self._server_socket(
+                    keyfile=SERVER_KEY,
+                    certfile=SERVER_CERT,
+                    ssl_version=ssl.PROTOCOL_SSLv2,
+                )
+            with self._assert_raises(ValueError):
+                TSSLSocket(
+                    'localhost',
+                    0,
+                    cert_reqs=ssl.CERT_NONE,
+                    ssl_version=ssl.PROTOCOL_SSLv2,
+                )
 
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv2)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT)
+    def test_reject_legacy_tls_versions(self):
+        legacy_protocols = []
+        for name in ('PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1'):
+            protocol = getattr(ssl, name, None)
+            if protocol is not None:
+                legacy_protocols.append(protocol)
 
-    def test_newer_tls(self):
+        for protocol in legacy_protocols:
+            with self._assert_raises(ValueError):
+                self._server_socket(
+                    keyfile=SERVER_KEY,
+                    certfile=SERVER_CERT,
+                    ssl_version=protocol,
+                )
+            with self._assert_raises(ValueError):
+                TSSLSocket(
+                    'localhost',
+                    0,
+                    cert_reqs=ssl.CERT_NONE,
+                    ssl_version=protocol,
+                )
+
+        if hasattr(ssl, 'TLSVersion'):
+            for name in ('TLSv1', 'TLSv1_1'):
+                version = getattr(ssl.TLSVersion, name, None)
+                if version is None:
+                    continue
+                with self._assert_raises(ValueError):
+                    self._server_socket(
+                        keyfile=SERVER_KEY,
+                        certfile=SERVER_CERT,
+                        ssl_version=version,
+                    )
+                with self._assert_raises(ValueError):
+                    TSSLSocket(
+                        'localhost',
+                        0,
+                        cert_reqs=ssl.CERT_NONE,
+                        ssl_version=version,
+                    )
+
+    def test_default_context_minimum_tls(self):
+        if not hasattr(ssl, 'TLSVersion'):
+            self.skipTest('TLSVersion is not available')
+
+        client = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_NONE)
+        try:
+            self.assertGreaterEqual(
+                client.ssl_context.minimum_version,
+                ssl.TLSVersion.TLSv1_2,
+            )
+            if client.ssl_context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+                self.assertGreaterEqual(
+                    client.ssl_context.maximum_version,
+                    ssl.TLSVersion.TLSv1_2,
+                )
+        finally:
+            client.close()
+
+        server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
+        try:
+            self.assertGreaterEqual(
+                server.ssl_context.minimum_version,
+                ssl.TLSVersion.TLSv1_2,
+            )
+            if server.ssl_context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+                self.assertGreaterEqual(
+                    server.ssl_context.maximum_version,
+                    ssl.TLSVersion.TLSv1_2,
+                )
+        finally:
+            server.close()
+
+    def test_tls12_supported(self):
         if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
             print('PROTOCOL_TLSv1_2 is not available')
         else:
             server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
             self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_1'):
-            print('PROTOCOL_TLSv1_1 is not available')
-        elif ssl.OPENSSL_VERSION_INFO >= (3, 0, 0):
-            print('skipping PROTOCOL_TLSv1_1 (disabled in OpenSSL 3)')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
-            try:
-                self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
-            except TTransportException as exc:
-                inner = getattr(exc, 'inner', None)
-                if isinstance(inner, ssl.SSLError) and 'NO_CIPHERS_AVAILABLE' in str(inner):
-                    self.skipTest('PROTOCOL_TLSv1_1 is disabled (no ciphers available)')
-                raise
-
-        if (not hasattr(ssl, 'PROTOCOL_TLSv1_1') or
-                not hasattr(ssl, 'PROTOCOL_TLSv1_2') or
-                ssl.OPENSSL_VERSION_INFO >= (3, 0, 0)):
-            print('PROTOCOL_TLSv1_1 and/or PROTOCOL_TLSv1_2 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
 
     def test_tls12_context_no_deprecation_warning(self):
         if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
@@ -383,17 +450,31 @@ class TSSLSocketTest(unittest.TestCase):
 
     def test_ssl_context(self):
         server_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        if hasattr(ssl, 'TLSVersion'):
+            server_context.minimum_version = ssl.TLSVersion.TLSv1_2
         server_context.load_cert_chain(SERVER_CERT, SERVER_KEY)
         server_context.load_verify_locations(CLIENT_CERT)
         server_context.verify_mode = ssl.CERT_REQUIRED
         server = self._server_socket(ssl_context=server_context)
 
         client_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        if hasattr(ssl, 'TLSVersion'):
+            client_context.minimum_version = ssl.TLSVersion.TLSv1_2
         client_context.load_cert_chain(CLIENT_CERT, CLIENT_KEY)
         client_context.load_verify_locations(SERVER_CERT)
         client_context.verify_mode = ssl.CERT_REQUIRED
 
         self._assert_connection_success(server, ssl_context=client_context)
+
+    def test_ssl_context_requires_tls12(self):
+        if not hasattr(ssl, 'TLSVersion'):
+            self.skipTest('TLSVersion is not available')
+        client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            client_context.minimum_version = ssl.TLSVersion.TLSv1_1
+        with self._assert_raises(ValueError):
+            TSSLSocket('localhost', 0, ssl_context=client_context)
 
 
 if __name__ == '__main__':
