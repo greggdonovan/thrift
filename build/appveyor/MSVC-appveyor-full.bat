@@ -92,11 +92,6 @@ IF "%PLATFORM%" == "x86" (
 :: FindBoost needs forward slashes so cmake doesn't see something as an escaped character
 SET BOOST_ROOT=C:/Libraries/boost_%BOOST_VERSION:.=_%
 SET BOOST_LIBRARYDIR=!BOOST_ROOT!/lib%NORM_PLATFORM%-msvc-%COMPILER:~-3,2%.%COMPILER:~-1,1%
-
-ECHO Boost candidates under C:\Libraries:
-DIR /B C:\Libraries\boost_* 2>NUL
-ECHO Boost root expected: %BOOST_ROOT%
-DIR /B "%BOOST_ROOT%" 2>NUL
 SET OPENSSL_ROOT=C:\OpenSSL-Win%NORM_PLATFORM%
 SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
 
