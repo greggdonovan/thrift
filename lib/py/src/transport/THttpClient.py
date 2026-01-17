@@ -31,6 +31,32 @@ import http.client
 from .TTransport import TTransportBase
 
 
+def _enforce_minimum_tls(context):
+    if not hasattr(ssl, 'TLSVersion'):
+        return
+    minimum = ssl.TLSVersion.TLSv1_2
+    if hasattr(context, 'minimum_version'):
+        if context.minimum_version < minimum:
+            context.minimum_version = minimum
+    if hasattr(context, 'maximum_version'):
+        if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+                context.maximum_version < minimum):
+            raise ValueError('TLS maximum_version must be TLS 1.2 or higher.')
+
+
+def _validate_minimum_tls(context):
+    if not hasattr(ssl, 'TLSVersion'):
+        return
+    minimum = ssl.TLSVersion.TLSv1_2
+    if hasattr(context, 'minimum_version'):
+        if context.minimum_version < minimum:
+            raise ValueError('ssl_context.minimum_version must be TLS 1.2 or higher.')
+    if hasattr(context, 'maximum_version'):
+        if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+                context.maximum_version < minimum):
+            raise ValueError('ssl_context.maximum_version must be TLS 1.2 or higher.')
+
+
 class THttpClient(TTransportBase):
     """Http implementation of TTransport base."""
 
@@ -63,11 +89,14 @@ class THttpClient(TTransportBase):
                 self.port = parsed.port or http.client.HTTP_PORT
             elif self.scheme == 'https':
                 self.port = parsed.port or http.client.HTTPS_PORT
-                if (cafile or cert_file or key_file) and not ssl_context:
-                    self.context = ssl.create_default_context(cafile=cafile)
-                    self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
-                else:
+                if ssl_context is not None:
+                    _validate_minimum_tls(ssl_context)
                     self.context = ssl_context
+                else:
+                    self.context = ssl.create_default_context(cafile=cafile)
+                    if cert_file or key_file:
+                        self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+                    _enforce_minimum_tls(self.context)
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
@@ -112,9 +141,11 @@ class THttpClient(TTransportBase):
             self.__http = http.client.HTTPConnection(self.host, self.port,
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http.client.HTTPSConnection(self.host, self.port,
-                                                      timeout=self.__timeout,
-                                                      context=self.context)
+            # Python 3.10+ uses an explicit SSLContext; TLS 1.2+ enforced in __init__.
+            self.__http = http.client.HTTPSConnection(  # nosem
+                self.host, self.port,
+                timeout=self.__timeout,
+                context=self.context)
         if self.using_proxy():
             self.__http.set_tunnel(self.realhost, self.realport,
                                    {"Proxy-Authorization": self.proxy_auth})
