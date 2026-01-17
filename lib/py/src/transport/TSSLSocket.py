@@ -34,8 +34,60 @@ warnings.filterwarnings(
 
 class TSSLBase(object):
     _default_protocol = ssl.PROTOCOL_TLS_CLIENT
+    _minimum_tls_version = (
+        ssl.TLSVersion.TLSv1_2 if hasattr(ssl, 'TLSVersion') else None
+    )
+
+    def _validate_tls_version(self, ssl_version):
+        if self._minimum_tls_version is None:
+            return
+        if isinstance(ssl_version, ssl.TLSVersion):
+            if ssl_version < self._minimum_tls_version:
+                raise ValueError(
+                    'SSLv2/SSLv3 and TLS 1.0/1.1 are not supported; use TLS 1.2 or higher.'
+                )
+            return
+
+        insecure_protocols = []
+        for name in ('PROTOCOL_SSLv2', 'PROTOCOL_SSLv3', 'PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1'):
+            protocol = getattr(ssl, name, None)
+            if protocol is not None:
+                insecure_protocols.append(protocol)
+        if ssl_version in insecure_protocols:
+            raise ValueError(
+                'SSLv2/SSLv3 and TLS 1.0/1.1 are not supported; use TLS 1.2 or higher.'
+            )
+
+    def _enforce_minimum_tls(self, context):
+        if self._minimum_tls_version is None:
+            return
+        if hasattr(context, 'minimum_version'):
+            if context.minimum_version < self._minimum_tls_version:
+                context.minimum_version = self._minimum_tls_version
+        if hasattr(context, 'maximum_version'):
+            if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+                    context.maximum_version < self._minimum_tls_version):
+                raise ValueError(
+                    'TLS maximum_version must be TLS 1.2 or higher.'
+                )
+
+    def _validate_context_tls(self, context):
+        if self._minimum_tls_version is None:
+            return
+        if hasattr(context, 'minimum_version'):
+            if context.minimum_version < self._minimum_tls_version:
+                raise ValueError(
+                    'ssl_context.minimum_version must be TLS 1.2 or higher.'
+                )
+        if hasattr(context, 'maximum_version'):
+            if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+                    context.maximum_version < self._minimum_tls_version):
+                raise ValueError(
+                    'ssl_context.maximum_version must be TLS 1.2 or higher.'
+                )
 
     def _init_context(self, ssl_version):
+        self._validate_tls_version(ssl_version)
         # Avoid deprecated protocol constants by mapping to TLSVersion limits.
         if hasattr(ssl, 'TLSVersion'):
             tls_version = None
@@ -58,6 +110,7 @@ class TSSLBase(object):
                 return
 
         self._context = ssl.SSLContext(ssl_version)
+        self._enforce_minimum_tls(self._context)
 
     @property
     def _should_verify(self):
@@ -123,6 +176,7 @@ class TSSLBase(object):
             self._server_hostname = ssl_opts.pop('server_hostname', host)
         if self._context:
             self._custom_context = True
+            self._validate_context_tls(self._context)
             if ssl_opts:
                 raise ValueError(
                     'Incompatible arguments: ssl_context and %s'
@@ -215,7 +269,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         """Positional arguments: ``host``, ``port``, ``unix_socket``
 
         Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``,
-                           ``ssl_version``, ``ca_certs``,
+                           ``ssl_version`` (TLS 1.2+ only), ``ca_certs``,
                            ``ciphers``, ``server_hostname``
         Passed to ssl.wrap_socket. See ssl.wrap_socket documentation.
 
@@ -321,8 +375,9 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
     def __init__(self, host=None, port=9090, *args, **kwargs):
         """Positional arguments: ``host``, ``port``, ``unix_socket``
 
-        Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``, ``ssl_version``,
-                           ``ca_certs``, ``ciphers``
+        Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``,
+                           ``ssl_version`` (TLS 1.2+ only), ``ca_certs``,
+                           ``ciphers``
         See ssl.wrap_socket documentation.
 
         Alternative keyword arguments:
