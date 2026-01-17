@@ -43,10 +43,6 @@ class TSSLBase(object):
                 tls_version = ssl_version
             elif ssl_version == ssl.PROTOCOL_TLSv1_2:
                 tls_version = ssl.TLSVersion.TLSv1_2
-            elif ssl_version == ssl.PROTOCOL_TLSv1_1:
-                tls_version = ssl.TLSVersion.TLSv1_1
-            elif ssl_version == ssl.PROTOCOL_TLSv1:
-                tls_version = ssl.TLSVersion.TLSv1
 
             if tls_version is not None:
                 if self._server_side and hasattr(ssl, 'PROTOCOL_TLS_SERVER'):
