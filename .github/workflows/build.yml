@@ -635,7 +635,8 @@ jobs:
         run: make -C lib/py
 
       - name: Run make install for python
-        run: sudo make -C lib/py install
+        run: |
+          sudo make -C lib/py install PY_PREFIX="$(python -c 'import sys; print(sys.prefix)')"
 
       - name: Run make for python libs
         run: make -C lib/py
