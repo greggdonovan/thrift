@@ -57,6 +57,11 @@ project.lock.json
 .vscode
 .vs
 
+/.venv*
+/build-cmake/
+/lib/py/src/protocol/*.so
+/lib/py/test/TestServer/
+
 /aclocal/libtool.m4
 /aclocal/lt*.m4
 /autoscan.log
