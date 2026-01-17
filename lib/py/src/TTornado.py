@@ -20,7 +20,6 @@
 import logging
 import socket
 import struct
-import warnings
 
 from .transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
 
@@ -66,17 +65,7 @@ class _Lock:
 
 class TTornadoStreamTransport(TTransportBase):
     """a framed, buffered transport over a Tornado stream"""
-    def __init__(self, host, port, stream=None, io_loop=None):
-        if io_loop is not None:
-            warnings.warn(
-                "The `io_loop` parameter is deprecated and unused. Passing "
-                "`io_loop` is unnecessary because Tornado now automatically "
-                "provides the current I/O loop via `IOLoop.current()`. "
-                "Remove the `io_loop` parameter to ensure compatibility - it "
-                "will be removed in a future release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+    def __init__(self, host, port, stream=None):
         self.host = host
         self.port = port
         self.io_loop = ioloop.IOLoop.current()
@@ -170,17 +159,6 @@ class TTornadoStreamTransport(TTransportBase):
 class TTornadoServer(tcpserver.TCPServer):
     def __init__(self, processor, iprot_factory, oprot_factory=None,
                  *args, **kwargs):
-        if 'io_loop' in kwargs:
-            warnings.warn(
-                "The `io_loop` parameter is deprecated and unused. Passing "
-                "`io_loop` is unnecessary because Tornado now automatically "
-                "provides the current I/O loop via `IOLoop.current()`. "
-                "Remove the `io_loop` parameter to ensure compatibility - it "
-                "will be removed in a future release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            kwargs.pop('io_loop')
         super(TTornadoServer, self).__init__(*args, **kwargs)
 
         self._processor = processor

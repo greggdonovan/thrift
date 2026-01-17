@@ -130,12 +130,12 @@ class ThriftTestCase(AsyncTestCase):
         self.processor = ThriftTest.Processor(self.handler)
         self.pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
-        self.server = TTornado.TTornadoServer(self.processor, self.pfactory, io_loop=self.io_loop)
+        self.server = TTornado.TTornadoServer(self.processor, self.pfactory)
         self.server.bind(self.port)
         self.server.start(1)
 
         # client
-        transport = TTornado.TTornadoStreamTransport('localhost', self.port, io_loop=self.io_loop)
+        transport = TTornado.TTornadoStreamTransport('localhost', self.port)
         pfactory = TBinaryProtocol.TBinaryProtocolFactory()
         self.io_loop.run_sync(transport.open)
         self.client = ThriftTest.Client(transport, pfactory)
