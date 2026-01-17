@@ -46,18 +46,38 @@
   {
     "name": "cl",
     "server": {
-      "command": ["TestServer"],
+      "command": [
+        "TestServer"
+      ],
       "workdir": "cl",
-      "protocols": ["binary", "multi"],
-      "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "protocols": [
+        "binary",
+        "multi"
+      ],
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip"
+      ]
     },
     "client": {
-      "command": ["TestClient"],
+      "command": [
+        "TestClient"
+      ],
       "workdir": "cl",
-      "protocols": ["binary", "multi"],
-      "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "protocols": [
+        "binary",
+        "multi"
+      ],
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip"
+      ]
     }
   },
   {
@@ -284,7 +304,9 @@
   {
     "name": "py",
     "server": {
-      "extra_args": ["TSimpleServer"],
+      "extra_args": [
+        "TSimpleServer"
+      ],
       "command": [
         "TestServer.py",
         "--verbose",
@@ -296,56 +318,6 @@
       "command": [
         "TestClient.py",
         "--verbose",
-        "--host=localhost",
-        "--genpydir=gen-py"
-      ]
-    },
-    "transports": [
-      "buffered",
-      "framed",
-      "http",
-      "zlib"
-    ],
-    "sockets": [
-      "ip",
-      "ip-ssl",
-      "domain"
-    ],
-    "protocols": [
-      "binary",
-      "binary:accel",
-      "compact",
-      "compact:accelc",
-      "header",
-      "json",
-      "multi",
-      "multi:multia",
-      "multia",
-      "multiac",
-      "multic",
-      "multic:multiac",
-      "multih",
-      "multij"
-    ],
-    "workdir": "py"
-  },
-  {
-    "comment": "Using 'python3' executable for py tests",
-    "name": "py3",
-    "server": {
-      "extra_args": ["TSimpleServer"],
-      "command": [
-        "python3",
-        "TestServer.py",
-        "--verbose",
-        "--genpydir=gen-py"
-      ]
-    },
-    "client": {
-      "timeout": 10,
-      "command": [
-        "python3",
-        "TestClient.py",
         "--host=localhost",
         "--genpydir=gen-py"
       ]
@@ -497,7 +469,7 @@
         "client"
       ]
     },
-        "workdir": "netstd"
+    "workdir": "netstd"
   },
   {
     "name": "perl",
@@ -617,9 +589,9 @@
       ],
       "command": [
         "dart",
-	    "--enable-asserts",
+        "--enable-asserts",
         "test_client/bin/main.dart",
-	    "--verbose"
+        "--verbose"
       ]
     },
     "workdir": "dart"
@@ -799,18 +771,40 @@
   {
     "name": "swift",
     "server": {
-      "command": ["TestServer"],
+      "command": [
+        "TestServer"
+      ],
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
-      "protocols": ["binary", "compact"],
-      "transports": ["buffered", "framed"],
-      "sockets": ["ip", "domain"]
+      "protocols": [
+        "binary",
+        "compact"
+      ],
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip",
+        "domain"
+      ]
     },
     "client": {
-      "command": ["TestClient"],
+      "command": [
+        "TestClient"
+      ],
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
-      "protocols": ["binary", "compact"],
-      "transports": ["buffered", "framed"],
-      "sockets": ["ip", "domain"]
+      "protocols": [
+        "binary",
+        "compact"
+      ],
+      "transports": [
+        "buffered",
+        "framed"
+      ],
+      "sockets": [
+        "ip",
+        "domain"
+      ]
     }
   }
 ]
