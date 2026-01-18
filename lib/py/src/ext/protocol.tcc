@@ -20,96 +20,15 @@
 #ifndef THRIFT_PY_PROTOCOL_TCC
 #define THRIFT_PY_PROTOCOL_TCC
 
+#include <algorithm>
 #include <iterator>
 
 #define CHECK_RANGE(v, min, max) (((v) <= (max)) && ((v) >= (min)))
 #define INIT_OUTBUF_SIZE 128
 
-#if PY_MAJOR_VERSION < 3
-#include <cStringIO.h>
-#else
-#include <algorithm>
-#endif
-
 namespace apache {
 namespace thrift {
 namespace py {
-
-#if PY_MAJOR_VERSION < 3
-
-namespace detail {
-
-inline bool input_check(PyObject* input) {
-  return PycStringIO_InputCheck(input);
-}
-
-inline EncodeBuffer* new_encode_buffer(size_t size) {
-  if (!PycStringIO) {
-    PycString_IMPORT;
-  }
-  if (!PycStringIO) {
-    return nullptr;
-  }
-  return PycStringIO->NewOutput(size);
-}
-
-inline int read_buffer(PyObject* buf, char** output, int len) {
-  if (!PycStringIO) {
-    PycString_IMPORT;
-  }
-  if (!PycStringIO) {
-    PyErr_SetString(PyExc_ImportError, "failed to import native cStringIO");
-    return -1;
-  }
-  return PycStringIO->cread(buf, output, len);
-}
-}
-
-template <typename Impl>
-inline ProtocolBase<Impl>::~ProtocolBase() {
-  if (output_) {
-    Py_CLEAR(output_);
-  }
-}
-
-template <typename Impl>
-inline bool ProtocolBase<Impl>::isUtf8(PyObject* typeargs) {
-  return PyString_Check(typeargs) && !strncmp(PyString_AS_STRING(typeargs), "UTF8", 4);
-}
-
-template <typename Impl>
-PyObject* ProtocolBase<Impl>::getEncodedValue() {
-  if (!PycStringIO) {
-    PycString_IMPORT;
-  }
-  if (!PycStringIO) {
-    return nullptr;
-  }
-  return PycStringIO->cgetvalue(output_);
-}
-
-template <typename Impl>
-inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
-  if (!PycStringIO) {
-    PycString_IMPORT;
-  }
-  if (!PycStringIO) {
-    PyErr_SetString(PyExc_ImportError, "failed to import native cStringIO");
-    return false;
-  }
-  int len = PycStringIO->cwrite(output_, data, size);
-  if (len < 0) {
-    PyErr_SetString(PyExc_IOError, "failed to write to cStringIO object");
-    return false;
-  }
-  if (static_cast<size_t>(len) != size) {
-    PyErr_Format(PyExc_EOFError, "write length mismatch: expected %lu got %d", size, len);
-    return false;
-  }
-  return true;
-}
-
-#else
 
 namespace detail {
 
@@ -127,22 +46,14 @@ inline EncodeBuffer* new_encode_buffer(size_t size) {
 
 struct bytesio {
   PyObject_HEAD
-#if PY_MINOR_VERSION < 5
-      char* buf;
-#else
       PyObject* buf;
-#endif
   Py_ssize_t pos;
   Py_ssize_t string_size;
 };
 
 inline int read_buffer(PyObject* buf, char** output, int len) {
   bytesio* buf2 = reinterpret_cast<bytesio*>(buf);
-#if PY_MINOR_VERSION < 5
-  *output = buf2->buf + buf2->pos;
-#else
   *output = PyBytes_AS_STRING(buf2->buf) + buf2->pos;
-#endif
   Py_ssize_t pos0 = buf2->pos;
   buf2->pos = (std::min)(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
   return static_cast<int>(buf2->pos - pos0);
@@ -182,8 +93,6 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
   return true;
 }
 
-#endif
-
 namespace detail {
 
 #define DECLARE_OP_SCOPE(name, op)                                                                 \
@@ -221,7 +130,7 @@ inline bool check_ssize_t_32(Py_ssize_t len) {
 
 template <typename T>
 bool parse_pyint(PyObject* o, T* ret, int32_t min, int32_t max) {
-  long val = PyInt_AsLong(o);
+  long val = PyLong_AsLong(o);
 
   if (INT_CONV_ERROR_OCCURRED(val)) {
     return false;
@@ -659,21 +568,21 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
     if (!impl()->readI8(v)) {
       return nullptr;
     }
-    return PyInt_FromLong(v);
+    return PyLong_FromLong(v);
   }
   case T_I16: {
     int16_t v = 0;
     if (!impl()->readI16(v)) {
       return nullptr;
     }
-    return PyInt_FromLong(v);
+    return PyLong_FromLong(v);
   }
   case T_I32: {
     int32_t v = 0;
     if (!impl()->readI32(v)) {
       return nullptr;
     }
-    return PyInt_FromLong(v);
+    return PyLong_FromLong(v);
   }
 
   case T_I64: {
@@ -684,7 +593,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
     // TODO(dreiss): Find out if we can take this fastpath always when
     //               sizeof(long) == sizeof(long long).
     if (CHECK_RANGE(v, LONG_MIN, LONG_MAX)) {
-      return PyInt_FromLong((long)v);
+      return PyLong_FromLong((long)v);
     }
     return PyLong_FromLongLong(v);
   }
