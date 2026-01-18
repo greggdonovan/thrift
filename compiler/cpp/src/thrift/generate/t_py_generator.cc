@@ -563,6 +563,23 @@ void t_py_generator::generate_enum(t_enum* tenum) {
     from_string_mapping << indent() << indent() << '"' << escape_string((*c_iter)->get_name())
                         << "\": " << value << ',' << '\n';
   }
+
+  if (gen_enum_) {
+    f_types_ << '\n';
+    indent(f_types_) << "@classmethod" << '\n';
+    indent(f_types_) << "def _missing_(cls, value):" << '\n';
+    indent_up();
+    indent(f_types_) << "if not isinstance(value, int):" << '\n';
+    indent_up();
+    indent(f_types_) << "return None" << '\n';
+    indent_down();
+    indent(f_types_) << "unknown = int.__new__(cls, value)" << '\n';
+    indent(f_types_) << "unknown._name_ = f\"UNKNOWN_{value}\"" << '\n';
+    indent(f_types_) << "unknown._value_ = value" << '\n';
+    indent(f_types_) << "cls._value2member_map_.setdefault(value, unknown)" << '\n';
+    indent(f_types_) << "return unknown" << '\n';
+    indent_down();
+  }
   to_string_mapping << indent() << "}" << '\n';
   from_string_mapping << indent() << "}" << '\n';
 
@@ -897,10 +914,27 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
       if (is_immutable(tstruct)) {
         if (gen_enum_ && type->is_enum()) {
+          string enum_value = tmp("_enum_value");
+          indent(out) << enum_value << " = " << (*m_iter)->get_name() << '\n';
+          indent(out) << "if " << enum_value << " is not None and not hasattr(" << enum_value
+                      << ", 'value'):" << '\n';
+          indent_up();
+          indent(out) << "try:" << '\n';
+          indent_up();
+          indent(out) << enum_value << " = " << type_name(type) << "(" << enum_value << ")" << '\n';
+          indent_down();
+          indent(out) << "except (ValueError, TypeError):" << '\n';
+          indent_up();
+          indent(out) << enum_value << " = " << type_name(type) << ".__members__.get(" << enum_value
+                      << ")" << '\n';
+          indent(out) << "if " << enum_value << " is None:" << '\n';
+          indent_up();
+          indent(out) << "raise" << '\n';
+          indent_down();
+          indent_down();
+          indent_down();
           indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
-                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name()
-                      << " if hasattr("  << (*m_iter)->get_name() << ", 'value') else "
-                      << type_name(type) << ".__members__.get(" << (*m_iter)->get_name() << "))" << '\n';
+                      << (*m_iter)->get_name() << "', " << enum_value << ")" << '\n';
         } else if (gen_newstyle_ || gen_dynamic_) {
           indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << '\n';
