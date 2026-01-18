@@ -23,7 +23,7 @@ import socket
 import ssl
 import warnings
 
-from .sslcompat import _match_has_ipaddress, _match_hostname
+from .sslcompat import _match_hostname
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
 
@@ -409,9 +409,6 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
-        if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
-                             'module to verify client certificate')
 
     def setCertfile(self, certfile):
         """Set or change the server certificate file used to wrap new

@@ -32,7 +32,7 @@ from contextlib import contextmanager
 
 import _import_local_thrift  # noqa
 
-from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
 from thrift.transport.TTransport import TTransportException
 
 SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -271,9 +271,6 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
 
     def test_client_cert(self):
-        if not _match_has_ipaddress:
-            print('skipping test_client_cert')
-            return
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
             certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
@@ -479,7 +476,7 @@ class TSSLSocketTest(unittest.TestCase):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
-    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
     from thrift.transport.TTransport import TTransportException
 
     unittest.main()
