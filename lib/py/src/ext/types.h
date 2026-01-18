@@ -28,17 +28,7 @@
 #endif
 #include <stdint.h>
 
-#if PY_MAJOR_VERSION >= 3
-
 #include <vector>
-
-// TODO: better macros
-#define PyInt_AsLong(v) PyLong_AsLong(v)
-#define PyInt_FromLong(v) PyLong_FromLong(v)
-
-#define PyString_InternFromString(v) PyUnicode_InternFromString(v)
-
-#endif
 
 #define INTERN_STRING(value) _intern_##value
 
@@ -123,16 +113,11 @@ struct DecodeBuffer {
   ScopedPyObject refill_callable;
 };
 
-#if PY_MAJOR_VERSION < 3
-extern char refill_signature[3];
-typedef PyObject EncodeBuffer;
-#else
 extern const char* refill_signature;
 struct EncodeBuffer {
   std::vector<char> buf;
   size_t pos;
 };
-#endif
 
 /**
  * A cache of the spec_args for a set or list,

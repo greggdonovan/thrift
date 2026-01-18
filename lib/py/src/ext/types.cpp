@@ -27,11 +27,7 @@ namespace py {
 
 PyObject* ThriftModule = nullptr;
 
-#if PY_MAJOR_VERSION < 3
-char refill_signature[] = {'s', '#', 'i'};
-#else
 const char* refill_signature = "y#i";
-#endif
 
 bool parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
   // i'd like to use ParseArgs here, but it seems to be a bottleneck.
@@ -41,12 +37,12 @@ bool parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
     return false;
   }
 
-  dest->tag = static_cast<TType>(PyInt_AsLong(PyTuple_GET_ITEM(spec_tuple, 0)));
+  dest->tag = static_cast<TType>(PyLong_AsLong(PyTuple_GET_ITEM(spec_tuple, 0)));
   if (INT_CONV_ERROR_OCCURRED(dest->tag)) {
     return false;
   }
 
-  dest->type = static_cast<TType>(PyInt_AsLong(PyTuple_GET_ITEM(spec_tuple, 1)));
+  dest->type = static_cast<TType>(PyLong_AsLong(PyTuple_GET_ITEM(spec_tuple, 1)));
   if (INT_CONV_ERROR_OCCURRED(dest->type)) {
     return false;
   }
@@ -63,7 +59,7 @@ bool parse_set_list_args(SetListTypeArgs* dest, PyObject* typeargs) {
     return false;
   }
 
-  dest->element_type = static_cast<TType>(PyInt_AsLong(PyTuple_GET_ITEM(typeargs, 0)));
+  dest->element_type = static_cast<TType>(PyLong_AsLong(PyTuple_GET_ITEM(typeargs, 0)));
   if (INT_CONV_ERROR_OCCURRED(dest->element_type)) {
     return false;
   }
@@ -81,12 +77,12 @@ bool parse_map_args(MapTypeArgs* dest, PyObject* typeargs) {
     return false;
   }
 
-  dest->ktag = static_cast<TType>(PyInt_AsLong(PyTuple_GET_ITEM(typeargs, 0)));
+  dest->ktag = static_cast<TType>(PyLong_AsLong(PyTuple_GET_ITEM(typeargs, 0)));
   if (INT_CONV_ERROR_OCCURRED(dest->ktag)) {
     return false;
   }
 
-  dest->vtag = static_cast<TType>(PyInt_AsLong(PyTuple_GET_ITEM(typeargs, 2)));
+  dest->vtag = static_cast<TType>(PyLong_AsLong(PyTuple_GET_ITEM(typeargs, 2)));
   if (INT_CONV_ERROR_OCCURRED(dest->vtag)) {
     return false;
   }
