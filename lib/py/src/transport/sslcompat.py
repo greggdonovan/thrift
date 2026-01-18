@@ -65,7 +65,7 @@ def legacy_validate_callback(cert, hostname):
         % (hostname, cert))
 
 
-def _fallback_match_hostname(cert, hostname):
+def _match_hostname(cert, hostname):
     if not cert:
         raise ssl.CertificateError('no peer certificate available')
 
@@ -102,16 +102,3 @@ def _fallback_match_hostname(cert, hostname):
     raise ssl.CertificateError(
         "no appropriate subjectAltName fields were found")
 
-
-def _optional_dependencies():
-    # ipaddress is always available in Python 3.10+
-    ipaddr = True
-
-    # ssl.match_hostname has been deprecated since Python 3.7 and removed in 3.12.
-    # Use the local fallback to avoid DeprecationWarning while preserving behavior
-    # for server-side peer checks.
-    match = _fallback_match_hostname
-    return ipaddr, match
-
-
-_match_has_ipaddress, _match_hostname = _optional_dependencies()
