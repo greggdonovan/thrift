@@ -66,6 +66,24 @@ def serialization_deserialization_exception_enum_test():
     assert test_obj.why == test_obj2.why
     assert test_obj.who == test_obj2.who
 
+def serialization_deserialization_unknown_enum_test():
+    test_obj = TestStruct(param1="test_string", param2=TestEnum(999), param3=SharedEnum(1001))
+    test_obj_serialized = serialize(test_obj)
+    test_obj2 = deserialize(TestStruct(), test_obj_serialized)
+    assert test_obj.param2 == test_obj2.param2
+    assert test_obj.param3 == test_obj2.param3
+    assert test_obj2.param2.value == 999
+    assert test_obj2.param3.value == 1001
+
+def serialization_deserialization_unknown_exception_enum_test():
+    test_obj = TestException(whatOp=0, why=SharedEnum(42), who=TestEnum(43))
+    test_obj_serialized = serialize(test_obj)
+    test_obj2 = deserialize_immutable(TestException, test_obj_serialized)
+    assert test_obj.why == test_obj2.why
+    assert test_obj.who == test_obj2.who
+    assert test_obj2.why.value == 42
+    assert test_obj2.who.value == 43
+
 
 
 if __name__ == "__main__":
@@ -78,3 +96,5 @@ if __name__ == "__main__":
     serialization_deserialization_struct_enum_as_string_test()
     serialization_deserialization_exception_enum_as_string_test()
     serialization_deserialization_exception_enum_test()
+    serialization_deserialization_unknown_enum_test()
+    serialization_deserialization_unknown_exception_enum_test()
