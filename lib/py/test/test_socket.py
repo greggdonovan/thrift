@@ -44,6 +44,7 @@ class TSocketTest(unittest.TestCase):
     def test_socket_readtimeout_exception(self):
         acc = ServerAcceptor(TServerSocket(port=0))
         acc.start()
+        acc.await_listening()
 
         sock = TSocket(host="localhost", port=acc.port)
         sock.open()
@@ -65,12 +66,13 @@ class TSocketTest(unittest.TestCase):
         timeouts = [
             None,  # blocking mode
             0,  # non-blocking mode
-            1.0,  # timeout mode
+            500,  # timeout mode (ms)
         ]
 
         for timeout in timeouts:
             acc = ServerAcceptor(TServerSocket(port=0))
             acc.start()
+            acc.await_listening()
 
             sock = TSocket(host="localhost", port=acc.port)
             self.assertFalse(sock.isOpen())
