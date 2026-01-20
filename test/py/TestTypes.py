@@ -21,44 +21,75 @@ from ThriftTest.ThriftTest import Client
 from ThriftTest.ttypes import Xtruct
 
 import unittest
+import typing
+from uuid import UUID
 
 # only run this test if the string 'options string: py:type_hints' esxists in the file 
 def has_type_hints_option():
     with open(ThriftTest.__file__) as f:
         return 'options string: py:type_hints' in f.read()
 
+if has_type_hints_option():
+    from TypeHintsTest.TypeHintsTest import Client as TypeHintsClient
+    from TypeHintsTest.ttypes import Container, Inner, Payload, Status
+
 @unittest.skipUnless(has_type_hints_option(), "type hints not enabled")
 class TypeAnnotationsTest(unittest.TestCase):
 
     def test_void(self):
-        self.assertEqual(Client.testVoid.__annotations__, {'return': None})
+        self.assertEqual(typing.get_type_hints(Client.testVoid), {'return': None})
 
     def test_string(self):
-        self.assertEqual(Client.testString.__annotations__, {'return': str, 'thing': str})
+        self.assertEqual(typing.get_type_hints(Client.testString), {'return': str, 'thing': str})
 
     def test_byte(self):
-        self.assertEqual(Client.testByte.__annotations__, {'return': int, 'thing': int})
+        self.assertEqual(typing.get_type_hints(Client.testByte), {'return': int, 'thing': int})
 
     def test_i32(self):
-        self.assertEqual(Client.testI32.__annotations__, {'return': int, 'thing': int})
+        self.assertEqual(typing.get_type_hints(Client.testI32), {'return': int, 'thing': int})
 
     def test_i64(self):
-        self.assertEqual(Client.testI64.__annotations__, {'return': int, 'thing': int})
+        self.assertEqual(typing.get_type_hints(Client.testI64), {'return': int, 'thing': int})
 
     def test_double(self):
-        self.assertEqual(Client.testDouble.__annotations__, {'return': float, 'thing': float})
+        self.assertEqual(typing.get_type_hints(Client.testDouble), {'return': float, 'thing': float})
 
     def test_binary(self):
-        self.assertEqual(Client.testBinary.__annotations__, {'return': bytes, 'thing': bytes})
+        self.assertEqual(typing.get_type_hints(Client.testBinary), {'return': bytes, 'thing': bytes})
 
     def test_struct(self):
-        self.assertEqual(Client.testStruct.__annotations__, {'return': Xtruct, 'thing': Xtruct})
+        self.assertEqual(typing.get_type_hints(Client.testStruct), {'return': Xtruct, 'thing': Xtruct})
 
     def test_map(self):
-        self.assertEqual(Client.testMap.__annotations__, {'return': dict[int, int], 'thing': dict[int, int]})
+        self.assertEqual(typing.get_type_hints(Client.testMap), {'return': dict[int, int], 'thing': dict[int, int]})
     
     def test_list(self):
-        self.assertEqual(Client.testList.__annotations__, {'return': list[int], 'thing': list[int]})
+        self.assertEqual(typing.get_type_hints(Client.testList), {'return': list[int], 'thing': list[int]})
 
     def test_set(self):
-        self.assertEqual(Client.testSet.__annotations__, {'return': set[int], 'thing': set[int]})
+        self.assertEqual(typing.get_type_hints(Client.testSet), {'return': set[int], 'thing': set[int]})
+
+    def test_complex_service(self):
+        self.assertEqual(
+            typing.get_type_hints(TypeHintsClient.ping),
+            {
+                'return': Container,
+                'data': dict[str, list[Inner]],
+                'payload': Payload | None,
+            },
+        )
+        self.assertEqual(
+            typing.get_type_hints(TypeHintsClient.batch),
+            {
+                'return': list[Container],
+                'items': list[Container],
+            },
+        )
+
+    def test_complex_struct_init(self):
+        hints = typing.get_type_hints(Container.__init__)
+        self.assertEqual(hints['inner_map'], dict[str, list[Inner]] | None)
+        self.assertEqual(hints['uuid_sets'], list[set[UUID]] | None)
+        self.assertEqual(hints['payload'], Payload | None)
+        self.assertEqual(hints['nested_numbers'], list[dict[str, list[int]]] | None)
+        self.assertEqual(hints['status'], Status | None)

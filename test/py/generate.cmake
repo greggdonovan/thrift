@@ -38,3 +38,5 @@ generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:dynamic,slots gen-py-dynamicslots)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:enum gen-py-enum)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:type_hints,enum gen-py-type_hints)
+
+generate(${MY_PROJECT_DIR}/test/v0.16/TypeHintsTest.thrift py:type_hints,enum gen-py-type_hints)

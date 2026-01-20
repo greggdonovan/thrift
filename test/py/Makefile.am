@@ -52,7 +52,8 @@ thrift_gen =                                    \
         gen-py-type_hints/ThriftTest/__init__.py \
         gen-py-type_hints/DebugProtoTest/__init__.py \
         gen-py-type_hints/DoubleConstantsTest/__init__.py \
-        gen-py-type_hints/Recursive/__init__.py
+        gen-py-type_hints/Recursive/__init__.py \
+        gen-py-type_hints/TypeHintsTest/__init__.py
 
 distdir:
 	$(MAKE) $(AM_MAKEFLAGS) distdir-am

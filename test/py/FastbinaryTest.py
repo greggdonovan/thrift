@@ -47,6 +47,13 @@ class TDevNullTransport(TTransport.TTransportBase):
     def isOpen(self):
         return True
 
+    def write(self, buf):
+        # Discard output for benchmarking.
+        pass
+
+    def flush(self):
+        pass
+
 
 ooe1 = OneOfEach()
 ooe1.im_true = True
