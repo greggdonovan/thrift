@@ -25,21 +25,28 @@ if [[ -z "$repo" ]]; then
 fi
 
 # Find the latest workflow run for the branch and capture its head SHA.
-latest=$(gh api -H "Accept: application/vnd.github+json" \
-  "/repos/${repo}/actions/runs?branch=${branch}&per_page=1" \
-  --jq '.workflow_runs[0] | [.id,.head_sha,.html_url] | @tsv')
+head_sha=""
+run_url=""
+while [[ -z "$head_sha" ]]; do
+  latest=$(gh api -H "Accept: application/vnd.github+json" \
+    "/repos/${repo}/actions/runs?branch=${branch}&per_page=1" \
+    --jq '.workflow_runs[0] | [.id,.head_sha,.html_url] | @tsv' || true)
 
-if [[ -z "$latest" ]]; then
-  echo "No workflow runs found for branch ${branch}." >&2
-  exit 1
-fi
+  if [[ -z "$latest" ]]; then
+    echo "No workflow runs found for branch ${branch}; retrying in ${interval}s..." >&2
+    sleep "$interval"
+    continue
+  fi
 
-IFS=$'\t' read -r latest_id head_sha run_url <<<"$latest"
+  IFS=$'\t' read -r latest_id head_sha run_url <<<"$latest"
 
-if [[ -z "$head_sha" || "$head_sha" == "null" ]]; then
-  echo "Unable to determine head SHA for branch ${branch}." >&2
-  exit 1
-fi
+  if [[ -z "$head_sha" || "$head_sha" == "null" ]]; then
+    echo "Latest run missing head SHA; retrying in ${interval}s..." >&2
+    head_sha=""
+    sleep "$interval"
+    continue
+  fi
+done
 
 echo "Monitoring CI for ${repo}@${branch} (sha=${head_sha})"
 echo "Latest run: ${run_url}"
