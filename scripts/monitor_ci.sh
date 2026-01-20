@@ -40,6 +40,13 @@ while [[ -z "$head_sha" ]]; do
 
   IFS=$'\t' read -r latest_id head_sha run_url <<<"$latest"
 
+  if [[ -z "$latest_id" || "$latest_id" == "null" ]]; then
+    echo "No workflow runs found for branch ${branch}; retrying in ${interval}s..." >&2
+    head_sha=""
+    sleep "$interval"
+    continue
+  fi
+
   if [[ -z "$head_sha" || "$head_sha" == "null" ]]; then
     echo "Latest run missing head SHA; retrying in ${interval}s..." >&2
     head_sha=""
