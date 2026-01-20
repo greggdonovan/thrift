@@ -1,1 +1,2 @@
-include src/ext/*
+include src/thrift/ext/*
+include src/thrift/py.typed

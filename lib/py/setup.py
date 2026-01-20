@@ -32,7 +32,7 @@ if 'vagrant' in str(os.environ):
     except AttributeError:
         pass
 
-include_dirs = ['src']
+include_dirs = ['src/thrift']
 if sys.platform == 'win32':
     include_dirs.append('compat/win32')
     ext_errors = (CompileError, ExecError, PlatformError, IOError)
@@ -79,10 +79,10 @@ def run_setup(with_binary):
                 Extension('thrift.protocol.fastbinary',
                           extra_compile_args=['-std=c++11'],
                           sources=[
-                              'src/ext/module.cpp',
-                              'src/ext/types.cpp',
-                              'src/ext/binary.cpp',
-                              'src/ext/compact.cpp',
+                              'src/thrift/ext/module.cpp',
+                              'src/thrift/ext/types.cpp',
+                              'src/thrift/ext/binary.cpp',
+                              'src/thrift/ext/compact.cpp',
                           ],
                           include_dirs=include_dirs,
                           )
@@ -115,7 +115,8 @@ def run_setup(with_binary):
               'thrift.transport',
               'thrift.server',
           ],
-          package_dir={'thrift': 'src'},
+          package_data={'thrift': ['py.typed']},
+          package_dir={'': 'src'},
           python_requires='>=3.10',
           classifiers=[
               'Development Status :: 5 - Production/Stable',
