@@ -32,7 +32,7 @@ while [[ -z "$head_sha" ]]; do
     "/repos/${repo}/actions/runs?branch=${branch}&per_page=1" \
     --jq '.workflow_runs[0] | [.id,.head_sha,.html_url] | @tsv' || true)
 
-  if [[ -z "$latest" ]]; then
+  if [[ -z "$latest" || "$latest" == "null" ]]; then
     echo "No workflow runs found for branch ${branch}; retrying in ${interval}s..." >&2
     sleep "$interval"
     continue
