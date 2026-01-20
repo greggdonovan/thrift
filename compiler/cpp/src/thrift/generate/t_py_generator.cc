@@ -63,7 +63,7 @@ public:
     gen_twisted_ = false;
     gen_dynamic_ = false;
     gen_enum_ = false;
-    gen_type_hints_ = false;
+    gen_type_hints_ = true;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -124,10 +124,9 @@ public:
       } else if( iter->first.compare("coding") == 0) {
         coding_ = iter->second;
       } else if (iter->first.compare("type_hints") == 0) {
-        if (!gen_enum_) {
-          throw "the type_hints py option requires the enum py option";
-        }
         gen_type_hints_ = true;
+      } else if (iter->first.compare("no_type_hints") == 0) {
+        gen_type_hints_ = false;
       } else {
         throw "unknown option py:" + iter->first;
       }
@@ -262,8 +261,9 @@ public:
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
   std::string type_to_py_type(t_type* type);
-  std::string member_hint(t_type* type, t_field::e_req req);
-  std::string arg_hint(t_type* type);
+  std::string field_type_hint(t_field* tfield, bool allow_default_none);
+  std::string member_hint(t_field* tfield);
+  std::string arg_hint(t_field* tfield);
   std::string func_hint(t_type* type);
 
   static bool is_valid_namespace(const std::string& sub_namespace) {
@@ -944,7 +944,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
         }
       } else {
         indent(out) << "self." << (*m_iter)->get_name()
-                    << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << " = "
+                    << member_hint(*m_iter) << " = "
                     << (*m_iter)->get_name() << '\n';
       }
     }
@@ -2784,8 +2784,7 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
  */
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
-  t_field::e_req req = tfield->get_req();
-  result << tfield->get_name() << member_hint(tfield->get_type(), req);
+  result << tfield->get_name() << member_hint(tfield);
 
   result << " = ";
   if (tfield->get_value() != nullptr) {
@@ -2860,7 +2859,7 @@ string t_py_generator::argument_list(t_struct* tstruct, vector<string>* pre, vec
       result += ", ";
     }
     result += (*f_iter)->get_name();
-    result += arg_hint((*f_iter)->get_type());
+    result += arg_hint(*f_iter);
   }
   if (post) {
     for (s_iter = post->begin(); s_iter != post->end(); ++s_iter) {
@@ -2890,24 +2889,29 @@ string t_py_generator::type_name(t_type* ttype) {
   return ttype->get_name();
 }
 
-string t_py_generator::arg_hint(t_type* type) {
-  if (gen_type_hints_) {
-    return ": " + type_to_py_type(type);
+string t_py_generator::field_type_hint(t_field* tfield, bool allow_default_none) {
+  if (!gen_type_hints_) {
+    return "";
   }
 
-  return "";
+  bool allow_none = tfield->get_req() != t_field::T_REQUIRED;
+  if (allow_default_none && tfield->get_value() == nullptr) {
+    allow_none = true;
+  }
+
+  std::string type_name = type_to_py_type(tfield->get_type());
+  if (allow_none) {
+    return ": " + type_name + " | None";
+  }
+  return ": " + type_name;
 }
 
-string t_py_generator::member_hint(t_type* type, t_field::e_req req) {
-  if (gen_type_hints_) {
-    if (req != t_field::T_REQUIRED) {
-      return ": typing.Optional[" + type_to_py_type(type) + "]";
-    } else {
-      return ": " + type_to_py_type(type);
-    }
-  }
+string t_py_generator::member_hint(t_field* tfield) {
+  return field_type_hint(tfield, true);
+}
 
-  return "";
+string t_py_generator::arg_hint(t_field* tfield) {
+  return field_type_hint(tfield, false);
 }
 
 string t_py_generator::func_hint(t_type* type) {
@@ -3064,5 +3068,6 @@ THRIFT_REGISTER_GENERATOR(
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
     "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.10 and higher.\n"
-    "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
+    "    type_hints:      Generate type hints (enabled by default).\n"
+    "    no_type_hints:   Disable type hint generation.\n"
 )
