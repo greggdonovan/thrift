@@ -267,7 +267,6 @@ class TProtocolBase(object):
         ('readContainerSet', 'writeContainerSet', True),  # 14 TType.SET
         ('readContainerList', 'writeContainerList', True),  # 15 TType.LIST
         ('readUuid', 'writeUuid', False),  # 16 TType.UUID
-        (None, None, False)  # 17 TType.UTF16 # TODO: handle utf16 types?
     )
 
     def _ttype_handlers(self, ttype: int, spec: Any) -> tuple[str | None, str | None, bool]:

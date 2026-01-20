@@ -478,7 +478,6 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
 
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for encodeValue: %d", type);
@@ -566,7 +565,6 @@ bool ProtocolBase<Impl>::skip(TType type) {
 
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for skip: %d", type);
@@ -783,7 +781,6 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
 
   case T_STOP:
   case T_VOID:
-  case T_UTF16:
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for decodeValue: %d", type);

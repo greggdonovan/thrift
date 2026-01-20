@@ -44,8 +44,6 @@ class TType(object):
     SET: Final[int] = 14
     LIST: Final[int] = 15
     UUID: Final[int] = 16
-    UTF8: Final[int] = 16
-    UTF16: Final[int] = 17
 
     _VALUES_TO_NAMES: ClassVar[tuple[str | None, ...]] = (
         'STOP',
@@ -65,7 +63,6 @@ class TType(object):
         'SET',
         'LIST',
         'UUID',
-        'UTF16',
     )
 
 
