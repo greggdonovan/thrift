@@ -22,6 +22,7 @@ import sys
 import threading
 import unittest
 import time
+import socket
 
 gen_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py")
 sys.path.append(gen_path)
@@ -60,6 +61,7 @@ class Client:
 
     def start_client(self):
         transport = TSocket.TSocket("127.0.0.1", 30030)
+        transport.setTimeout(2000)
         trans = TTransport.TFramedTransport(transport)
         protocol = TBinaryProtocol.TBinaryProtocol(trans)
         client = TestServer.Client(protocol)
@@ -79,6 +81,18 @@ class Client:
 
 
 class TestNonblockingServer(unittest.TestCase):
+    def _wait_for_server(self, timeout=2.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            sock = socket.socket()
+            try:
+                if sock.connect_ex(("127.0.0.1", 30030)) == 0:
+                    return True
+            finally:
+                sock.close()
+            time.sleep(0.05)
+        return False
+
     def test_close_closes_socketpair(self):
         serve = Server()
         serve.close_server()
@@ -89,20 +103,23 @@ class TestNonblockingServer(unittest.TestCase):
         serve = Server()
         client = Client()
 
-        serve_thread = threading.Thread(target=serve.start_server)
-        client_thread = threading.Thread(target=client.start_client)
+        serve_thread = threading.Thread(target=serve.start_server, daemon=True)
+        client_thread = threading.Thread(target=client.start_client, daemon=True)
         serve_thread.start()
-        time.sleep(10)
+        self.assertTrue(self._wait_for_server(), "server did not start in time")
         client_thread.start()
-        client_thread.join(0.5)
+        client_thread.join(2.0)
         try:
             msg = client.get_message()
             self.assertEqual("hello thrift", msg)
+            self.assertFalse(client_thread.is_alive(), "client thread did not exit")
         except AssertionError as e:
             raise e
             print("assert failure")
         finally:
             serve.close_server()
+            serve_thread.join(2.0)
+            self.assertFalse(serve_thread.is_alive(), "server thread did not exit")
 
 
 if __name__ == '__main__':

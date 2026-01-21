@@ -30,6 +30,7 @@ sys.path.insert(0, local_libpath())
 from thrift.protocol import TProtocol, TProtocolDecorator
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+DEFAULT_TIMEOUT_MS = int(os.environ.get('THRIFT_TEST_CLIENT_TIMEOUT_MS', '20000'))
 
 
 class AbstractTest(unittest.TestCase):
@@ -46,12 +47,14 @@ class AbstractTest(unittest.TestCase):
                 self.transport = THttpClient.THttpClient(uri, cafile=__cafile, cert_file=__certfile, key_file=__keyfile)
             else:
                 self.transport = THttpClient.THttpClient(uri)
+            self.transport.setTimeout(DEFAULT_TIMEOUT_MS)
         else:
             if options.ssl:
                 from thrift.transport import TSSLSocket
                 socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
             else:
                 socket = TSocket.TSocket(options.host, options.port, options.domain_socket)
+            socket.setTimeout(DEFAULT_TIMEOUT_MS)
             # frame or buffer depending upon args
             self.transport = TTransport.TBufferedTransport(socket)
             if options.trans == 'framed':
