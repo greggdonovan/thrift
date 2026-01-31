@@ -94,10 +94,23 @@ def find_thrift_compiler() -> str:
     )
 
 
+def find_thrift_lib_build_dir() -> str | None:
+    """Find the built thrift library directory."""
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    root_dir = os.path.dirname(os.path.dirname(os.path.dirname(test_dir)))
+    for libpath in glob.glob(os.path.join(root_dir, "lib", "py", "build", "lib.*")):
+        for pattern in ("-%d.%d", "-%d%d"):
+            postfix = pattern % (sys.version_info[0], sys.version_info[1])
+            if libpath.endswith(postfix):
+                return libpath
+    return None
+
+
 class TypeCheckTest(unittest.TestCase):
     """Tests that validate type hints in generated Python code."""
 
     gen_dir: str
+    thrift_lib_build_dir: str | None
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -107,6 +120,7 @@ class TypeCheckTest(unittest.TestCase):
         test_dir = os.path.dirname(__file__)
         thrift_file = os.path.join(test_dir, "type_check_test.thrift")
         cls.gen_dir = os.path.join(test_dir, "gen-py-typecheck")
+        cls.thrift_lib_build_dir = find_thrift_lib_build_dir()
 
         # Find thrift compiler
         thrift_bin = find_thrift_compiler()
@@ -141,8 +155,14 @@ class TypeCheckTest(unittest.TestCase):
 
     def test_ty_type_check_passes(self) -> None:
         """Verify generated code passes ty without errors."""
+        # Build ty command with extra search path for thrift library
+        cmd = ["ty", "check"]
+        if self.thrift_lib_build_dir:
+            cmd.extend(["--extra-search-path", self.thrift_lib_build_dir])
+        cmd.append(self.gen_dir)
+
         result = subprocess.run(
-            ["ty", "check", self.gen_dir],
+            cmd,
             capture_output=True,
             text=True,
         )
