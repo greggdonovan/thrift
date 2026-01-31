@@ -24,6 +24,7 @@ py-build:
 py-test: py-build
 	$(PYTHON) test/thrift_json.py
 	$(PYTHON) test/thrift_transport.py
+	$(PYTHON) test/test_sslcontext_hostname.py
 	$(PYTHON) test/test_sslsocket.py
 	$(PYTHON) test/test_socket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py
@@ -31,8 +32,12 @@ py-test: py-build
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
 	$(PYTHON) test/thrift_TSerializer.py
+	$(PYTHON) test/test_type_check.py
 py-security:
-	@command -v uv >/dev/null || { echo "uv is required for py-security"; exit 1; }
+	@command -v uv >/dev/null 2>&1 || { \
+		echo "Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	}
 	uv tool run bandit -r src --severity-level medium --confidence-level medium
 	uv tool run semgrep scan --config p/security-audit --config p/python \
 		--severity WARNING --severity ERROR --metrics off src test

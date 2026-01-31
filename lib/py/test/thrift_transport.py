@@ -77,16 +77,12 @@ class TestMemoryBuffer(unittest.TestCase):
 
 class TestHttpTls(unittest.TestCase):
     def test_http_client_minimum_tls(self):
-        if not hasattr(ssl, 'TLSVersion'):
-            self.skipTest('TLSVersion is not available')
         client = THttpClient.THttpClient('https://localhost:8443/')
         self.assertGreaterEqual(client.context.minimum_version, ssl.TLSVersion.TLSv1_2)
         if client.context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
             self.assertGreaterEqual(client.context.maximum_version, ssl.TLSVersion.TLSv1_2)
 
     def test_http_client_rejects_legacy_context(self):
-        if not hasattr(ssl, 'TLSVersion'):
-            self.skipTest('TLSVersion is not available')
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=DeprecationWarning)
@@ -95,8 +91,6 @@ class TestHttpTls(unittest.TestCase):
             THttpClient.THttpClient('https://localhost:8443/', ssl_context=context)
 
     def test_http_server_minimum_tls(self):
-        if not hasattr(ssl, 'TLSVersion'):
-            self.skipTest('TLSVersion is not available')
 
         class DummyProcessor(object):
             def on_message_begin(self, _on_begin):

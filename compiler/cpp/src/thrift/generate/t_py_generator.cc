@@ -54,16 +54,12 @@ public:
 
     std::map<std::string, std::string>::const_iterator iter;
 
-    gen_newstyle_ = true;
-    gen_utf8strings_ = true;
     gen_dynbase_ = false;
     gen_slots_ = false;
     gen_tornado_ = false;
     gen_zope_interface_ = false;
     gen_twisted_ = false;
     gen_dynamic_ = false;
-    gen_enum_ = false;
-    gen_type_hints_ = false;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -72,21 +68,12 @@ public:
     import_dynbase_ = "";
     package_prefix_ = "";
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("enum") == 0) {
-        gen_enum_ = true;
-      } else if( iter->first.compare("new_style") == 0) {
-        pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
-      } else if( iter->first.compare("utf8strings") == 0) {
-        pwarning(0, "utf8strings is enabled by default, so the option will be removed in the near future.\n");
-      } else if( iter->first.compare("no_utf8strings") == 0) {
-        gen_utf8strings_ = false;
-      } else if( iter->first.compare("slots") == 0) {
+      if( iter->first.compare("slots") == 0) {
         gen_slots_ = true;
       } else if( iter->first.compare("package_prefix") == 0) {
         package_prefix_ = iter->second;
       } else if( iter->first.compare("dynamic") == 0) {
         gen_dynamic_ = true;
-        gen_newstyle_ = false; // dynamic is newstyle
         if( gen_dynbaseclass_.empty()) {
           gen_dynbaseclass_ = "TBase";
         }
@@ -123,11 +110,6 @@ public:
         gen_tornado_ = true;
       } else if( iter->first.compare("coding") == 0) {
         coding_ = iter->second;
-      } else if (iter->first.compare("type_hints") == 0) {
-        if (!gen_enum_) {
-          throw "the type_hints py option requires the enum py option";
-        }
-        gen_type_hints_ = true;
       } else {
         throw "unknown option py:" + iter->first;
       }
@@ -301,12 +283,6 @@ public:
 private:
 
   /**
-   * True if we should generate new-style classes.
-   */
-  bool gen_newstyle_;
-  bool gen_enum_;
-
-  /**
   * True if we should generate dynamic style classes.
   */
   bool gen_dynamic_;
@@ -320,11 +296,6 @@ private:
   std::string import_dynbase_;
 
   bool gen_slots_;
-
-  /**
-  * True if we should generate classes type hints and type checks in write methods.
-  */
-  bool gen_type_hints_;
 
   std::string copy_options_;
 
@@ -342,11 +313,6 @@ private:
    * True if we should generate code for use with Tornado
    */
   bool gen_tornado_;
-
-  /**
-   * True if strings should be encoded using utf-8.
-   */
-  bool gen_utf8strings_;
 
   /**
    * specify generated file encoding
@@ -427,6 +393,12 @@ void t_py_generator::init_generator() {
   f_init << "]" << '\n';
   f_init.close();
 
+  // Generate py.typed marker for PEP 561 (typed package)
+  string f_py_typed_name = package_dir_ + "/py.typed";
+  ofstream_with_content_based_conditional_update f_py_typed;
+  f_py_typed.open(f_py_typed_name.c_str());
+  f_py_typed.close();
+
   // Print header
   f_types_ << py_autogen_comment() << '\n'
            << py_imports() << '\n'
@@ -434,11 +406,7 @@ void t_py_generator::init_generator() {
            << "from thrift.transport import TTransport" << '\n'
            << import_dynbase_;
 
-  if (gen_type_hints_) {
-    f_types_ << "all_structs: list[typing.Any] = []" << '\n';
-  } else {
-    f_types_ << "all_structs = []" << '\n';
-  }
+  f_types_ << "all_structs: list[typing.Any] = []" << '\n';
 
   f_consts_ <<
     py_autogen_comment() << '\n' <<
@@ -476,11 +444,10 @@ string t_py_generator::py_autogen_comment() {
  */
 string t_py_generator::py_imports() {
   ostringstream ss;
-  if (gen_type_hints_) {
-    ss << "from __future__ import annotations" << '\n' << "import typing" << '\n';
-  }
-
-  ss << "from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, "
+  ss << "from __future__ import annotations" << '\n'
+     << "import typing" << '\n'
+     << '\n'
+     << "from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, "
         "TApplicationException"
      << '\n'
      << "from thrift.protocol.TProtocol import TProtocolException"
@@ -488,13 +455,8 @@ string t_py_generator::py_imports() {
      << "from thrift.TRecursive import fix_spec"
      << '\n'
      << "from uuid import UUID"
-     << '\n';
-  if (gen_enum_) {
-    ss << "from enum import IntEnum" << '\n';
-  }
-  if (gen_utf8strings_) {
-    ss << '\n' << "import sys";
-  }
+     << '\n'
+     << "from enum import IntEnum" << '\n';
   return ss.str();
 }
 
@@ -528,66 +490,39 @@ void t_py_generator::generate_typedef(t_typedef* ttypedef) {
  * @param tenum The enumeration
  */
 void t_py_generator::generate_enum(t_enum* tenum) {
-  std::ostringstream to_string_mapping, from_string_mapping;
-  std::string base_class;
-
-  if (gen_enum_) {
-    base_class = "IntEnum";
-  } else if (gen_newstyle_) {
-    base_class = "object";
-  } else if (gen_dynamic_) {
-    base_class = gen_dynbaseclass_;
-  }
-
+  // Python 3.10+: All enums use IntEnum
   f_types_ << '\n'
            << '\n'
-           << "class " << tenum->get_name()
-           << (base_class.empty() ? "" : "(" + base_class + ")")
-           << ":"
+           << "class " << tenum->get_name() << "(IntEnum):"
            << '\n';
   indent_up();
   generate_python_docstring(f_types_, tenum);
-
-  to_string_mapping << indent() << "_VALUES_TO_NAMES = {" << '\n';
-  from_string_mapping << indent() << "_NAMES_TO_VALUES = {" << '\n';
 
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator c_iter;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     indent(f_types_) << (*c_iter)->get_name() << " = " << value << '\n';
-
-    // Dictionaries to/from string names of enums
-    to_string_mapping << indent() << indent() << value << ": \""
-                      << escape_string((*c_iter)->get_name()) << "\"," << '\n';
-    from_string_mapping << indent() << indent() << '"' << escape_string((*c_iter)->get_name())
-                        << "\": " << value << ',' << '\n';
   }
 
-  if (gen_enum_) {
-    f_types_ << '\n';
-    indent(f_types_) << "@classmethod" << '\n';
-    indent(f_types_) << "def _missing_(cls, value):" << '\n';
-    indent_up();
-    indent(f_types_) << "if not isinstance(value, int):" << '\n';
-    indent_up();
-    indent(f_types_) << "return None" << '\n';
-    indent_down();
-    indent(f_types_) << "unknown = int.__new__(cls, value)" << '\n';
-    indent(f_types_) << "unknown._name_ = f\"UNKNOWN_{value}\"" << '\n';
-    indent(f_types_) << "unknown._value_ = value" << '\n';
-    indent(f_types_) << "cls._value2member_map_.setdefault(value, unknown)" << '\n';
-    indent(f_types_) << "return unknown" << '\n';
-    indent_down();
-  }
-  to_string_mapping << indent() << "}" << '\n';
-  from_string_mapping << indent() << "}" << '\n';
+  // Handle unknown enum values gracefully
+  f_types_ << '\n';
+  indent(f_types_) << "@classmethod" << '\n';
+  indent(f_types_) << "def _missing_(cls, value):" << '\n';
+  indent_up();
+  indent(f_types_) << "if not isinstance(value, int):" << '\n';
+  indent_up();
+  indent(f_types_) << "return None" << '\n';
+  indent_down();
+  indent(f_types_) << "unknown = int.__new__(cls, value)" << '\n';
+  indent(f_types_) << "unknown._name_ = f\"UNKNOWN_{value}\"" << '\n';
+  indent(f_types_) << "unknown._value_ = value" << '\n';
+  indent(f_types_) << "cls._value2member_map_.setdefault(value, unknown)" << '\n';
+  indent(f_types_) << "return unknown" << '\n';
+  indent_down();
 
   indent_down();
   f_types_ << '\n';
-  if (!gen_enum_) {
-    f_types_ << to_string_mapping.str() << '\n' << from_string_mapping.str();
-  }
 }
 
 /**
@@ -645,12 +580,8 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
   } else if (type->is_enum()) {
     out << indent();
     int64_t int_val = value->get_integer();
-    if (gen_enum_) {
-      t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
-      out << type_name(type) << "." << enum_val->get_name();
-    } else {
-      out << int_val;
-    }
+    t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
+    out << type_name(type) << "." << enum_val->get_name();
   } else if (type->is_struct() || type->is_xception()) {
     out << type_name(type) << "(**{" << '\n';
     indent_up();
@@ -843,14 +774,12 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     } else  {
       out << "(" << gen_dynbaseclass_ << ")";
     }
-  } else if (gen_newstyle_) {
-    out << "(object)";
   }
+  // Note: For Python 3.10+, we don't need explicit (object) base class
   out << ":" << '\n';
   indent_up();
   generate_python_docstring(out, tstruct);
-  std::string thrift_spec_type = gen_type_hints_ ? ": typing.Any" : "";
-  out << indent() << "thrift_spec" << thrift_spec_type << " = None" << '\n';
+  out << indent() << "thrift_spec: typing.Any = None" << '\n';
 
   out << '\n';
 
@@ -913,7 +842,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       }
 
       if (is_immutable(tstruct)) {
-        if (gen_enum_ && type->is_enum()) {
+        if (type->is_enum()) {
           string enum_value = tmp("_enum_value");
           indent(out) << enum_value << " = " << (*m_iter)->get_name() << '\n';
           indent(out) << "if " << enum_value << " is not None and not hasattr(" << enum_value
@@ -933,14 +862,12 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
           indent_down();
           indent_down();
           indent_down();
-          indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
+          indent(out) << "super().__setattr__('"
                       << (*m_iter)->get_name() << "', " << enum_value << ")" << '\n';
-        } else if (gen_newstyle_ || gen_dynamic_) {
-          indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
-                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << '\n';
         } else {
-          indent(out) << "self.__dict__['" << (*m_iter)->get_name()
-                      << "'] = " << (*m_iter)->get_name() << '\n';
+          // For immutable structs, use super().__setattr__ to bypass __setattr__ override
+          indent(out) << "super().__setattr__('"
+                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << '\n';
         }
       } else {
         indent(out) << "self." << (*m_iter)->get_name()
@@ -1001,7 +928,8 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     }
 
     out << "))" << '\n';
-  } else if (gen_enum_) {
+  } else {
+    // For mutable structs with enum fields, generate __setattr__ to handle enum conversion
     bool has_enum = false;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* type = (*m_iter)->get_type();
@@ -1402,9 +1330,8 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
   } else {
     if (gen_zope_interface_) {
       extends_if = "(Interface)";
-    } else if (gen_newstyle_ || gen_dynamic_ || gen_tornado_) {
-      extends_if = "(object)";
     }
+    // Note: For Python 3.10+, we don't need explicit (object) base class
   }
 
   f_service_ << '\n' << '\n' << "class Iface" << extends_if << ":" << '\n';
@@ -1448,11 +1375,8 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     } else {
       extends_client = extends + ".Client, ";
     }
-  } else {
-    if (gen_zope_interface_ && (gen_newstyle_ || gen_dynamic_)) {
-      extends_client = "(object)";
-    }
   }
+  // Note: For Python 3.10+, we don't need explicit (object) base class
 
   f_service_ << '\n' << '\n';
 
@@ -2424,11 +2348,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     }
     out << '\n';
   } else if (type->is_enum()) {
-    if (gen_enum_) {
-      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
-    } else {
-      indent(out) << name << " = iprot.readI32()";
-    }
+    indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     out << '\n';
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
@@ -2615,11 +2535,7 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      if (gen_enum_){
-        out << "writeI32(" << name << ".value)";
-      } else {
-        out << "writeI32(" << name << ")";
-      }
+      out << "writeI32(" << name << ".value)";
     }
     out << '\n';
   } else {
@@ -2891,31 +2807,20 @@ string t_py_generator::type_name(t_type* ttype) {
 }
 
 string t_py_generator::arg_hint(t_type* type) {
-  if (gen_type_hints_) {
-    return ": " + type_to_py_type(type);
-  }
-
-  return "";
+  return ": " + type_to_py_type(type);
 }
 
 string t_py_generator::member_hint(t_type* type, t_field::e_req req) {
-  if (gen_type_hints_) {
-    if (req != t_field::T_REQUIRED) {
-      return ": typing.Optional[" + type_to_py_type(type) + "]";
-    } else {
-      return ": " + type_to_py_type(type);
-    }
+  if (req != t_field::T_REQUIRED) {
+    // Python 3.10+ union syntax for optional fields
+    return ": " + type_to_py_type(type) + " | None";
+  } else {
+    return ": " + type_to_py_type(type);
   }
-
-  return "";
 }
 
 string t_py_generator::func_hint(t_type* type) {
-  if (gen_type_hints_) {
-    return " -> " + type_to_py_type(type);
-  }
-
-  return "";
+  return " -> " + type_to_py_type(type);
 }
 
 /**
@@ -3013,8 +2918,9 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
   if (ttype->is_binary()) {
     return  "'BINARY'";
-  } else if (gen_utf8strings_ && ttype->is_base_type()
+  } else if (ttype->is_base_type()
              && reinterpret_cast<t_base_type*>(ttype)->is_string()) {
+    // Python 3: strings are always UTF-8
     return "'UTF8'";
   } else if (ttype->is_base_type() || ttype->is_enum()) {
     return  "None";
@@ -3051,7 +2957,6 @@ THRIFT_REGISTER_GENERATOR(
     "    zope.interface:  Generate code for use with zope.interface.\n"
     "    twisted:         Generate Twisted-friendly RPC services.\n"
     "    tornado:         Generate code for use with Tornado.\n"
-    "    no_utf8strings:  Do not Encode/decode strings using utf8 in the generated code. Basically no effect for Python 3.\n"
     "    coding=CODING:   Add file encoding declare in generated file.\n"
     "    slots:           Generate code using slots for instance members.\n"
     "    dynamic:         Generate dynamic code, less code generated but slower.\n"
@@ -3063,6 +2968,4 @@ THRIFT_REGISTER_GENERATOR(
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
-    "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.10 and higher.\n"
-    "    type_hints:      Generate type hints and type checks in write method. Requires the enum option.\n"
 )

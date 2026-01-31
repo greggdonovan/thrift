@@ -41,7 +41,7 @@ class TTransportException(TException):
         self.inner = inner
 
 
-class TTransportBase(object):
+class TTransportBase:
     """Base class for Thrift transport layer."""
 
     def isOpen(self):
@@ -78,7 +78,7 @@ class TTransportBase(object):
 
 
 # This class should be thought of as an interface.
-class CReadableTransport(object):
+class CReadableTransport:
     """base class for transports that are readable from C"""
 
     # TODO(dreiss): Think about changing this interface to allow us to use
@@ -106,7 +106,7 @@ class CReadableTransport(object):
         pass
 
 
-class TServerTransportBase(object):
+class TServerTransportBase:
     """Base class for Thrift server transports."""
 
     def listen(self):
@@ -119,14 +119,14 @@ class TServerTransportBase(object):
         pass
 
 
-class TTransportFactoryBase(object):
+class TTransportFactoryBase:
     """Base class for a Transport Factory"""
 
     def getTransport(self, trans):
         return trans
 
 
-class TBufferedTransportFactory(object):
+class TBufferedTransportFactory:
     """Factory transport that builds buffered transports"""
 
     def getTransport(self, trans):
@@ -251,7 +251,7 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
         raise EOFError()
 
 
-class TFramedTransportFactory(object):
+class TFramedTransportFactory:
     """Factory transport that builds framed transports"""
 
     def getTransport(self, trans):

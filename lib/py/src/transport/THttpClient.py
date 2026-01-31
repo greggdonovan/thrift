@@ -28,33 +28,8 @@ import urllib.parse
 import urllib.request
 import http.client
 
+from .sslcompat import enforce_minimum_tls, validate_minimum_tls
 from .TTransport import TTransportBase
-
-
-def _enforce_minimum_tls(context):
-    if not hasattr(ssl, 'TLSVersion'):
-        return
-    minimum = ssl.TLSVersion.TLSv1_2
-    if hasattr(context, 'minimum_version'):
-        if context.minimum_version < minimum:
-            context.minimum_version = minimum
-    if hasattr(context, 'maximum_version'):
-        if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
-                context.maximum_version < minimum):
-            raise ValueError('TLS maximum_version must be TLS 1.2 or higher.')
-
-
-def _validate_minimum_tls(context):
-    if not hasattr(ssl, 'TLSVersion'):
-        return
-    minimum = ssl.TLSVersion.TLSv1_2
-    if hasattr(context, 'minimum_version'):
-        if context.minimum_version < minimum:
-            raise ValueError('ssl_context.minimum_version must be TLS 1.2 or higher.')
-    if hasattr(context, 'maximum_version'):
-        if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
-                context.maximum_version < minimum):
-            raise ValueError('ssl_context.maximum_version must be TLS 1.2 or higher.')
 
 
 class THttpClient(TTransportBase):
@@ -90,13 +65,13 @@ class THttpClient(TTransportBase):
             elif self.scheme == 'https':
                 self.port = parsed.port or http.client.HTTPS_PORT
                 if ssl_context is not None:
-                    _validate_minimum_tls(ssl_context)
+                    validate_minimum_tls(ssl_context)
                     self.context = ssl_context
                 else:
                     self.context = ssl.create_default_context(cafile=cafile)
                     if cert_file or key_file:
                         self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
-                    _enforce_minimum_tls(self.context)
+                    enforce_minimum_tls(self.context)
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:

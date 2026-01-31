@@ -45,6 +45,8 @@ CLIENT_KEY_NO_IP = os.path.join(ROOT_DIR, 'test', 'keys', 'client.key')
 CLIENT_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.crt')
 CLIENT_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.key')
 CLIENT_CA = os.path.join(ROOT_DIR, 'test', 'keys', 'CA.pem')
+EXPIRED_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'expired.crt')
+EXPIRED_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'expired.key')
 
 TEST_CIPHERS = 'DES-CBC3-SHA:ECDHE-RSA-AES128-GCM-SHA256'
 
@@ -261,6 +263,7 @@ class TSSLSocketTest(unittest.TestCase):
             ca_certs=SERVER_CERT,
             server_hostname='notlocalhost',
         )
+
     def test_set_server_cert(self):
         server = self._server_socket(keyfile=SERVER_KEY, certfile=CLIENT_CERT)
         with self._assert_raises(Exception):
@@ -271,16 +274,20 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
 
     def test_client_cert(self):
+        # Client presents wrong cert (not trusted by server's CA)
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
             certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
         self._assert_connection_failure(
             server, cert_reqs=ssl.CERT_NONE, certfile=SERVER_CERT, keyfile=SERVER_KEY)
 
+        # Client presents valid cert signed by trusted CA
+        # Note: We no longer validate client cert SAN/CN against client IP address.
+        # mTLS just verifies the cert is signed by a trusted CA.
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
             certfile=SERVER_CERT, ca_certs=CLIENT_CERT_NO_IP)
-        self._assert_connection_failure(
+        self._assert_connection_success(
             server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT_NO_IP, keyfile=CLIENT_KEY_NO_IP)
 
         server = self._server_socket(
@@ -296,7 +303,7 @@ class TSSLSocketTest(unittest.TestCase):
             server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT, keyfile=CLIENT_KEY)
 
     def test_ciphers(self):
-        tls12 = ssl.PROTOCOL_TLSv1_2
+        tls12 = ssl.TLSVersion.TLSv1_2
         server = self._server_socket(
             keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
         self._assert_connection_success(
@@ -309,86 +316,45 @@ class TSSLSocketTest(unittest.TestCase):
             keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
         self._assert_connection_failure(server, ca_certs=SERVER_CERT, ciphers='NULL', ssl_version=tls12)
 
-    def test_ssl2_and_ssl3_disabled(self):
-        if not hasattr(ssl, 'PROTOCOL_SSLv3'):
-            print('PROTOCOL_SSLv3 is not available')
-        else:
-            with self._assert_raises(ValueError):
-                self._server_socket(
-                    keyfile=SERVER_KEY,
-                    certfile=SERVER_CERT,
-                    ssl_version=ssl.PROTOCOL_SSLv3,
-                )
-            with self._assert_raises(ValueError):
-                TSSLSocket(
-                    'localhost',
-                    0,
-                    cert_reqs=ssl.CERT_NONE,
-                    ssl_version=ssl.PROTOCOL_SSLv3,
-                )
-
-        if not hasattr(ssl, 'PROTOCOL_SSLv2'):
-            print('PROTOCOL_SSLv2 is not available')
-        else:
-            with self._assert_raises(ValueError):
-                self._server_socket(
-                    keyfile=SERVER_KEY,
-                    certfile=SERVER_CERT,
-                    ssl_version=ssl.PROTOCOL_SSLv2,
-                )
-            with self._assert_raises(ValueError):
-                TSSLSocket(
-                    'localhost',
-                    0,
-                    cert_reqs=ssl.CERT_NONE,
-                    ssl_version=ssl.PROTOCOL_SSLv2,
-                )
+    def test_reject_deprecated_protocol_constants(self):
+        """Verify that deprecated PROTOCOL_* constants are rejected."""
+        # Our implementation requires ssl.TLSVersion enum values, not the
+        # deprecated PROTOCOL_* constants. This test verifies the error message.
+        with self._assert_raises(ValueError):
+            self._server_socket(
+                keyfile=SERVER_KEY,
+                certfile=SERVER_CERT,
+                ssl_version=ssl.PROTOCOL_TLS,
+            )
+        with self._assert_raises(ValueError):
+            TSSLSocket(
+                'localhost',
+                0,
+                cert_reqs=ssl.CERT_NONE,
+                ssl_version=ssl.PROTOCOL_TLS_CLIENT,
+            )
 
     def test_reject_legacy_tls_versions(self):
-        legacy_protocols = []
-        for name in ('PROTOCOL_TLSv1', 'PROTOCOL_TLSv1_1'):
-            protocol = getattr(ssl, name, None)
-            if protocol is not None:
-                legacy_protocols.append(protocol)
-
-        for protocol in legacy_protocols:
+        """Verify that TLS 1.0 and 1.1 are rejected."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            legacy_versions = (ssl.TLSVersion.TLSv1, ssl.TLSVersion.TLSv1_1)
+        for version in legacy_versions:
             with self._assert_raises(ValueError):
                 self._server_socket(
                     keyfile=SERVER_KEY,
                     certfile=SERVER_CERT,
-                    ssl_version=protocol,
+                    ssl_version=version,
                 )
             with self._assert_raises(ValueError):
                 TSSLSocket(
                     'localhost',
                     0,
                     cert_reqs=ssl.CERT_NONE,
-                    ssl_version=protocol,
+                    ssl_version=version,
                 )
 
-        if hasattr(ssl, 'TLSVersion'):
-            for name in ('TLSv1', 'TLSv1_1'):
-                version = getattr(ssl.TLSVersion, name, None)
-                if version is None:
-                    continue
-                with self._assert_raises(ValueError):
-                    self._server_socket(
-                        keyfile=SERVER_KEY,
-                        certfile=SERVER_CERT,
-                        ssl_version=version,
-                    )
-                with self._assert_raises(ValueError):
-                    TSSLSocket(
-                        'localhost',
-                        0,
-                        cert_reqs=ssl.CERT_NONE,
-                        ssl_version=version,
-                    )
-
     def test_default_context_minimum_tls(self):
-        if not hasattr(ssl, 'TLSVersion'):
-            self.skipTest('TLSVersion is not available')
-
         client = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_NONE)
         try:
             self.assertGreaterEqual(
@@ -418,16 +384,12 @@ class TSSLSocketTest(unittest.TestCase):
             server.close()
 
     def test_tls12_supported(self):
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
-            print('PROTOCOL_TLSv1_2 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-            self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
+        server = self._server_socket(
+            keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.TLSVersion.TLSv1_2)
+        self._assert_connection_success(
+            server, ca_certs=SERVER_CERT, ssl_version=ssl.TLSVersion.TLSv1_2)
 
     def test_tls12_context_no_deprecation_warning(self):
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
-            print('PROTOCOL_TLSv1_2 is not available')
-            return
         with warnings.catch_warnings():
             warnings.filterwarnings(
                 'error',
@@ -437,26 +399,24 @@ class TSSLSocketTest(unittest.TestCase):
             server = self._server_socket(
                 keyfile=SERVER_KEY,
                 certfile=SERVER_CERT,
-                ssl_version=ssl.PROTOCOL_TLSv1_2,
+                ssl_version=ssl.TLSVersion.TLSv1_2,
             )
             self._assert_connection_success(
                 server,
                 ca_certs=SERVER_CERT,
-                ssl_version=ssl.PROTOCOL_TLSv1_2,
+                ssl_version=ssl.TLSVersion.TLSv1_2,
             )
 
     def test_ssl_context(self):
         server_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        if hasattr(ssl, 'TLSVersion'):
-            server_context.minimum_version = ssl.TLSVersion.TLSv1_2
+        server_context.minimum_version = ssl.TLSVersion.TLSv1_2
         server_context.load_cert_chain(SERVER_CERT, SERVER_KEY)
         server_context.load_verify_locations(CLIENT_CERT)
         server_context.verify_mode = ssl.CERT_REQUIRED
         server = self._server_socket(ssl_context=server_context)
 
         client_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        if hasattr(ssl, 'TLSVersion'):
-            client_context.minimum_version = ssl.TLSVersion.TLSv1_2
+        client_context.minimum_version = ssl.TLSVersion.TLSv1_2
         client_context.load_cert_chain(CLIENT_CERT, CLIENT_KEY)
         client_context.load_verify_locations(SERVER_CERT)
         client_context.verify_mode = ssl.CERT_REQUIRED
@@ -464,14 +424,20 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, ssl_context=client_context)
 
     def test_ssl_context_requires_tls12(self):
-        if not hasattr(ssl, 'TLSVersion'):
-            self.skipTest('TLSVersion is not available')
         client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             client_context.minimum_version = ssl.TLSVersion.TLSv1_1
         with self._assert_raises(ValueError):
             TSSLSocket('localhost', 0, ssl_context=client_context)
+
+    def test_expired_certificate_rejected(self):
+        """Verify that expired server certificates are rejected."""
+        if not os.path.exists(EXPIRED_CERT):
+            self.skipTest('expired.crt not found in test/keys/')
+        server = self._server_socket(keyfile=EXPIRED_KEY, certfile=EXPIRED_CERT)
+        self._assert_connection_failure(
+            server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=EXPIRED_CERT)
 
 
 if __name__ == '__main__':

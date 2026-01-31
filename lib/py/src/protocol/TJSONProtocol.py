@@ -84,7 +84,7 @@ for key in CTYPES.keys():
     JTYPES[CTYPES[key]] = key
 
 
-class JSONBaseContext(object):
+class JSONBaseContext:
 
     def __init__(self, protocol):
         self.protocol = protocol

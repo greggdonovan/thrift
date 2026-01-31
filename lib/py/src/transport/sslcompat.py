@@ -1,104 +1,69 @@
 #
-# licensed to the apache software foundation (asf) under one
-# or more contributor license agreements. see the notice file
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
-# regarding copyright ownership. the asf licenses this file
-# to you under the apache license, version 2.0 (the
-# "license"); you may not use this file except in compliance
-# with the license. you may obtain a copy of the license at
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/license-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-# unless required by applicable law or agreed to in writing,
-# software distributed under the license is distributed on an
-# "as is" basis, without warranties or conditions of any
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
 #
 
-import ipaddress
-import logging
+"""SSL compatibility utilities for Thrift.
+
+For Python 3.10+, hostname verification is handled by OpenSSL during the
+TLS handshake when SSLContext.check_hostname is True. This module provides
+TLS version enforcement utilities.
+"""
+
 import ssl
 
-from thrift.transport.TTransport import TTransportException
+# Minimum TLS version for all Thrift SSL connections
+MINIMUM_TLS_VERSION = ssl.TLSVersion.TLSv1_2
 
-logger = logging.getLogger(__name__)
 
+def enforce_minimum_tls(context):
+    """Enforce TLS 1.2 or higher on an SSLContext.
 
-def legacy_validate_callback(cert, hostname):
-    """legacy method to validate the peer's SSL certificate, and to check
-    the commonName of the certificate to ensure it matches the hostname we
-    used to make this connection.  Does not support subjectAltName records
-    in certificates.
+    This function modifies the context in-place to ensure that TLS 1.2 or higher
+    is used. It raises ValueError if the context's maximum_version is set to a
+    version lower than TLS 1.2.
 
-    raises TTransportException if the certificate fails validation.
+    Args:
+        context: An ssl.SSLContext to enforce minimum TLS version on
     """
-    if 'subject' not in cert:
-        raise TTransportException(
-            TTransportException.NOT_OPEN,
-            'No SSL certificate found from %s' % hostname)
-    fields = cert['subject']
-    for field in fields:
-        # ensure structure we get back is what we expect
-        if not isinstance(field, tuple):
-            continue
-        cert_pair = field[0]
-        if len(cert_pair) < 2:
-            continue
-        cert_key, cert_value = cert_pair[0:2]
-        if cert_key != 'commonName':
-            continue
-        certhost = cert_value
-        # this check should be performed by some sort of Access Manager
-        if certhost == hostname:
-            # success, cert commonName matches desired hostname
-            return
-        else:
-            raise TTransportException(
-                TTransportException.UNKNOWN,
-                'Hostname we connected to "%s" doesn\'t match certificate '
-                'provided commonName "%s"' % (hostname, certhost))
-    raise TTransportException(
-        TTransportException.UNKNOWN,
-        'Could not validate SSL certificate from host "%s".  Cert=%s'
-        % (hostname, cert))
+    if context.minimum_version < MINIMUM_TLS_VERSION:
+        context.minimum_version = MINIMUM_TLS_VERSION
+    if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+            context.maximum_version < MINIMUM_TLS_VERSION):
+        raise ValueError('TLS maximum_version must be TLS 1.2 or higher.')
 
 
-def _match_hostname(cert, hostname):
-    if not cert:
-        raise ssl.CertificateError('no peer certificate available')
+def validate_minimum_tls(context):
+    """Validate that an SSLContext uses TLS 1.2 or higher.
 
-    try:
-        host_ip = ipaddress.ip_address(hostname)
-    except ValueError:
-        host_ip = None
+    Unlike enforce_minimum_tls, this function does not modify the context.
+    It raises ValueError if the context is configured to use TLS versions
+    lower than 1.2.
 
-    dnsnames = []
-    san = cert.get('subjectAltName', ())
-    for key, value in san:
-        if key == 'DNS':
-            if host_ip is None and ssl._dnsname_match(value, hostname):
-                return
-            dnsnames.append(value)
-        elif key == 'IP Address':
-            if host_ip is not None and ssl._ipaddress_match(value, host_ip.packed):
-                return
-            dnsnames.append(value)
+    Args:
+        context: An ssl.SSLContext to validate
 
-    if not dnsnames:
-        for sub in cert.get('subject', ()):
-            for key, value in sub:
-                if key == 'commonName':
-                    if ssl._dnsname_match(value, hostname):
-                        return
-                    dnsnames.append(value)
-
-    if dnsnames:
-        raise ssl.CertificateError(
-            "hostname %r doesn't match %s"
-            % (hostname, ', '.join(repr(dn) for dn in dnsnames)))
-
-    raise ssl.CertificateError(
-        "no appropriate subjectAltName fields were found")
-
+    Raises:
+        ValueError: If the context allows TLS versions below 1.2
+    """
+    if context.minimum_version < MINIMUM_TLS_VERSION:
+        raise ValueError(
+            'ssl_context.minimum_version must be TLS 1.2 or higher.')
+    if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+            context.maximum_version < MINIMUM_TLS_VERSION):
+        raise ValueError(
+            'ssl_context.maximum_version must be TLS 1.2 or higher.')

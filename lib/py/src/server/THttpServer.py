@@ -24,19 +24,7 @@ import http.server as BaseHTTPServer
 from thrift.Thrift import TMessageType
 from thrift.server import TServer
 from thrift.transport import TTransport
-
-
-def _enforce_minimum_tls(context):
-    if not hasattr(ssl, 'TLSVersion'):
-        return
-    minimum = ssl.TLSVersion.TLSv1_2
-    if hasattr(context, 'minimum_version'):
-        if context.minimum_version < minimum:
-            context.minimum_version = minimum
-    if hasattr(context, 'maximum_version'):
-        if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
-                context.maximum_version < minimum):
-            raise ValueError('TLS maximum_version must be TLS 1.2 or higher.')
+from thrift.transport.sslcompat import enforce_minimum_tls
 
 
 class ResponseException(Exception):
@@ -137,7 +125,7 @@ class THttpServer(TServer.TServer):
             else:
                 context.verify_mode = ssl.CERT_NONE
             context.load_cert_chain(kwargs.get('cert_file'), kwargs.get('key_file'))
-            _enforce_minimum_tls(context)
+            enforce_minimum_tls(context)
             self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
 
     def serve(self):

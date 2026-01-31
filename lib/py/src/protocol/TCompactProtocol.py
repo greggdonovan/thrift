@@ -80,7 +80,7 @@ def readVarint(trans):
         shift += 7
 
 
-class CompactType(object):
+class CompactType:
     STOP = 0x00
     TRUE = 0x01
     FALSE = 0x02

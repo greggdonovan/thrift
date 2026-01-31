@@ -29,7 +29,7 @@ from thrift.transport import TTransport
 logger = logging.getLogger(__name__)
 
 
-class TServer(object):
+class TServer:
     """Base interface for a server, which must have a serve() method.
 
     Three constructors for all servers:

@@ -20,7 +20,7 @@
 from thrift.transport import TTransport
 
 
-class TBase(object):
+class TBase:
     __slots__ = ()
 
     def __repr__(self):
