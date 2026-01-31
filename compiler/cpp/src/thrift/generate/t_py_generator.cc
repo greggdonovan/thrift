@@ -813,6 +813,16 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     indent(out) << ")" << '\n' << '\n';
   }
 
+  // For immutable structs without slots, declare class-level attributes
+  // so type checkers can recognize the attributes set via super().__setattr__
+  if (is_immutable(tstruct) && !gen_slots_ && !gen_dynamic_ && members.size() > 0) {
+    for (m_iter = sorted_members.begin(); m_iter != sorted_members.end(); ++m_iter) {
+      indent(out) << (*m_iter)->get_name()
+                  << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << '\n';
+    }
+    out << '\n';
+  }
+
   // TODO(dreiss): Look into generating an empty tuple instead of None
   // for structures with no members.
   // TODO(dreiss): Test encoding of structs where some inner structs
