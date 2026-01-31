@@ -52,8 +52,12 @@ class Server:
         self.server.serve()
         print("------stop server -----\n")
 
-    def close_server(self):
+    def stop(self):
+        """Signal the server to stop. Must be called before close()."""
         self.server.stop()
+
+    def close(self):
+        """Close server resources. Call only after serve() has returned."""
         self.server.close()
 
 
@@ -95,7 +99,7 @@ class TestNonblockingServer(unittest.TestCase):
 
     def test_close_closes_socketpair(self):
         serve = Server()
-        serve.close_server()
+        serve.close()
         self.assertIsNone(serve.server._read)
         self.assertIsNone(serve.server._write)
 
@@ -117,10 +121,13 @@ class TestNonblockingServer(unittest.TestCase):
             raise e
             print("assert failure")
         finally:
-            serve.close_server()
-            # Allow extra time for server shutdown on slower CI runners
+            # Stop must be called before waiting for the thread to exit
+            # close() should only be called after serve() has returned,
+            # otherwise it destroys the socket pair used to wake up select()
+            serve.stop()
             serve_thread.join(10.0)
             self.assertFalse(serve_thread.is_alive(), "server thread did not exit")
+            serve.close()
 
 
 if __name__ == '__main__':
