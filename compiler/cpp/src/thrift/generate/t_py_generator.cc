@@ -1248,6 +1248,9 @@ void t_py_generator::generate_service(t_service* tservice) {
              << import_dynbase_;
   if (gen_zope_interface_) {
     f_service_ << "from zope.interface import Interface, implementer" << '\n';
+  } else {
+    // Import Protocol for type-safe interface definitions
+    f_service_ << "from typing import Protocol" << '\n';
   }
 
   if (gen_twisted_) {
@@ -1330,8 +1333,11 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
   } else {
     if (gen_zope_interface_) {
       extends_if = "(Interface)";
+    } else {
+      // Inherit from Protocol for type-safe interface definitions
+      // This allows type checkers to recognize abstract methods with ellipsis body
+      extends_if = "(Protocol)";
     }
-    // Note: For Python 3.10+, we don't need explicit (object) base class
   }
 
   f_service_ << '\n' << '\n' << "class Iface" << extends_if << ":" << '\n';
@@ -1352,7 +1358,10 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
       f_service_ << indent() << "def " << function_signature(*f_iter, true) << ":" << '\n';
       indent_up();
       generate_python_docstring(f_service_, (*f_iter));
-      f_service_ << indent() << "pass" << '\n';
+      // Use ellipsis (...) instead of pass for interface stubs
+      // This is the Python convention for abstract/protocol methods
+      // and type checkers recognize this pattern
+      f_service_ << indent() << "..." << '\n';
       indent_down();
     }
   }
