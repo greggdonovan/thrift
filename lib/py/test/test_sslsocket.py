@@ -310,14 +310,36 @@ class TSSLSocketTest(unittest.TestCase):
             server, ca_certs=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
 
         # NULL cipher tests don't work reliably on Windows where the SSL
-        # library may ignore invalid cipher specifications rather than failing
+        # library may ignore invalid cipher specifications rather than failing.
+        # On other platforms, we must force TLS 1.2 only (not just minimum) to
+        # prevent TLS 1.3 from negotiating with its own cipher suites that
+        # aren't affected by set_ciphers('NULL').
         if platform.system() != 'Windows':
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=tls12)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ciphers='NULL', ssl_version=tls12)
+            # Create server with TLS 1.2 only (no TLS 1.3 fallback)
+            server_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            server_ctx.minimum_version = tls12
+            server_ctx.maximum_version = tls12
+            server_ctx.load_cert_chain(SERVER_CERT, SERVER_KEY)
+            server = self._server_socket(ssl_context=server_ctx)
 
-            server = self._server_socket(
-                keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ciphers='NULL', ssl_version=tls12)
+            # Create client with NULL ciphers - should fail to connect
+            client_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            client_ctx.minimum_version = tls12
+            client_ctx.maximum_version = tls12
+            client_ctx.check_hostname = False
+            client_ctx.verify_mode = ssl.CERT_REQUIRED
+            client_ctx.load_verify_locations(SERVER_CERT)
+            client_ctx.set_ciphers('NULL')
+            self._assert_connection_failure(server, ssl_context=client_ctx)
+
+            # Same test but server also specifies ciphers
+            server_ctx2 = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            server_ctx2.minimum_version = tls12
+            server_ctx2.maximum_version = tls12
+            server_ctx2.load_cert_chain(SERVER_CERT, SERVER_KEY)
+            server_ctx2.set_ciphers(TEST_CIPHERS)
+            server = self._server_socket(ssl_context=server_ctx2)
+            self._assert_connection_failure(server, ssl_context=client_ctx)
 
     def test_reject_deprecated_protocol_constants(self):
         """Verify that deprecated PROTOCOL_* constants are rejected."""
