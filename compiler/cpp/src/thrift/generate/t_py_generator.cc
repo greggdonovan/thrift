@@ -815,10 +815,11 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
   // For immutable structs without slots, declare class-level attributes
   // so type checkers can recognize the attributes set via super().__setattr__
+  // Always use | None since __init__ parameters always allow None
   if (is_immutable(tstruct) && !gen_slots_ && !gen_dynamic_ && members.size() > 0) {
     for (m_iter = sorted_members.begin(); m_iter != sorted_members.end(); ++m_iter) {
       indent(out) << (*m_iter)->get_name()
-                  << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << '\n';
+                  << ": " << type_to_py_type((*m_iter)->get_type()) << " | None" << '\n';
     }
     out << '\n';
   }
@@ -880,8 +881,9 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
                       << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << '\n';
         }
       } else {
+        // Instance attribute type hint should always allow None to match __init__ params
         indent(out) << "self." << (*m_iter)->get_name()
-                    << member_hint((*m_iter)->get_type(), (*m_iter)->get_req()) << " = "
+                    << ": " << type_to_py_type((*m_iter)->get_type()) << " | None = "
                     << (*m_iter)->get_name() << '\n';
       }
     }
@@ -2719,8 +2721,10 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
  */
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
-  t_field::e_req req = tfield->get_req();
-  result << tfield->get_name() << member_hint(tfield->get_type(), req);
+  // For __init__ parameters, always use `| None` type hint since all params
+  // have None as default for backward compatibility. Validation of required
+  // fields happens at runtime in validate().
+  result << tfield->get_name() << ": " << type_to_py_type(tfield->get_type()) << " | None";
 
   result << " = ";
   if (tfield->get_value() != nullptr) {
