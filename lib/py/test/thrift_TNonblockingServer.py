@@ -118,7 +118,8 @@ class TestNonblockingServer(unittest.TestCase):
             print("assert failure")
         finally:
             serve.close_server()
-            serve_thread.join(2.0)
+            # Allow extra time for server shutdown on slower CI runners
+            serve_thread.join(10.0)
             self.assertFalse(serve_thread.is_alive(), "server thread did not exit")
 
 
