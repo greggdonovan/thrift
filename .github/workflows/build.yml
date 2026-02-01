@@ -81,7 +81,7 @@ jobs:
   compiler-macos:
     strategy:
       matrix:
-        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-26]
+        os: &macos_versions [macos-15-intel, macos-14, macos-15, macos-16]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -108,7 +108,7 @@ jobs:
         run: /usr/local/bin/thrift -version
 
       - name: Archive built thrift compiler (macOS)
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp/thrift
@@ -627,7 +627,7 @@ jobs:
       - name: Run configure
         run: ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: thrift-compiler-${{ matrix.os }}
           path: compiler/cpp
@@ -762,7 +762,7 @@ jobs:
     env:
       SKIP_BUILD_EXT: ${{ matrix.skip-build-ext && '1' || '' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -778,7 +778,7 @@ jobs:
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-ruby/with-ruby/')
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: thrift-compiler
           path: compiler/cpp
