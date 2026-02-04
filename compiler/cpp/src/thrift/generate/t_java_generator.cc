@@ -470,13 +470,16 @@ void t_java_generator::init_generator() {
   package_dir_ = subdir;
 
   // Generate package-info.java with @NullMarked annotation for null safety
-  string package_info_filename = package_dir_ + "/package-info.java";
-  ofstream_with_content_based_conditional_update f_package_info;
-  f_package_info.open(package_info_filename);
-  f_package_info << autogen_comment() << '\n';
-  f_package_info << "@org.jspecify.annotations.NullMarked" << '\n';
-  f_package_info << java_package();
-  f_package_info.close();
+  // Only generate if a package name is specified (required for package-level annotations)
+  if (!package_name_.empty()) {
+    string package_info_filename = package_dir_ + "/package-info.java";
+    ofstream_with_content_based_conditional_update f_package_info;
+    f_package_info.open(package_info_filename);
+    f_package_info << autogen_comment() << '\n';
+    f_package_info << "@org.jspecify.annotations.NullMarked" << '\n';
+    f_package_info << java_package();
+    f_package_info.close();
+  }
 }
 
 /**
