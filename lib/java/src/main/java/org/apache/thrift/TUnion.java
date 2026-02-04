@@ -33,6 +33,7 @@ import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
+import org.jspecify.annotations.Nullable;
 
 public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     implements TBase<T, F> {
