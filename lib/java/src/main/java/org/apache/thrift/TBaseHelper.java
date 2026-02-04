@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.jspecify.annotations.Nullable;
 
 public final class TBaseHelper {
 
@@ -259,7 +260,7 @@ public final class TBaseHelper {
     return remaining;
   }
 
-  public static ByteBuffer rightSize(ByteBuffer in) {
+  public static @Nullable ByteBuffer rightSize(@Nullable ByteBuffer in) {
     if (in == null) {
       return null;
     }
@@ -269,7 +270,7 @@ public final class TBaseHelper {
     return ByteBuffer.wrap(byteBufferToByteArray(in));
   }
 
-  public static ByteBuffer copyBinary(final ByteBuffer orig) {
+  public static @Nullable ByteBuffer copyBinary(final @Nullable ByteBuffer orig) {
     if (orig == null) {
       return null;
     }
@@ -284,7 +285,7 @@ public final class TBaseHelper {
     return copy;
   }
 
-  public static byte[] copyBinary(final byte[] orig) {
+  public static byte @Nullable [] copyBinary(final byte @Nullable [] orig) {
     return (orig == null) ? null : Arrays.copyOf(orig, orig.length);
   }
 

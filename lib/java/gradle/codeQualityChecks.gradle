@@ -7,6 +7,7 @@ dependencies {
     spotbugs configurations.spotbugsPlugins.dependencies
     spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
     errorprone "com.google.errorprone:error_prone_core:${property('errorprone.version')}"
+    errorprone "com.uber.nullaway:nullaway:${nullawayVersion}"
 }
 
 // ErrorProne configuration - validates both library and generated code
@@ -16,6 +17,10 @@ tasks.withType(JavaCompile).configureEach {
         disableWarningsInGeneratedCode = false
         // Disable specific checks that are too noisy for generated code
         disable("MissingSummary")  // Generated code doesn't need javadoc summaries
+
+        // NullAway configuration for null safety analysis
+        option("NullAway:AnnotatedPackages", "org.apache.thrift")
+        option("NullAway:JSpecifyMode", "true")
     }
 }
 

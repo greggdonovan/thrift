@@ -20,6 +20,7 @@
 package org.apache.thrift;
 
 import org.apache.thrift.protocol.TField;
+import org.jspecify.annotations.Nullable;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TStruct;
@@ -47,7 +48,7 @@ public class TApplicationException extends TException implements TSerializable {
   public static final int UNSUPPORTED_CLIENT_TYPE = 10;
 
   protected int type_ = UNKNOWN;
-  private String message_ = null;
+  private @Nullable String message_ = null;
 
   public TApplicationException() {
     super();

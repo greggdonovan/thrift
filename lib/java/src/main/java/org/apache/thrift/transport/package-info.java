@@ -17,18 +17,8 @@
  * under the License.
  */
 
-package org.apache.thrift.annotation;
+/** Thrift transport implementations. */
+@NullMarked
+package org.apache.thrift.transport;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- * Annotation indicating a field, method return, or method parameter may be {@code null}.
- *
- * @deprecated Use {@link org.jspecify.annotations.Nullable} instead. JSpecify is now a standard
- *     dependency of the Thrift Java library, and the Thrift compiler generates JSpecify annotations
- *     for null safety analysis with tools like NullAway.
- */
-@Deprecated
-@Retention(RetentionPolicy.CLASS)
-public @interface Nullable {}
+import org.jspecify.annotations.NullMarked;

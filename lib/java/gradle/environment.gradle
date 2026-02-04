@@ -46,6 +46,8 @@ ext.junitVersion = property('junit.version')
 ext.mockitoVersion = property('mockito.version')
 ext.javaxAnnotationVersion = property('javax.annotation.version')
 ext.commonsLang3Version = property('commons-lang3.version')
+ext.jspecifyVersion = property('jspecify.version')
+ext.nullawayVersion = property('nullaway.version')
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -60,6 +62,7 @@ repositories {
 }
 
 dependencies {
+    api "org.jspecify:jspecify:${jspecifyVersion}"
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
     implementation "org.apache.httpcomponents.client5:httpclient5:${httpclientVersion}"
     implementation "org.apache.httpcomponents.core5:httpcore5:${httpcoreVersion}"

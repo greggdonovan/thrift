@@ -22,6 +22,7 @@ package org.apache.thrift.transport;
 import java.io.Closeable;
 import java.nio.ByteBuffer;
 import org.apache.thrift.TConfiguration;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Generic class that encapsulates the I/O layer. This is basically a thin wrapper around the
@@ -161,7 +162,7 @@ public abstract class TTransport implements Closeable {
    *
    * @return protocol's Underlying buffer
    */
-  public byte[] getBuffer() {
+  public byte @Nullable [] getBuffer() {
     return null;
   }
 
