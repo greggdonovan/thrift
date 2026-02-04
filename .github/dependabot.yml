@@ -40,19 +40,23 @@ updates:
         patterns:
           - "com.google.errorprone:*"
           - "com.uber.nullaway:*"
+          - "org.jspecify:*"
           - "net.ltgt.errorprone"
           - "com.github.spotbugs"
           - "com.h3xstream.findsecbugs:*"
           - "net.sourceforge.pmd:*"
+          - "com.diffplug.spotless"
       # Group test dependencies together
       testing:
         patterns:
           - "org.junit*"
           - "org.mockito*"
-      # Group Apache HTTP components together
-      apache-http:
+      # Group Apache dependencies together
+      apache:
         patterns:
           - "org.apache.httpcomponents*"
+          - "org.apache.commons:*"
+          - "org.apache.tomcat*"
       # Group Jakarta EE APIs together
       jakarta:
         patterns:
