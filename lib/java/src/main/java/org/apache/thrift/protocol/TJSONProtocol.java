@@ -111,7 +111,8 @@ public class TJSONProtocol extends TProtocol {
       case TType.MAP -> NAME_MAP;
       case TType.SET -> NAME_SET;
       case TType.LIST -> NAME_LIST;
-      default -> throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
+      default ->
+          throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
     };
   }
 

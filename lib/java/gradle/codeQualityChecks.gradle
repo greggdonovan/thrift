@@ -44,6 +44,6 @@ tasks.withType(Pmd) {
 spotless {
     java {
         target 'src/**/*.java'
-        googleJavaFormat()
+        googleJavaFormat('1.33.0')
     }
 }

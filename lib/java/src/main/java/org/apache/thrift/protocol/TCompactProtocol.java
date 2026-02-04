@@ -887,7 +887,8 @@ public class TCompactProtocol extends TProtocol {
       case 13 -> 1; // element count Map sizeof(byte)
       case 14 -> 1; // element count Set sizeof(byte)
       case 15 -> 1; // element count List sizeof(byte)
-      default -> throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+      default ->
+          throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     };
   }
 
