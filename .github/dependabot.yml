@@ -23,11 +23,39 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
+    labels:
+      - "dependencies"
+      - "github-actions"
+
   - package-ecosystem: "gradle"
     directory: "/lib/java"
     schedule:
       interval: monthly
+    labels:
+      - "dependencies"
+      - "java"
+    groups:
+      # Group static analysis tools together
+      static-analysis:
+        patterns:
+          - "com.google.errorprone:*"
+          - "com.uber.nullaway:*"
+          - "net.ltgt.errorprone"
+          - "com.github.spotbugs"
+      # Group test dependencies together
+      testing:
+        patterns:
+          - "org.junit*"
+          - "org.mockito*"
+      # Group Apache HTTP components together
+      apache-http:
+        patterns:
+          - "org.apache.httpcomponents*"
+
   - package-ecosystem: "gradle"
     directory: "/lib/kotlin"
     schedule:
       interval: monthly
+    labels:
+      - "dependencies"
+      - "kotlin"
