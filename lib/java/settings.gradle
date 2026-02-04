@@ -17,4 +17,11 @@
  * under the License.
  */
 
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
 rootProject.name = 'libthrift'

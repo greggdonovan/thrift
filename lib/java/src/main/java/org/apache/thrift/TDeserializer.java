@@ -21,6 +21,7 @@ package org.apache.thrift;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
@@ -435,14 +436,15 @@ public class TDeserializer {
   }
 
   /**
-   * Deserialize the Thrift object from a Java string, using the default JVM charset encoding.
+   * Deserialize the Thrift object from a Java string, using ISO-8859-1 encoding. This encoding
+   * provides a 1:1 mapping between bytes and characters, matching TSerializer.toString().
    *
    * @param base The object to read into
    * @param data The string to read from
    * @throws TException if an error is encountered during deserialization.
    */
   public void fromString(TBase base, String data) throws TException {
-    deserialize(base, data.getBytes());
+    deserialize(base, data.getBytes(StandardCharsets.ISO_8859_1));
   }
 
   // ----------------------------------------------------------------------

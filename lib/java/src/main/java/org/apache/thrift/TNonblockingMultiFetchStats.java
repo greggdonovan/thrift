@@ -46,6 +46,7 @@ public class TNonblockingMultiFetchStats {
     readTime = 0;
   }
 
+  @Override
   public String toString() {
     String stats =
         String.format(

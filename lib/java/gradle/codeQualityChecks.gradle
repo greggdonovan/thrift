@@ -6,6 +6,17 @@
 dependencies {
     spotbugs configurations.spotbugsPlugins.dependencies
     spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
+    errorprone "com.google.errorprone:error_prone_core:${property('errorprone.version')}"
+}
+
+// ErrorProne configuration
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        // Disable checks in generated code
+        disableWarningsInGeneratedCode = true
+        // Exclude test code from some stricter checks
+        excludedPaths = '.*/build/generated/.*'
+    }
 }
 
 // see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugsextension

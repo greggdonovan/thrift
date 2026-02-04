@@ -72,14 +72,17 @@ public abstract class Option<T> {
 
   /** The None type, representing an absent value (instead of "null") */
   public static class None<T> extends Option<T> {
+    @Override
     public boolean isDefined() {
       return false;
     }
 
+    @Override
     public T get() {
       throw new IllegalStateException("Cannot call get() on None");
     }
 
+    @Override
     public String toString() {
       return "None";
     }
@@ -97,14 +100,17 @@ public abstract class Option<T> {
       this.value = value;
     }
 
+    @Override
     public boolean isDefined() {
       return true;
     }
 
+    @Override
     public T get() {
       return value;
     }
 
+    @Override
     public String toString() {
       return "Some(" + value + ")";
     }

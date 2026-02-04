@@ -39,6 +39,7 @@ public class TField {
   public final byte type;
   public final short id;
 
+  @Override
   public String toString() {
     return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
   }
