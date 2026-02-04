@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.thrift.protocol.TField;
-import org.jspecify.annotations.Nullable;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
 import org.apache.thrift.protocol.TStruct;
@@ -34,6 +33,7 @@ import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
+import org.jspecify.annotations.Nullable;
 
 public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     implements TBase<T, F> {
