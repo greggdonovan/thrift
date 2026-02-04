@@ -45,8 +45,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-static const string thrift_option_class = "org.apache.thrift.Option";
-static const string jdk_option_class = "java.util.Optional";
+static const string optional_class = "java.util.Optional";
 
 /**
  * Java code generator.
@@ -66,19 +65,15 @@ public:
     private_members_ = false;
     nocamel_style_ = false;
     fullcamel_style_ = false;
-    android_legacy_ = false;
     sorted_containers_ = false;
-    java5_ = false;
     reuse_objects_ = false;
-    use_option_type_ = false;
     generate_future_iface_ = false;
-    use_jdk8_option_type_ = false;
     undated_generated_annotations_ = false;
     suppress_generated_annotations_ = false;
     rethrow_unhandled_exceptions_ = false;
     unsafe_binaries_ = false;
     annotations_as_metadata_ = false;
-    jakarta_annotations_ = false;
+    jakarta_annotations_ = true;  // Jakarta annotations are the default for JDK 17+
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -92,27 +87,14 @@ public:
         nocamel_style_ = true;
       } else if (iter->first.compare("fullcamel") == 0) {
         fullcamel_style_ = true;
-      } else if (iter->first.compare("android_legacy") == 0) {
-        android_legacy_ = true;
       } else if (iter->first.compare("sorted_containers") == 0) {
         sorted_containers_ = true;
-      } else if (iter->first.compare("java5") == 0) {
-        java5_ = true;
       } else if (iter->first.compare("future_iface") == 0) {
         generate_future_iface_ = true;
       } else if (iter->first.compare("reuse_objects") == 0
                  || iter->first.compare("reuse-objects") == 0) {
         // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
         reuse_objects_ = true;
-      } else if (iter->first.compare("option_type") == 0) {
-        use_option_type_ = true;
-        if (iter->second.compare("jdk8") == 0) {
-          use_jdk8_option_type_ = true;
-        } else if (iter->second.compare("thrift") == 0 || iter->second.compare("") == 0) {
-          use_jdk8_option_type_ = false;
-        } else {
-          throw "option_type must be 'jdk8' or 'thrift'";
-        }
       } else if (iter->first.compare("rethrow_unhandled_exceptions") == 0) {
         rethrow_unhandled_exceptions_ = true;
       } else if (iter->first.compare("generated_annotations") == 0) {
@@ -127,15 +109,11 @@ public:
         unsafe_binaries_ = true;
       } else if (iter->first.compare("annotations_as_metadata") == 0) {
         annotations_as_metadata_ = true;
-      } else if (iter->first.compare("jakarta_annotations") == 0) {
-        jakarta_annotations_ = true;
+      } else if (iter->first.compare("javax_annotations") == 0) {
+        jakarta_annotations_ = false;  // Allow opting out to legacy javax annotations
       } else {
         throw "unknown option java:" + iter->first;
       }
-    }
-
-    if (java5_) {
-      android_legacy_ = true;
     }
 
     out_dir_base_ = (bean_style_ ? "gen-javabean" : "gen-java");
@@ -454,13 +432,9 @@ private:
   bool private_members_;
   bool nocamel_style_;
   bool fullcamel_style_;
-  bool android_legacy_;
-  bool java5_;
   bool sorted_containers_;
   bool reuse_objects_;
   bool generate_future_iface_;
-  bool use_option_type_;
-  bool use_jdk8_option_type_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
   bool rethrow_unhandled_exceptions_;
@@ -2435,7 +2409,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
-    bool optional = use_option_type_ && field->get_req() == t_field::T_OPTIONAL;
+    bool optional = field->get_req() == t_field::T_OPTIONAL;
     bool is_deprecated = this->is_deprecated(field->annotations_);
 
     if (type->is_container()) {
@@ -2445,11 +2419,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
           indent(out) << "@Deprecated" << '\n';
         }
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "public " << jdk_option_class << "<Integer> get" << cap_name;
-        } else {
-          indent(out) << "public " << thrift_option_class << "<Integer> get" << cap_name;
-        }
+        indent(out) << "public " << optional_class << "<Integer> get" << cap_name;
 
         out << get_cap_name("size() {") << '\n';
 
@@ -2457,21 +2427,13 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         indent(out) << "if (this." << field_name << " == null) {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".empty();" << '\n';
-        } else {
-          indent(out) << "return " << thrift_option_class << ".none();" << '\n';
-        }
+        indent(out) << "return " << optional_class << ".empty();" << '\n';
 
         indent_down();
         indent(out) << "} else {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".of(this.";
-        } else {
-          indent(out) << "return " << thrift_option_class << ".some(this.";
-        }
+        indent(out) << "return " << optional_class << ".of(this.";
         out << field_name << ".size());" << '\n';
 
         indent_down();
@@ -2507,11 +2469,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
           indent(out) << "@Deprecated" << '\n';
         }
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "public " << jdk_option_class << "<";
-        } else {
-          indent(out) << "public " << thrift_option_class << "<";
-        }
+        indent(out) << "public " << optional_class << "<";
         out << "java.util.Iterator<" << type_name(element_type, true, false) << ">> get"
             << cap_name;
 
@@ -2521,21 +2479,13 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         indent(out) << "if (this." << field_name << " == null) {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".empty();" << '\n';
-        } else {
-          indent(out) << "return " << thrift_option_class << ".none();" << '\n';
-        }
+        indent(out) << "return " << optional_class << ".empty();" << '\n';
 
         indent_down();
         indent(out) << "} else {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".of(this.";
-        } else {
-          indent(out) << "return " << thrift_option_class << ".some(this.";
-        }
+        indent(out) << "return " << optional_class << ".of(this.";
         out << field_name << ".iterator());" << '\n';
 
         indent_down();
@@ -2636,11 +2586,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
           indent(out) << "@Deprecated" << '\n';
         }
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "public " << jdk_option_class << "<" << type_name(type, true) << ">";
-        } else {
-          indent(out) << "public " << thrift_option_class << "<" << type_name(type, true) << ">";
-        }
+        indent(out) << "public " << optional_class << "<" << type_name(type, true) << ">";
 
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2653,22 +2599,14 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         indent(out) << "if (this.isSet" << cap_name << "()) {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".of(this.";
-        } else {
-          indent(out) << "return " << thrift_option_class << ".some(this.";
-        }
+        indent(out) << "return " << optional_class << ".of(this.";
         out << field_name << ");" << '\n';
 
         indent_down();
         indent(out) << "} else {" << '\n';
         indent_up();
 
-        if (use_jdk8_option_type_) {
-          indent(out) << "return " << jdk_option_class << ".empty();" << '\n';
-        } else {
-          indent(out) << "return " << thrift_option_class << ".none();" << '\n';
-        }
+        indent(out) << "return " << optional_class << ".empty();" << '\n';
 
         indent_down();
         indent(out) << "}" << '\n';
@@ -5481,8 +5419,7 @@ void t_java_generator::generate_java_struct_write_object(ostream& out, t_struct*
                  "org.apache.thrift.transport.TIOStreamTransport(out)));"
               << '\n';
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << '\n';
-  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_ ? ".getMessage()" : "")
-              << ");" << '\n';
+  indent(out) << "    throw new java.io.IOException(te);" << '\n';
   indent(out) << "  }" << '\n';
   indent(out) << "}" << '\n' << '\n';
 }
@@ -5515,8 +5452,7 @@ void t_java_generator::generate_java_struct_read_object(ostream& out, t_struct* 
                  "org.apache.thrift.transport.TIOStreamTransport(in)));"
               << '\n';
   indent(out) << "  } catch (org.apache.thrift.TException te) {" << '\n';
-  indent(out) << "    throw new java.io.IOException(te" << (android_legacy_ ? ".getMessage()" : "")
-              << ");" << '\n';
+  indent(out) << "    throw new java.io.IOException(te);" << '\n';
   indent(out) << "  }" << '\n';
   indent(out) << "}" << '\n' << '\n';
 }
@@ -5886,15 +5822,10 @@ THRIFT_REGISTER_GENERATOR(
     "    nocamel:         Do not use CamelCase field accessors with beans.\n"
     "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
     "    android:         Generated structures are Parcelable.\n"
-    "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
-    "    option_type=[thrift|jdk8]:\n"
-    "                     thrift: wrap optional fields in thrift Option type.\n"
-    "                     jdk8: Wrap optional fields in JDK8+ Option type.\n"
-    "                     If the Option type is not specified, 'thrift' is used.\n"
     "    rethrow_unhandled_exceptions:\n"
-    "                     Enable rethrow of unhandled exceptions and let them propagate further. (Default behavior is to catch and log it.)\n"
-    "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
-    "    future_iface:    Generate CompletableFuture based iface based on async client.\n"
+    "                     Enable rethrow of unhandled exceptions and let them propagate further.\n"
+    "                     (Default behavior is to catch and log it.)\n"
+    "    future_iface:    Generate CompletableFuture based interface based on async client.\n"
     "    reuse_objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
     "    reuse-objects:   Same as 'reuse_objects' (deprecated).\n"
     "    sorted_containers:\n"
@@ -5903,6 +5834,10 @@ THRIFT_REGISTER_GENERATOR(
     "                     undated: suppress the date at @Generated annotations\n"
     "                     suppress: suppress @Generated annotations entirely\n"
     "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n"
-    "    jakarta_annotations: generate jakarta annotations (javax by default)\n"
+    "    javax_annotations:\n"
+    "                     Use legacy javax.annotation.Generated (default is jakarta.annotation.Generated).\n"
     "    annotations_as_metadata:\n"
-    "                     Include Thrift field annotations as metadata in the generated code.\n")
+    "                     Include Thrift field annotations as metadata in the generated code.\n"
+    "\n"
+    "    Optional fields are wrapped in java.util.Optional. Jakarta annotations are used by default.\n"
+    "    Generated code requires JDK 17 or later.\n")
