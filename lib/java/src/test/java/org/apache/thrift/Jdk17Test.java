@@ -47,8 +47,7 @@ public class Jdk17Test {
     // Verify that record classes (JDK 16+ feature, finalized in JDK 16) are available
     // by checking that the Record class exists and is accessible
     assertDoesNotThrow(
-        () -> Class.forName("java.lang.Record"),
-        "java.lang.Record should be available in JDK 17+");
+        () -> Class.forName("java.lang.Record"), "java.lang.Record should be available in JDK 17+");
   }
 
   @Test

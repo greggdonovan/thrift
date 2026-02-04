@@ -536,7 +536,8 @@ public class TBinaryProtocol extends TProtocol {
       case 13 -> 4; // element count Map sizeof(int)
       case 14 -> 4; // element count Set sizeof(int)
       case 15 -> 4; // element count List sizeof(int)
-      default -> throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+      default ->
+          throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     };
   }
 
