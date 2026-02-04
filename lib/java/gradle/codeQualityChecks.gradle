@@ -9,13 +9,13 @@ dependencies {
     errorprone "com.google.errorprone:error_prone_core:${property('errorprone.version')}"
 }
 
-// ErrorProne configuration
+// ErrorProne configuration - validates both library and generated code
 tasks.withType(JavaCompile).configureEach {
     options.errorprone {
-        // Disable checks in generated code
-        disableWarningsInGeneratedCode = true
-        // Exclude test code from some stricter checks
-        excludedPaths = '.*/build/generated/.*'
+        // Enable checking of generated code to ensure Thrift compiler output is clean
+        disableWarningsInGeneratedCode = false
+        // Disable specific checks that are too noisy for generated code
+        disable("MissingSummary")  // Generated code doesn't need javadoc summaries
     }
 }
 
