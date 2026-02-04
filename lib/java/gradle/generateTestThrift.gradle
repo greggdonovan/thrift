@@ -24,21 +24,21 @@ ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
-ext.genOptionTypeJdk8Src = file("$buildDir/gen-option-type-jdk8")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
 ext.genDefinitionOrderTestASrc = file("$buildDir/resources/test/definition-order-test/a")
 ext.genDefinitionOrderTestBSrc = file("$buildDir/resources/test/definition-order-test/b")
 
 // Add the generated code directories to the test source set
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc, genOptionTypeJdk8Src
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc
 }
 
 // ----------------------------------------------------------------------------
 // Code generation for Unit Testing
 
 // A callable closure to make this easier
-ext.thriftCompile = { Task task, String thriftFileName, String generator = 'java:jakarta_annotations', File outputDir = genSrc ->
+// Note: jakarta_annotations and java.util.Optional are now the defaults
+ext.thriftCompile = { Task task, String thriftFileName, String generator = 'java', File outputDir = genSrc ->
     def thriftFile = file("$thriftRoot/test/$thriftFileName")
     if (!thriftFile.exists()) {
         thriftFile = file("$projectDir/src/test/resources/$thriftFileName")
@@ -93,22 +93,13 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'FuzzTest.thrift')
 }
 
-task generateOptionalTypeJava(group: 'Build') {
-    description = 'Generate the thrift gen-option-type-jdk8 source'
-    generate.dependsOn it
-
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'JavaOptionTypeJdk8Test.thrift', 'java:option_type=jdk8,jakarta_annotations', genOptionTypeJdk8Src)
-}
-
 task generateBeanJava(group: 'Build') {
     description = 'Generate the thrift gen-javabean source'
     generate.dependsOn it
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel,future_iface,jakarta_annotations', genBeanSrc)
+    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel,future_iface', genBeanSrc)
 }
 
 task generateReuseJava(group: 'Build') {
@@ -117,7 +108,7 @@ task generateReuseJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel,future_iface,jakarta_annotations', genFullCamelSrc)
+    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel,future_iface', genFullCamelSrc)
 }
 
 task generateFullCamelJava(group: 'Build') {
@@ -126,7 +117,7 @@ task generateFullCamelJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse_objects,jakarta_annotations', genReuseSrc)
+    thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse_objects', genReuseSrc)
 }
 
 task generateUnsafeBinariesJava(group: 'Build') {
@@ -135,7 +126,7 @@ task generateUnsafeBinariesJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries,jakarta_annotations', genUnsafeSrc)
+    thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries', genUnsafeSrc)
 }
 
 task generateWithAnnotationMetadata(group: 'Build') {
@@ -144,7 +135,7 @@ task generateWithAnnotationMetadata(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata,jakarta_annotations', genSrc)
+    thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata', genSrc)
 }
 
 task generateJavaDefinitionOrderTestJava(group: 'Build') {
@@ -153,6 +144,6 @@ task generateJavaDefinitionOrderTestJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaDefinitionOrderA.thrift', 'java:jakarta_annotations', genDefinitionOrderTestASrc)
-    thriftCompile(it, 'JavaDefinitionOrderB.thrift', 'java:jakarta_annotations', genDefinitionOrderTestBSrc)
+    thriftCompile(it, 'JavaDefinitionOrderA.thrift', 'java', genDefinitionOrderTestASrc)
+    thriftCompile(it, 'JavaDefinitionOrderB.thrift', 'java', genDefinitionOrderTestBSrc)
 }
