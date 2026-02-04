@@ -522,36 +522,22 @@ public class TBinaryProtocol extends TProtocol {
   /** Return the minimum number of bytes a type will consume on the wire */
   @Override
   public int getMinSerializedSize(byte type) throws TTransportException {
-    switch (type) {
-      case 0:
-        return 1; // Stop - T_STOP needs to count itself
-      case 1:
-        return 1; // Void - T_VOID needs to count itself
-      case 2:
-        return 1; // Bool sizeof(byte)
-      case 3:
-        return 1; // Byte sizeof(byte)
-      case 4:
-        return 8; // Double sizeof(double)
-      case 6:
-        return 2; // I16 sizeof(short)
-      case 8:
-        return 4; // I32 sizeof(int)
-      case 10:
-        return 8; // I64 sizeof(long)
-      case 11:
-        return 4; // string length sizeof(int)
-      case 12:
-        return 1; // empty struct needs at least 1 byte for the T_STOP
-      case 13:
-        return 4; // element count Map sizeof(int)
-      case 14:
-        return 4; // element count Set sizeof(int)
-      case 15:
-        return 4; // element count List sizeof(int)
-      default:
-        throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
-    }
+    return switch (type) {
+      case 0 -> 1; // Stop - T_STOP needs to count itself
+      case 1 -> 1; // Void - T_VOID needs to count itself
+      case 2 -> 1; // Bool sizeof(byte)
+      case 3 -> 1; // Byte sizeof(byte)
+      case 4 -> 8; // Double sizeof(double)
+      case 6 -> 2; // I16 sizeof(short)
+      case 8 -> 4; // I32 sizeof(int)
+      case 10 -> 8; // I64 sizeof(long)
+      case 11 -> 4; // string length sizeof(int)
+      case 12 -> 1; // empty struct needs at least 1 byte for the T_STOP
+      case 13 -> 4; // element count Map sizeof(int)
+      case 14 -> 4; // element count Set sizeof(int)
+      case 15 -> 4; // element count List sizeof(int)
+      default -> throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+    };
   }
 
   // -----------------------------------------------------------------

@@ -818,8 +818,8 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          # here we intentionally use an older version so that we also verify Java 17 compiles to it
-          java-version: 8
+          # Java 17 is the minimum supported version
+          java-version: 17
           cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)
