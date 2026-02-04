@@ -21,14 +21,13 @@
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// We are using Java 17 (latest LTS) toolchain to compile.
+// We are using Java 17 (LTS) toolchain to compile.
 // This enables decoupling from the Java version that gradle runs, from
 // the actual JDK version for the project. For more details, see
 // https://docs.gradle.org/current/userguide/toolchains.html
 //
-// The '--release' option added below makes sure that even if we are using
-// the toolchain version > 11, the final artifact is at version 11. There is
-// also a runtime CI that's based on Java 11 to ensure that.
+// The '--release' option added below ensures bytecode compatibility with Java 17.
+// Java 17 is the minimum supported version for this library.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
@@ -39,8 +38,8 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
-    // the following is to build with Java 8 specifications, even when building with later JDK
-    options.release = 8
+    // the following ensures bytecode compatibility with Java 17
+    options.release = 17
     options.compilerArgs += [
             '-Werror',
             '-Xlint:deprecation',

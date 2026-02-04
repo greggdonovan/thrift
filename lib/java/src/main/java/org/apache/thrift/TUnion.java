@@ -66,16 +66,16 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
   }
 
   private static Object deepCopyObject(Object o) {
-    if (o instanceof TBase) {
-      return ((TBase) o).deepCopy();
-    } else if (o instanceof ByteBuffer) {
-      return TBaseHelper.copyBinary((ByteBuffer) o);
-    } else if (o instanceof List) {
-      return deepCopyList((List) o);
-    } else if (o instanceof Set) {
-      return deepCopySet((Set) o);
-    } else if (o instanceof Map) {
-      return deepCopyMap((Map) o);
+    if (o instanceof TBase tb) {
+      return tb.deepCopy();
+    } else if (o instanceof ByteBuffer bb) {
+      return TBaseHelper.copyBinary(bb);
+    } else if (o instanceof List l) {
+      return deepCopyList(l);
+    } else if (o instanceof Set s) {
+      return deepCopySet(s);
+    } else if (o instanceof Map m) {
+      return deepCopyMap(m);
     } else {
       return o;
     }
@@ -203,8 +203,8 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
       Object v = getFieldValue();
       sb.append(getFieldDesc(getSetField()).name);
       sb.append(":");
-      if (v instanceof ByteBuffer) {
-        TBaseHelper.toString((ByteBuffer) v, sb);
+      if (v instanceof ByteBuffer bb) {
+        TBaseHelper.toString(bb, sb);
       } else {
         sb.append(v.toString());
       }

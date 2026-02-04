@@ -32,8 +32,8 @@
   <version>0.23.0</version>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
     <thrift.root>${basedir}/../..</thrift.root>
     <thrift.compiler>${thrift.root}/compiler/cpp/thrift</thrift.compiler>
     <thrift.test.home>${thrift.root}/test</thrift.test.home>
