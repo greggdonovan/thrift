@@ -42,6 +42,8 @@ updates:
           - "com.uber.nullaway:*"
           - "net.ltgt.errorprone"
           - "com.github.spotbugs"
+          - "com.h3xstream.findsecbugs:*"
+          - "net.sourceforge.pmd:*"
       # Group test dependencies together
       testing:
         patterns:
@@ -51,6 +53,15 @@ updates:
       apache-http:
         patterns:
           - "org.apache.httpcomponents*"
+      # Group Jakarta EE APIs together
+      jakarta:
+        patterns:
+          - "jakarta.servlet:*"
+          - "jakarta.annotation:*"
+      # Group logging dependencies together
+      logging:
+        patterns:
+          - "org.slf4j:*"
 
   - package-ecosystem: "gradle"
     directory: "/lib/kotlin"

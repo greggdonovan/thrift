@@ -5,7 +5,7 @@
 
 dependencies {
     spotbugs configurations.spotbugsPlugins.dependencies
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0'
     errorprone "com.google.errorprone:error_prone_core:${property('errorprone.version')}"
     errorprone "com.uber.nullaway:nullaway:${nullawayVersion}"
 }
@@ -27,7 +27,7 @@ tasks.withType(JavaCompile).configureEach {
 // see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugsextension
 spotbugs {
     ignoreFailures = true
-    toolVersion = '4.5.3'
+    toolVersion = '4.9.8'
     effort = 'max'
     reportLevel = 'low'
     excludeFilter = file('code_quality_tools/findbugs-filter.xml')
@@ -36,17 +36,18 @@ spotbugs {
 // see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugstask
 spotbugsMain {
     reports {
-        text.enabled = false
-        html.enabled = true
-        xml.enabled = false
+        text.required = false
+        html.required = true
+        xml.required = false
     }
 }
 
 pmd {
     ignoreFailures = true
-    toolVersion = '6.0.0'
+    toolVersion = '7.9.0'
     sourceSets = [ sourceSets.main ]
-    ruleSets = [ 'java-basic' ]
+    // PMD 7 uses category-based rulesets
+    ruleSets = [ 'category/java/errorprone.xml' ]
 }
 
 tasks.withType(Pmd) {
