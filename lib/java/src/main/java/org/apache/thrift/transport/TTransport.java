@@ -54,6 +54,7 @@ public abstract class TTransport implements Closeable {
   public abstract void open() throws TTransportException;
 
   /** Closes the transport. */
+  @Override
   public abstract void close();
 
   /**
