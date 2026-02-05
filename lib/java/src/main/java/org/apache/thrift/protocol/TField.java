@@ -56,9 +56,7 @@ public class TField {
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    TField otherField = (TField) obj;
+    if (!(obj instanceof TField otherField)) return false;
     return type == otherField.type && id == otherField.id;
   }
 }
