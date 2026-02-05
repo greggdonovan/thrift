@@ -26,6 +26,7 @@ import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
+import org.jspecify.annotations.Nullable;
 
 /**
  * TFramedTransport is a buffered TTransport that ensures a fully read message every time by
@@ -38,8 +39,6 @@ public class TFramedTransport extends TLayeredTransport {
 
   /** Buffer for input */
   private final TMemoryInputTransport readBuffer_;
-
-  private static final byte[] EMPTY_BUFFER = new byte[0];
 
   public static class Factory extends TTransportFactory {
     private final int maxLength_;
@@ -109,9 +108,8 @@ public class TFramedTransport extends TLayeredTransport {
   }
 
   @Override
-  public byte[] getBuffer() {
-    byte[] buffer = readBuffer_.getBuffer();
-    return buffer == null ? EMPTY_BUFFER : buffer;
+  public byte @Nullable [] getBuffer() {
+    return readBuffer_.getBuffer();
   }
 
   @Override
