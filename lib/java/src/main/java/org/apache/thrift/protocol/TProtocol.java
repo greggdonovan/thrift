@@ -36,8 +36,10 @@ import org.apache.thrift.transport.TTransport;
 public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
 
   /** Prevent direct instantiation */
-  @SuppressWarnings("unused")
-  private TProtocol() {}
+  @SuppressWarnings({"unused", "NullAway.Init"})
+  private TProtocol() {
+    throw new AssertionError("TProtocol cannot be directly instantiated");
+  }
 
   /** Transport */
   protected TTransport trans_;
