@@ -42,11 +42,11 @@ sourceSets {
 // 4. shadow jar will package both main and test source set, along with cross test runtime dependencies
 configurations {
     crossTestImplementation {
-        description "implementation for cross test"
+        description = "implementation for cross test"
         extendsFrom testImplementation
     }
     crossTestRuntime {
-        description "runtime dependencies for cross test"
+        description = "runtime dependencies for cross test"
         extendsFrom crossTestImplementation, testRuntimeOnly
     }
 }

@@ -53,7 +53,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(Javadoc) {
-    failOnError false
+    failOnError = false
     options.addStringOption('Xdoclint:none', '-quiet')
     options.addStringOption('encoding', 'UTF-8')
     options.addStringOption('charSet', 'UTF-8')
