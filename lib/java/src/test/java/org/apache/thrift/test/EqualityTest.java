@@ -130,6 +130,7 @@ import java.nio.ByteBuffer;
 import thrift.test.JavaTestHelper;
 
 /** */
+@SuppressWarnings("NullAway")
 public class EqualityTest {
   public static void main(String[] args) throws Exception {
     JavaTestHelper lhs, rhs;

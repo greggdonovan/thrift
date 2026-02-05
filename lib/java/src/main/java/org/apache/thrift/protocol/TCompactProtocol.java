@@ -35,6 +35,11 @@ import org.apache.thrift.transport.TTransportException;
  * structures, short strings and collections, and low-value i32 and i64 fields you have, the more
  * benefit you'll see.
  */
+@SuppressWarnings({
+  "NullAway", // Buffer null checks done at runtime with appropriate fallbacks
+  "EffectivelyPrivate", // Compact type constants used in type conversion tables
+  "UnnecessaryParentheses" // Parentheses aid readability in bit manipulation
+})
 public class TCompactProtocol extends TProtocol {
   private static final byte[] EMPTY_BYTES = new byte[0];
   private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(EMPTY_BYTES);

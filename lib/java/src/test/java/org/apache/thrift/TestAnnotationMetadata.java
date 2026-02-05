@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import thrift.test.OneOfEachBeans;
 import thrift.test.annotations.OneOfEachBeansWithAnnotations;
 
+@SuppressWarnings("NullAway") // Test expects known fields to exist in metadata map
 public class TestAnnotationMetadata {
 
   @Test

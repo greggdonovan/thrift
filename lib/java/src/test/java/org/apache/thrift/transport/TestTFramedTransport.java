@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -143,11 +144,13 @@ public class TestTFramedTransport {
 
     byte[] buf = new byte[256];
     int readBytes = din.read(buf, 0, 256);
+    assertEquals(256, readBytes);
     assertArrayEquals(byteSequence(0, 255), buf);
 
     assertEquals(246, din.readInt());
     buf = new byte[246];
     int readBytes2 = din.read(buf, 0, 246);
+    assertEquals(246, readBytes2);
     assertArrayEquals(byteSequence(0, 245), buf);
   }
 
@@ -211,14 +214,20 @@ public class TestTFramedTransport {
     assertArrayEquals(readBuf, byteSequence(0, 219));
 
     assertTrue(trans instanceof TFramedTransport || trans instanceof TFastFramedTransport);
-    if (trans instanceof TFramedTransport) {
-      assertTrue(trans.getBuffer() != null && trans.getBuffer().length > 0);
-      ((TFramedTransport) trans).clear();
-      assertNull(trans.getBuffer());
-    } else {
-      assertTrue(trans.getBuffer().length > TestTFastFramedTransport.INITIAL_CAPACITY);
-      ((TFastFramedTransport) trans).clear();
-      assertEquals(TestTFastFramedTransport.INITIAL_CAPACITY, trans.getBuffer().length);
+    if (trans instanceof TFramedTransport framedTransport) {
+      byte[] buffer = framedTransport.getBuffer();
+      assertNotNull(buffer);
+      assertTrue(buffer.length > 0);
+      framedTransport.clear();
+      assertNull(framedTransport.getBuffer());
+    } else if (trans instanceof TFastFramedTransport fastFramedTransport) {
+      byte[] buffer = fastFramedTransport.getBuffer();
+      assertNotNull(buffer);
+      assertTrue(buffer.length > TestTFastFramedTransport.INITIAL_CAPACITY);
+      fastFramedTransport.clear();
+      byte[] clearedBuffer = fastFramedTransport.getBuffer();
+      assertNotNull(clearedBuffer);
+      assertEquals(TestTFastFramedTransport.INITIAL_CAPACITY, clearedBuffer.length);
     }
   }
 }

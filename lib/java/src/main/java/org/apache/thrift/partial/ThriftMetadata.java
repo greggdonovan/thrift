@@ -44,6 +44,14 @@ import org.apache.thrift.protocol.TType;
  *
  * <p>This class is mainly used by {@code TDeserializer}.
  */
+@SuppressWarnings({
+  "NullAway", // Metadata fields intentionally nullable for optional data
+  "UnusedNestedClass", // ComparisonResult reserved for future comparison operations
+  "UnusedVariable", // enums field reserved for future enum metadata support
+  "StatementSwitchToExpressionSwitch", // Statement switches clearer for type dispatch
+  "AnnotateFormatMethod", // Format strings validated at runtime
+  "TypeParameterUnusedInFormals" // Generic type parameter needed for proper cast semantics
+})
 public class ThriftMetadata {
 
   enum FieldTypeEnum implements TFieldIdEnum {

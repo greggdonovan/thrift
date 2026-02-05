@@ -30,6 +30,10 @@ import org.apache.thrift.transport.TNonblockingServerTransport;
  * An extension of the TNonblockingServer to a Half-Sync/Half-Async server. Like TNonblockingServer,
  * it relies on the use of TFramedTransport.
  */
+@SuppressWarnings({
+  "NullAway", // executorService optional and set via builder or defaults
+  "InlineMeSuggester" // Deprecated method kept for backwards compatibility
+})
 public class THsHaServer extends TNonblockingServer {
 
   public static class Args extends AbstractNonblockingServerArgs<Args> {

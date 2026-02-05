@@ -22,6 +22,7 @@ package org.apache.thrift.transport;
 public class TestTSSLTransportFactoryCustomClient2 extends TestTSSLTransportFactory {
 
   @Override
+  @SuppressWarnings("NullAway")
   public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
     TSSLTransportFactory.TSSLTransportParameters params =
         new TSSLTransportFactory.TSSLTransportParameters();

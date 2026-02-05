@@ -51,6 +51,10 @@ import org.apache.thrift.protocol.*;
  *
  * </blockquote>
  */
+@SuppressWarnings({
+  "NullAway", // defaultProcessor is optional and may not be set
+  "EffectivelyPrivate" // StoredMessageProtocol constructor used internally
+})
 public class TMultiplexedProcessor implements TProcessor {
 
   private final Map<String, TProcessor> SERVICE_PROCESSOR_MAP = new HashMap<String, TProcessor>();

@@ -20,6 +20,7 @@
 package org.apache.thrift;
 
 /** Utility methods for use when encoding/decoding raw data as byte arrays. */
+@SuppressWarnings("UnnecessaryParentheses") // Parentheses aid readability in bit manipulation
 public class EncodingUtils {
 
   /**

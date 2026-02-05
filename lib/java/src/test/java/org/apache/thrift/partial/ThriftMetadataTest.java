@@ -40,9 +40,8 @@ import org.junit.jupiter.api.Test;
 
 public class ThriftMetadataTest {
 
-  private PartialThriftTestData testData = new PartialThriftTestData();
-
   @Test
+  @SuppressWarnings("NullAway")
   public void testArgChecks() {
     // Should not throw.
     List<ThriftField> testFields = ThriftField.fromNames(Arrays.asList("byteField"));
@@ -93,30 +92,51 @@ public class ThriftMetadataTest {
 
     ThriftMetadata.ThriftStructBase smallStructMetadata =
         (ThriftMetadata.ThriftStructBase) structWithUnions.fields.get(2);
+    if (smallStructMetadata == null) {
+      throw new AssertionError("Missing metadata for smallStruct");
+    }
     assertFalse(smallStructMetadata.isUnion());
 
     ThriftMetadata.ThriftStructBase simpleUnionMetadata =
         (ThriftMetadata.ThriftStructBase) structWithUnions.fields.get(3);
+    if (simpleUnionMetadata == null) {
+      throw new AssertionError("Missing metadata for simpleUnion");
+    }
     assertTrue(simpleUnionMetadata.isUnion());
 
     ThriftMetadata.ThriftList unionListMetadata =
         (ThriftMetadata.ThriftList) structWithUnions.fields.get(4);
+    if (unionListMetadata == null) {
+      throw new AssertionError("Missing metadata for unionList");
+    }
     assertTrue(unionListMetadata.hasUnion());
 
     ThriftMetadata.ThriftSet unionSetMetadata =
         (ThriftMetadata.ThriftSet) structWithUnions.fields.get(5);
+    if (unionSetMetadata == null) {
+      throw new AssertionError("Missing metadata for unionSet");
+    }
     assertTrue(unionSetMetadata.hasUnion());
 
     ThriftMetadata.ThriftMap keyUnionMapMetadata =
         (ThriftMetadata.ThriftMap) structWithUnions.fields.get(6);
+    if (keyUnionMapMetadata == null) {
+      throw new AssertionError("Missing metadata for keyUnionMap");
+    }
     assertTrue(keyUnionMapMetadata.hasUnion());
 
     ThriftMetadata.ThriftMap valUnionMapMetadata =
         (ThriftMetadata.ThriftMap) structWithUnions.fields.get(7);
+    if (valUnionMapMetadata == null) {
+      throw new AssertionError("Missing metadata for valUnionMap");
+    }
     assertTrue(valUnionMapMetadata.hasUnion());
 
     ThriftMetadata.ThriftMap unionMapMetadata =
         (ThriftMetadata.ThriftMap) structWithUnions.fields.get(8);
+    if (unionMapMetadata == null) {
+      throw new AssertionError("Missing metadata for unionMap");
+    }
     assertTrue(unionMapMetadata.hasUnion());
   }
 
@@ -138,6 +158,9 @@ public class ThriftMetadataTest {
 
     ThriftMetadata.ThriftObject fieldMetadata =
         (ThriftMetadata.ThriftObject) testStruct.fields.get(id);
+    if (fieldMetadata == null) {
+      throw new AssertionError("Missing field metadata for id " + id);
+    }
     assertEquals(testStruct, fieldMetadata.parent);
 
     assertEquals(id, fieldMetadata.fieldId.getThriftFieldId());
@@ -217,64 +240,38 @@ public class ThriftMetadataTest {
   }
 
   private Class<? extends FieldValueMetaData> getMetaDataClassForTType(byte ttype) {
-    switch (ttype) {
-      case TType.STRUCT:
-        return StructMetaData.class;
-
-      case TType.LIST:
-        return ListMetaData.class;
-
-      case TType.MAP:
-        return MapMetaData.class;
-
-      case TType.SET:
-        return SetMetaData.class;
-
-      case TType.ENUM:
-        return EnumMetaData.class;
-
-      case TType.BOOL:
-      case TType.BYTE:
-      case TType.I16:
-      case TType.I32:
-      case TType.I64:
-      case TType.DOUBLE:
-      case TType.STRING:
-        return FieldValueMetaData.class;
-
-      default:
-        throw ThriftMetadata.unsupportedFieldTypeException(ttype);
-    }
+    return switch (ttype) {
+      case TType.STRUCT -> StructMetaData.class;
+      case TType.LIST -> ListMetaData.class;
+      case TType.MAP -> MapMetaData.class;
+      case TType.SET -> SetMetaData.class;
+      case TType.ENUM -> EnumMetaData.class;
+      case TType.BOOL,
+          TType.BYTE,
+          TType.I16,
+          TType.I32,
+          TType.I64,
+          TType.DOUBLE,
+          TType.STRING -> FieldValueMetaData.class;
+      default -> throw ThriftMetadata.unsupportedFieldTypeException(ttype);
+    };
   }
 
   private Class<? extends ThriftMetadata.ThriftObject> getClassForTType(byte ttype) {
-    switch (ttype) {
-      case TType.STRUCT:
-        return ThriftMetadata.ThriftStruct.class;
-
-      case TType.LIST:
-        return ThriftMetadata.ThriftList.class;
-
-      case TType.MAP:
-        return ThriftMetadata.ThriftMap.class;
-
-      case TType.SET:
-        return ThriftMetadata.ThriftSet.class;
-
-      case TType.ENUM:
-        return ThriftMetadata.ThriftEnum.class;
-
-      case TType.BOOL:
-      case TType.BYTE:
-      case TType.I16:
-      case TType.I32:
-      case TType.I64:
-      case TType.DOUBLE:
-      case TType.STRING:
-        return ThriftMetadata.ThriftPrimitive.class;
-
-      default:
-        throw ThriftMetadata.unsupportedFieldTypeException(ttype);
-    }
+    return switch (ttype) {
+      case TType.STRUCT -> ThriftMetadata.ThriftStruct.class;
+      case TType.LIST -> ThriftMetadata.ThriftList.class;
+      case TType.MAP -> ThriftMetadata.ThriftMap.class;
+      case TType.SET -> ThriftMetadata.ThriftSet.class;
+      case TType.ENUM -> ThriftMetadata.ThriftEnum.class;
+      case TType.BOOL,
+          TType.BYTE,
+          TType.I16,
+          TType.I32,
+          TType.I64,
+          TType.DOUBLE,
+          TType.STRING -> ThriftMetadata.ThriftPrimitive.class;
+      default -> throw ThriftMetadata.unsupportedFieldTypeException(ttype);
+    };
   }
 }

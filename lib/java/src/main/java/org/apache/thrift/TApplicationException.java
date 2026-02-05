@@ -27,6 +27,10 @@ import org.apache.thrift.protocol.TType;
 import org.jspecify.annotations.Nullable;
 
 /** Application level exception */
+@SuppressWarnings({
+  "NullAway", // getMessage may return null from parent Throwable
+  "StatementSwitchToExpressionSwitch" // Statement switch clearer for field parsing
+})
 public class TApplicationException extends TException implements TSerializable {
 
   private static final TStruct TAPPLICATION_EXCEPTION_STRUCT = new TStruct("TApplicationException");
@@ -81,6 +85,7 @@ public class TApplicationException extends TException implements TSerializable {
     }
   }
 
+  @Override
   public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
@@ -132,6 +137,7 @@ public class TApplicationException extends TException implements TSerializable {
     return result;
   }
 
+  @Override
   public void write(TProtocol oprot) throws TException {
     oprot.writeStructBegin(TAPPLICATION_EXCEPTION_STRUCT);
     if (getMessage() != null) {

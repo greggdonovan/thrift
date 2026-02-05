@@ -202,13 +202,13 @@ public class TSaslServerTransport extends TSaslTransport {
     @Override
     public TTransport getTransport(TTransport base) throws TTransportException {
       WeakReference<TSaslServerTransport> ret = transportMap.get(base);
-      if (ret == null || ret.get() == null) {
+      TSaslServerTransport transport = (ret == null) ? null : ret.get();
+      if (transport == null) {
         LOGGER.debug("transport map does not contain key", base);
-        ret =
-            new WeakReference<TSaslServerTransport>(
-                new TSaslServerTransport(serverDefinitionMap, base));
+        transport = new TSaslServerTransport(serverDefinitionMap, base);
+        ret = new WeakReference<TSaslServerTransport>(transport);
         try {
-          ret.get().open();
+          transport.open();
         } catch (TTransportException e) {
           LOGGER.debug("failed to open server transport", e);
           throw new RuntimeException(e);
@@ -218,7 +218,7 @@ public class TSaslServerTransport extends TSaslTransport {
       } else {
         LOGGER.debug("transport map does contain key {}", base);
       }
-      return ret.get();
+      return transport;
     }
   }
 }

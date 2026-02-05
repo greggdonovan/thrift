@@ -41,6 +41,11 @@ import org.slf4j.LoggerFactory;
 /**
  * A Factory for providing and setting up Client and Server SSL wrapped TSocket and TServerSocket
  */
+@SuppressWarnings({
+  "NullAway", // SSL configuration fields intentionally nullable
+  "EmptyBlockTag", // Parameter documentation inherited from overloads
+  "EmptyCatch" // Fallback SSL configuration attempts expected to fail silently
+})
 public class TSSLTransportFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSSLTransportFactory.class);

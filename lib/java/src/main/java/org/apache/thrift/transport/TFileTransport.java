@@ -37,6 +37,13 @@ import org.slf4j.LoggerFactory;
  * FileTransport can then be a user of this framed file format with some additional logic for
  * chunking.
  */
+@SuppressWarnings({
+  "NullAway", // Uses null to indicate unset state for file/stream fields
+  "UnnecessaryParentheses", // Code style inherited from C++ port
+  "UnusedMethod", // performRecovery reserved for future recovery functionality
+  "UnusedLabel", // retry label for potential future use
+  "EmptyCatch" // Intentionally ignoring InterruptedException in sleep
+})
 public class TFileTransport extends TTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TFileTransport.class.getName());
@@ -349,6 +356,7 @@ public class TFileTransport extends TTransport {
    *
    * @return true
    */
+  @Override
   public boolean isOpen() {
     return ((inputStream_ != null) && (readOnly_ || (outputStream_ != null)));
   }
@@ -357,6 +365,7 @@ public class TFileTransport extends TTransport {
    * Diverging from the cpp model and sticking to the TSocket model Files are not opened in ctor -
    * but in explicit open call
    */
+  @Override
   public void open() throws TTransportException {
     if (isOpen()) throw new TTransportException(TTransportException.ALREADY_OPEN);
 
@@ -372,6 +381,7 @@ public class TFileTransport extends TTransport {
   }
 
   /** Closes the transport. */
+  @Override
   public void close() {
     if (inputFile_ != null) {
       try {
@@ -418,6 +428,7 @@ public class TFileTransport extends TTransport {
    * Cloned from TTransport.java:readAll(). Only difference is throwing an EOF exception where one
    * is detected.
    */
+  @Override
   public int readAll(byte[] buf, int off, int len) throws TTransportException {
     int got = 0;
     int ret = 0;
@@ -443,6 +454,7 @@ public class TFileTransport extends TTransport {
    * @return The number of bytes actually read
    * @throws TTransportException if there was an error reading data
    */
+  @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if (!isOpen())
       throw new TTransportException(TTransportException.NOT_OPEN, "Must open before reading");
@@ -505,7 +517,7 @@ public class TFileTransport extends TTransport {
       }
     }
 
-    if (chunk * cs.getChunkSize() != cs.getOffset()) {
+    if ((long) chunk * cs.getChunkSize() != cs.getOffset()) {
       try {
         inputFile_.seek((long) chunk * cs.getChunkSize());
       } catch (IOException iox) {
@@ -543,6 +555,7 @@ public class TFileTransport extends TTransport {
    * @param len The number of bytes to write
    * @throws TTransportException if there was an error writing data
    */
+  @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
     throw new TTransportException("Not Supported");
   }
@@ -552,6 +565,7 @@ public class TFileTransport extends TTransport {
    *
    * @throws TTransportException if there was an error writing out data.
    */
+  @Override
   public void flush() throws TTransportException {
     throw new TTransportException("Not Supported");
   }

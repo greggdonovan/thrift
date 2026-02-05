@@ -34,7 +34,7 @@ public class EnumCacheTest {
     Bob(0),
     Charlie(1);
 
-    private int value;
+    private final int value;
 
     TestEnum(int value) {
       this.value = value;
@@ -54,7 +54,7 @@ public class EnumCacheTest {
 
     private static final NotEnum[] allValues = {Alice, Bob, Charlie};
 
-    private int value;
+    private final int value;
 
     private NotEnum(int value) {
       this.value = value;
@@ -76,6 +76,7 @@ public class EnumCacheTest {
   }
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testArgChecks() {
     EnumCache cache = new EnumCache();
 

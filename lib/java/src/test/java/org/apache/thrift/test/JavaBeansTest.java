@@ -20,7 +20,8 @@
 package org.apache.thrift.test;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import thrift.test.OneOfEachBeans;
 
 public class JavaBeansTest {
@@ -53,17 +54,20 @@ public class JavaBeansTest {
       throw new RuntimeException("isSet method error: unset field returned as set!");
 
     for (int i = 1; i < 12; i++) {
-      if (ooe.isSet(ooe.fieldForId(i)))
+      OneOfEachBeans._Fields field = ooe.fieldForId(i);
+      if (field == null)
+        throw new RuntimeException("isSet method error: field " + i + " not found!");
+      if (ooe.isSet(field))
         throw new RuntimeException("isSet method error: unset field " + i + " returned as set!");
     }
 
     // Everything is set
     ooe.set_a_bite((byte) 1);
-    ooe.set_base64(ByteBuffer.wrap("bytes".getBytes()));
-    ooe.set_byte_list(new LinkedList<>());
+    ooe.set_base64(ByteBuffer.wrap("bytes".getBytes(StandardCharsets.UTF_8)));
+    ooe.set_byte_list(new ArrayList<>());
     ooe.set_double_precision(1);
-    ooe.set_i16_list(new LinkedList<>());
-    ooe.set_i64_list(new LinkedList<>());
+    ooe.set_i16_list(new ArrayList<>());
+    ooe.set_i64_list(new ArrayList<>());
     ooe.set_boolean_field(true);
     ooe.set_integer16((short) 1);
     ooe.set_integer32(1);
@@ -94,14 +98,21 @@ public class JavaBeansTest {
       throw new RuntimeException("isSet method error: set field returned as unset!");
 
     for (int i = 1; i < 12; i++) {
-      if (!ooe.isSet(ooe.fieldForId(i)))
+      OneOfEachBeans._Fields field = ooe.fieldForId(i);
+      if (field == null)
+        throw new RuntimeException("isSet method error: field " + i + " not found!");
+      if (!ooe.isSet(field))
         throw new RuntimeException("isSet method error: set field " + i + " returned as unset!");
     }
 
     // Should throw exception when field doesn't exist
     boolean exceptionThrown = false;
     try {
-      ooe.isSet(ooe.fieldForId(100));
+      OneOfEachBeans._Fields field = ooe.fieldForId(100);
+      if (field == null) {
+        throw new IllegalArgumentException("Field id 100 does not exist");
+      }
+      ooe.isSet(field);
     } catch (IllegalArgumentException e) {
       exceptionThrown = true;
     }

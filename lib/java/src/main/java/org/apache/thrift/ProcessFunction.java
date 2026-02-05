@@ -8,6 +8,10 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({
+  "NullAway", // result is null only for oneway methods which don't write responses
+  "UnusedMethod" // handleException reserved for future error handling patterns
+})
 public abstract class ProcessFunction<I, T extends TBase, A extends TBase> {
   private final String methodName;
 

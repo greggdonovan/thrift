@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Wrapper around ServerSocket for Thrift. */
+@SuppressWarnings("NullAway") // Uses null to indicate unset/closed socket state
 public class TServerSocket extends TServerTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TServerSocket.class.getName());
@@ -100,6 +101,7 @@ public class TServerSocket extends TServerTransport {
     }
   }
 
+  @Override
   public void listen() throws TTransportException {
     // Make sure to block on accept
     if (serverSocket_ != null) {
@@ -131,6 +133,7 @@ public class TServerSocket extends TServerTransport {
     return socket;
   }
 
+  @Override
   public void close() {
     if (serverSocket_ != null) {
       try {
@@ -142,6 +145,7 @@ public class TServerSocket extends TServerTransport {
     }
   }
 
+  @Override
   public void interrupt() {
     // The thread-safeness of this is dubious, but Java documentation suggests
     // that it is safe to do this from a different thread context

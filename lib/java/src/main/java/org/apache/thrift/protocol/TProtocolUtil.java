@@ -22,6 +22,7 @@ package org.apache.thrift.protocol;
 import org.apache.thrift.TException;
 
 /** Utility class with static methods for interacting with protocol data streams. */
+@SuppressWarnings("StatementSwitchToExpressionSwitch") // Statement switch clearer for type dispatch
 public class TProtocolUtil {
 
   // no instantiation

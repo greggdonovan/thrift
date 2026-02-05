@@ -51,9 +51,10 @@ public enum NegotiationStatus {
   }
 
   public static NegotiationStatus byValue(byte val) throws TSaslNegotiationException {
-    if (!reverseMap.containsKey(val)) {
+    NegotiationStatus result = reverseMap.get(val);
+    if (result == null) {
       throw new TSaslNegotiationException(PROTOCOL_ERROR, "Invalid status " + val);
     }
-    return reverseMap.get(val);
+    return result;
   }
 }

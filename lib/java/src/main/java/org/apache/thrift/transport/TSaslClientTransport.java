@@ -58,7 +58,7 @@ public class TSaslClientTransport extends TSaslTransport {
    * documentation for <code>Sasl.createSaslClient</code> for the details of the parameters.
    *
    * @param transport The underlying Thrift transport.
-   * @throws SaslException
+   * @throws SaslException if there is an error creating the SASL client
    */
   public TSaslClientTransport(
       String mechanism,

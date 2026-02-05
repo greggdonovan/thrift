@@ -43,6 +43,12 @@ import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 
 /** Generic utility for easily deserializing objects from a byte array or Java String. */
+@SuppressWarnings({
+  "NullAway", // Null fields indicate uninitialized optional state; null returns documented
+  "UnusedMethod", // Methods reserved for future use or accessed via reflection
+  "UnusedVariable", // Variables used in switch branches for clarity
+  "StatementSwitchToExpressionSwitch" // Statement switches clearer for type dispatch
+})
 public class TDeserializer {
   private final TProtocol protocol_;
   private final TMemoryInputTransport trans_;

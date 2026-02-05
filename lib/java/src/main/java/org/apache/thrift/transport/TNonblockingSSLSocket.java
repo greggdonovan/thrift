@@ -34,6 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Transport for use with async ssl client. */
+@SuppressWarnings({
+  "NullAway", // selectionKey initialized lazily via registerSelector
+  "StatementSwitchToExpressionSwitch", // Statement switches clearer for complex SSL handshake logic
+  "FutureReturnValueIgnored" // Delegated SSL tasks run asynchronously, errors handled by SSLEngine
+})
 public class TNonblockingSSLSocket extends TNonblockingSocket implements SocketAddressProvider {
 
   private static final Logger LOGGER =

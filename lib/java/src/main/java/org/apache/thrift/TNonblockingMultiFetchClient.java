@@ -63,6 +63,10 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note: It assumes all remote servers are TNonblockingServers and use TFramedTransport.
  */
+@SuppressWarnings({
+  "NullAway", // Null fields indicate uninitialized state; null return documented in javadoc
+  "EffectivelyPrivate" // Package-private inner class methods need controlled visibility
+})
 public class TNonblockingMultiFetchClient {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingMultiFetchClient.class);
@@ -189,6 +193,7 @@ public class TNonblockingMultiFetchClient {
      * <p>Sanity check for parameters has been done in TNonblockingMultiFetchClient before calling
      * this function.
      */
+    @Override
     public void run() {
       long t1 = System.currentTimeMillis();
 

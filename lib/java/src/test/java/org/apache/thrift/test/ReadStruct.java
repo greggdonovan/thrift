@@ -29,6 +29,7 @@ import org.apache.thrift.transport.TTransport;
 import thrift.test.CompactProtoTestStruct;
 
 public class ReadStruct {
+  @SuppressWarnings("NullAway")
   public static void main(String[] args) throws Exception {
     if (args.length != 2) {
       System.out.println(
@@ -41,7 +42,10 @@ public class ReadStruct {
         new TIOStreamTransport(new BufferedInputStream(new FileInputStream(args[0])));
 
     TProtocolFactory factory =
-        (TProtocolFactory) Class.forName(args[1]).getDeclaredConstructor().newInstance();
+        Class.forName(args[1])
+            .asSubclass(TProtocolFactory.class)
+            .getDeclaredConstructor()
+            .newInstance();
 
     TProtocol proto = factory.getProtocol(trans);
 

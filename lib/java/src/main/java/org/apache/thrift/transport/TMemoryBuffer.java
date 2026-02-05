@@ -76,6 +76,7 @@ public class TMemoryBuffer extends TEndpointTransport {
     if (amtToRead > 0) {
       System.arraycopy(src, pos_, buf, off, amtToRead);
       pos_ += amtToRead;
+      countConsumedMessageBytes(amtToRead);
     }
     return amtToRead;
   }

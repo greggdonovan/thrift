@@ -28,6 +28,11 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 /** Binary protocol implementation for thrift. */
+@SuppressWarnings({
+  "NullAway", // Buffer checks done at runtime with null-safe fallbacks
+  "MissingOverride", // Factory inner class implements interface method
+  "UnnecessaryParentheses" // Parentheses aid readability in bit manipulation
+})
 public class TBinaryProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
   private static final long NO_LENGTH_LIMIT = -1;

@@ -26,34 +26,40 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
+@SuppressWarnings("NullAway") // Fields initialized in constructor, null indicates closed state
 public class TStandardFile implements TSeekableFile {
 
-  protected String path_ = null;
-  protected RandomAccessFile inputFile_ = null;
+  protected String path_;
+  protected RandomAccessFile inputFile_;
 
   public TStandardFile(String path) throws IOException {
     path_ = path;
     inputFile_ = new RandomAccessFile(path_, "r");
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return new FileInputStream(inputFile_.getFD());
   }
 
+  @Override
   public OutputStream getOutputStream() throws IOException {
     return new FileOutputStream(path_);
   }
 
+  @Override
   public void close() throws IOException {
     if (inputFile_ != null) {
       inputFile_.close();
     }
   }
 
+  @Override
   public long length() throws IOException {
     return inputFile_.length();
   }
 
+  @Override
   public void seek(long pos) throws IOException {
     inputFile_.seek(pos);
   }

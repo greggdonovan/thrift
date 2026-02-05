@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import thrift.test.voidmethexceptions.TAppService01;
 import thrift.test.voidmethexceptions.TExampleException;
 
+@SuppressWarnings({"NullAway", "ImmutableEnumChecker"})
 public class TestVoidMethExceptions {
 
   private static final Logger log = LoggerFactory.getLogger(TestVoidMethExceptions.class);

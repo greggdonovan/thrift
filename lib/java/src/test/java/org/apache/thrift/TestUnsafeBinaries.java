@@ -79,6 +79,7 @@ public class TestUnsafeBinaries {
 
   //  buffer doens't copy
   @Test
+  @SuppressWarnings("ByteBufferBackingArray") // Intentional: testing direct array access behavior
   public void testUnsafeBufferFor() {
     UnsafeBytes struct = new UnsafeBytes(ByteBuffer.wrap(input()));
 
@@ -115,6 +116,7 @@ public class TestUnsafeBinaries {
   }
 
   @Test
+  @SuppressWarnings("ByteBufferBackingArray") // Intentional: testing buffer copy behavior
   public void testSafeBufferFor() {
     SafeBytes struct = new SafeBytes(ByteBuffer.wrap(input()));
 

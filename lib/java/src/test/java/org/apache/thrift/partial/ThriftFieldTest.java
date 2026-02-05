@@ -21,6 +21,7 @@ package org.apache.thrift.partial;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,14 +34,12 @@ import org.junit.jupiter.api.Test;
 public class ThriftFieldTest {
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testArgChecks() {
-    ThriftField test;
-    List<ThriftField> testFields;
-
     // Should not throw.
-    test = new ThriftField("foo");
-    test = new ThriftField("foo", Collections.singletonList(new ThriftField("bar")));
-    testFields = ThriftField.fromNames(Collections.singletonList("foo"));
+    assertNotNull(new ThriftField("foo"));
+    assertNotNull(new ThriftField("foo", Collections.singletonList(new ThriftField("bar"))));
+    assertNotNull(ThriftField.fromNames(Collections.singletonList("foo")));
 
     // Verify it throws.
     assertThrows(

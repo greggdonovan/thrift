@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Simple singlethreaded server for testing. */
+@SuppressWarnings("NullAway") // Connection context set during request lifecycle
 public class TSimpleServer extends TServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSimpleServer.class.getName());
@@ -113,6 +114,7 @@ public class TSimpleServer extends TServer {
     setServing(false);
   }
 
+  @Override
   public void stop() {
     stopped_ = true;
     serverTransport_.interrupt();

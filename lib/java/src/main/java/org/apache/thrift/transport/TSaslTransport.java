@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
  * A superclass for SASL client/server thrift transports. A subclass need only implement the <code>
  * open</code> method.
  */
+@SuppressWarnings("NullAway") // sasl field initialized lazily via setSaslServer in subclasses
 abstract class TSaslTransport extends TEndpointTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSaslTransport.class);
@@ -115,7 +116,7 @@ abstract class TSaslTransport extends TEndpointTransport {
    *
    * @param status The status to send.
    * @param payload The data to send as the payload of this message.
-   * @throws TTransportException
+   * @throws TTransportException if there is a failure sending the message
    */
   protected void sendSaslMessage(NegotiationStatus status, byte[] payload)
       throws TTransportException {
@@ -198,8 +199,8 @@ abstract class TSaslTransport extends TEndpointTransport {
    * Implemented by subclasses to start the Thrift SASL handshake process. When this method
    * completes, the <code>SaslParticipant</code> in this class is assumed to be initialized.
    *
-   * @throws TTransportException
-   * @throws SaslException
+   * @throws TTransportException if there is a transport failure
+   * @throws SaslException if there is a SASL-related failure
    */
   protected abstract void handleSaslStartMessage() throws TTransportException, SaslException;
 
@@ -461,10 +462,14 @@ abstract class TSaslTransport extends TEndpointTransport {
    * Used to abstract over the <code>SaslServer</code> and <code>SaslClient</code> classes, which
    * share a lot of their interface, but unfortunately don't share a common superclass.
    */
+  @SuppressWarnings({
+    "NullAway", // One of saslServer/saslClient is always null by design
+    "EffectivelyPrivate" // Public fields and methods needed for inner class access pattern
+  })
   private static class SaslParticipant {
     // One of these will always be null.
-    public SaslServer saslServer;
-    public SaslClient saslClient;
+    SaslServer saslServer;
+    SaslClient saslClient;
 
     public SaslParticipant(SaslServer saslServer) {
       this.saslServer = saslServer;

@@ -19,6 +19,7 @@
 package org.apache.thrift;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.ByteBuffer;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -164,7 +165,9 @@ public class TestTDeserializer {
       short id =
           deserializer.partialDeserializeSetFieldIdInUnion(
               serialize(level1SWU, factory), StructWithAUnion._Fields.TEST_UNION);
-      assertEquals(level2TestUnion.getSetField().getThriftFieldId(), id);
+      TestUnion._Fields setField = level2TestUnion.getSetField();
+      assertNotNull(setField, "expected union set field to be non-null");
+      assertEquals(setField.getThriftFieldId(), id);
     }
   }
 

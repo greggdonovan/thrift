@@ -31,7 +31,7 @@ import org.apache.thrift.TConfiguration;
 /** TZlibTransport deflates on write and inflates on read. */
 public class TZlibTransport extends TIOStreamTransport {
 
-  private TTransport transport_ = null;
+  private TTransport transport_;
 
   public static class Factory extends TTransportFactory {
     public Factory() {}
@@ -90,7 +90,7 @@ public class TZlibTransport extends TIOStreamTransport {
 
 class TTransportInputStream extends InputStream {
 
-  private TTransport transport = null;
+  private TTransport transport;
 
   public TTransportInputStream(TTransport transport) {
     this.transport = transport;
@@ -119,7 +119,7 @@ class TTransportInputStream extends InputStream {
 
 class TTransportOutputStream extends OutputStream {
 
-  private TTransport transport = null;
+  private TTransport transport;
 
   public TTransportOutputStream(TTransport transport) {
     this.transport = transport;

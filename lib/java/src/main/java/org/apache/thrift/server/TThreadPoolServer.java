@@ -43,6 +43,11 @@ import org.slf4j.LoggerFactory;
  * Server which uses Java's built in ThreadPool management to spawn off a worker pool that deals
  * with client connections in blocking way.
  */
+@SuppressWarnings({
+  "NullAway", // Optional fields and connection context set during lifecycle
+  "PatternMatchingInstanceof", // Traditional instanceof clearer for transport type checks
+  "StatementSwitchToExpressionSwitch" // Statement switch clearer for exception handling
+})
 public class TThreadPoolServer extends TServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class);
 

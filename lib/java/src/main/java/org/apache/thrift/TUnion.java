@@ -35,6 +35,10 @@ import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 import org.jspecify.annotations.Nullable;
 
+@SuppressWarnings({
+  "NullAway", // Scheme lookup uses static map guaranteed to contain entries
+  "MissingOverride" // Inner scheme factory classes implement interface methods
+})
 public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     implements TBase<T, F> {
 
@@ -114,6 +118,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return value_;
   }
 
+  @Override
   public Object getFieldValue(F fieldId) {
     if (fieldId != setField_) {
       throw new IllegalArgumentException(
@@ -138,6 +143,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return setField_ != null;
   }
 
+  @Override
   public boolean isSet(F fieldId) {
     return setField_ == fieldId;
   }
@@ -146,10 +152,12 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return isSet(enumForId((short) fieldId));
   }
 
+  @Override
   public void read(TProtocol iprot) throws TException {
     schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
   }
 
+  @Override
   public void setFieldValue(F fieldId, Object value) {
     checkType(fieldId, value);
     setField_ = fieldId;
@@ -160,6 +168,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     setFieldValue(enumForId((short) fieldId), value);
   }
 
+  @Override
   public void write(TProtocol oprot) throws TException {
     schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
@@ -219,6 +228,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return sb.toString();
   }
 
+  @Override
   public final void clear() {
     this.setField_ = null;
     this.value_ = null;

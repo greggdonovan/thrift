@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -195,10 +196,12 @@ public abstract class ProtocolTestBase {
   private void internalTestByteField(final byte b) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.BYTE, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeByte(b);
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(b, proto.readByte());
           }
@@ -215,10 +218,12 @@ public abstract class ProtocolTestBase {
   private void internalTestI16Field(final short n) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.I16, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeI16(n);
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(n, proto.readI16());
           }
@@ -257,10 +262,12 @@ public abstract class ProtocolTestBase {
   private void internalTestI32Field(final int n) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.I32, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeI32(n);
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(n, proto.readI32());
           }
@@ -277,10 +284,12 @@ public abstract class ProtocolTestBase {
   private void internalTestI64Field(final long n) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.I64, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeI64(n);
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(n, proto.readI64());
           }
@@ -297,10 +306,12 @@ public abstract class ProtocolTestBase {
   private void internalTestStringField(final String str) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.STRING, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeString(str);
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(str, proto.readString());
           }
@@ -317,10 +328,12 @@ public abstract class ProtocolTestBase {
   private void internalTestBinaryField(final byte[] data) throws Exception {
     internalTestStructField(
         new StructFieldTestCase(TType.STRING, (short) 15) {
+          @Override
           public void writeMethod(TProtocol proto) throws TException {
             proto.writeBinary(ByteBuffer.wrap(data));
           }
 
+          @Override
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(ByteBuffer.wrap(data), proto.readBinary());
           }
@@ -360,12 +373,11 @@ public abstract class ProtocolTestBase {
     for (TMessage msg : msgs) {
       TMemoryBuffer buf = new TMemoryBuffer(0);
       TProtocol proto = getFactory().getProtocol(buf);
-      TMessage output = null;
 
       proto.writeMessageBegin(msg);
       proto.writeMessageEnd();
 
-      output = proto.readMessageBegin();
+      TMessage output = proto.readMessageBegin();
 
       assertEquals(msg, output);
     }
@@ -375,20 +387,25 @@ public abstract class ProtocolTestBase {
   public void testServerRequest() throws Exception {
     Srv.Iface handler =
         new Srv.Iface() {
+          @Override
           public int Janky(int i32arg) throws TException {
             return i32arg * 2;
           }
 
+          @Override
           public int primitiveMethod() throws TException {
             return 0;
           }
 
+          @Override
           public CompactProtoTestStruct structMethod() throws TException {
-            return null;
+            return new CompactProtoTestStruct();
           }
 
+          @Override
           public void voidMethod() throws TException {}
 
+          @Override
           public void methodWithDefaultArgs(int something) throws TException {}
 
           @Override
@@ -455,14 +472,14 @@ public abstract class ProtocolTestBase {
     byte type_;
     short id_;
 
-    public StructFieldTestCase(byte type, short id) {
+    StructFieldTestCase(byte type, short id) {
       type_ = type;
       id_ = id;
     }
 
-    public abstract void writeMethod(TProtocol proto) throws TException;
+    abstract void writeMethod(TProtocol proto) throws TException;
 
-    public abstract void readMethod(TProtocol proto) throws TException;
+    abstract void readMethod(TProtocol proto) throws TException;
   }
 
   private static final int NUM_TRIALS = 5;
@@ -475,6 +492,9 @@ public abstract class ProtocolTestBase {
       long serStart = System.currentTimeMillis();
       for (int rep = 0; rep < NUM_REPS; rep++) {
         serialized = ser.serialize(Fixtures.getHolyMoley());
+      }
+      if (serialized == null) {
+        throw new AssertionError("Serialization returned null");
       }
       long serEnd = System.currentTimeMillis();
       long serElapsed = serEnd - serStart;
@@ -512,8 +532,9 @@ public abstract class ProtocolTestBase {
 
         @Override
         public List<Integer> testList(List<Integer> thing) {
-          thing.addAll(thing);
-          thing.addAll(thing);
+          List<Integer> snapshot = new ArrayList<>(thing);
+          thing.addAll(snapshot);
+          thing.addAll(snapshot);
           return thing;
         }
 

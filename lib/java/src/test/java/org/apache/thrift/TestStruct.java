@@ -53,6 +53,11 @@ import thrift.test.StructA;
 import thrift.test.StructB;
 import thrift.test.Xtruct;
 
+@SuppressWarnings({
+  "NullAway", // Test expects known keys in metadata maps and uses null values for testing
+  "DefaultCharset", // Test uses platform default charset intentionally for compatibility testing
+  "UnicodeEscape" // Test data includes intentional unicode escapes for non-ASCII testing
+})
 public class TestStruct {
   @Test
   public void testIdentity() throws Exception {

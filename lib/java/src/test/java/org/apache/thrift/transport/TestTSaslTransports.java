@@ -50,6 +50,7 @@ import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class TestTSaslTransports {
   public static final String REALM = "thrift-test-realm";
 
   public static final String UNWRAPPED_MECHANISM = "CRAM-MD5";
-  public static final Map<String, String> UNWRAPPED_PROPS = null;
+  public static final @Nullable Map<String, String> UNWRAPPED_PROPS = null;
 
   public static final String WRAPPED_MECHANISM = "DIGEST-MD5";
   public static final Map<String, String> WRAPPED_PROPS = new HashMap<String, String>();
@@ -86,6 +87,10 @@ public class TestTSaslTransports {
           + "this nation will rise up and live out the true meaning of its creed: "
           + "'We hold these truths to be self-evident, that all men are created equal.'";
 
+  private static Map<String, String> nonNullProps(@Nullable Map<String, String> props) {
+    return props == null ? new HashMap<>() : props;
+  }
+
   public static class TestSaslCallbackHandler implements CallbackHandler {
     private final String password;
 
@@ -96,14 +101,14 @@ public class TestTSaslTransports {
     @Override
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
       for (Callback c : callbacks) {
-        if (c instanceof NameCallback) {
-          ((NameCallback) c).setName(PRINCIPAL);
-        } else if (c instanceof PasswordCallback) {
-          ((PasswordCallback) c).setPassword(password.toCharArray());
-        } else if (c instanceof AuthorizeCallback) {
-          ((AuthorizeCallback) c).setAuthorized(true);
-        } else if (c instanceof RealmCallback) {
-          ((RealmCallback) c).setText(REALM);
+        if (c instanceof NameCallback nameCallback) {
+          nameCallback.setName(PRINCIPAL);
+        } else if (c instanceof PasswordCallback passwordCallback) {
+          passwordCallback.setPassword(password.toCharArray());
+        } else if (c instanceof AuthorizeCallback authorizeCallback) {
+          authorizeCallback.setAuthorized(true);
+        } else if (c instanceof RealmCallback realmCallback) {
+          realmCallback.setText(REALM);
         } else {
           throw new UnsupportedCallbackException(c);
         }
@@ -113,14 +118,15 @@ public class TestTSaslTransports {
 
   private static class ServerThread extends Thread {
     final String mechanism;
-    final Map<String, String> props;
-    volatile Throwable thrown;
+    final @Nullable Map<String, String> props;
+    volatile @Nullable Throwable thrown;
 
-    public ServerThread(String mechanism, Map<String, String> props) {
+    ServerThread(String mechanism, @Nullable Map<String, String> props) {
       this.mechanism = mechanism;
       this.props = props;
     }
 
+    @Override
     public void run() {
       try {
         internalRun();
@@ -139,36 +145,37 @@ public class TestTSaslTransports {
 
     private void acceptAndWrite(TServerSocket serverSocket) throws Exception {
       TTransport serverTransport = serverSocket.accept();
+      Map<String, String> effectiveProps = nonNullProps(props);
       TTransport saslServerTransport =
           new TSaslServerTransport(
               mechanism,
               SERVICE,
               HOST,
-              props,
+              effectiveProps,
               new TestSaslCallbackHandler(PASSWORD),
               serverTransport);
 
       saslServerTransport.open();
 
-      byte[] inBuf = new byte[testMessage1.getBytes().length];
+      byte[] inBuf = new byte[testMessage1.getBytes(StandardCharsets.UTF_8).length];
       // Deliberately read less than the full buffer to ensure
       // that TSaslTransport is correctly buffering reads. This
       // will fail for the WRAPPED test, if it doesn't work.
       saslServerTransport.readAll(inBuf, 0, 5);
       saslServerTransport.readAll(inBuf, 5, 10);
       saslServerTransport.readAll(inBuf, 15, inBuf.length - 15);
-      LOGGER.debug("server got: {}", new String(inBuf));
-      assertEquals(new String(inBuf), testMessage1);
+      LOGGER.debug("server got: {}", new String(inBuf, StandardCharsets.UTF_8));
+      assertEquals(new String(inBuf, StandardCharsets.UTF_8), testMessage1);
 
       LOGGER.debug("server writing: {}", testMessage2);
-      saslServerTransport.write(testMessage2.getBytes());
+      saslServerTransport.write(testMessage2.getBytes(StandardCharsets.UTF_8));
       saslServerTransport.flush();
 
       saslServerTransport.close();
     }
   }
 
-  private void testSaslOpen(final String mechanism, final Map<String, String> props)
+  private void testSaslOpen(final String mechanism, final @Nullable Map<String, String> props)
       throws Exception {
     ServerThread serverThread = new ServerThread(mechanism, props);
     serverThread.start();
@@ -181,24 +188,25 @@ public class TestTSaslTransports {
 
     try {
       TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
+      Map<String, String> effectiveProps = nonNullProps(props);
       TTransport saslClientTransport =
           new TSaslClientTransport(
               mechanism,
               PRINCIPAL,
               SERVICE,
               HOST,
-              props,
+              effectiveProps,
               new TestSaslCallbackHandler(PASSWORD),
               clientSocket);
       saslClientTransport.open();
       LOGGER.debug("client writing: {}", testMessage1);
-      saslClientTransport.write(testMessage1.getBytes());
+      saslClientTransport.write(testMessage1.getBytes(StandardCharsets.UTF_8));
       saslClientTransport.flush();
 
-      byte[] inBuf = new byte[testMessage2.getBytes().length];
+      byte[] inBuf = new byte[testMessage2.getBytes(StandardCharsets.UTF_8).length];
       saslClientTransport.readAll(inBuf, 0, inBuf.length);
-      LOGGER.debug("client got: {}", new String(inBuf));
-      assertEquals(new String(inBuf), testMessage2);
+      LOGGER.debug("client got: {}", new String(inBuf, StandardCharsets.UTF_8));
+      assertEquals(new String(inBuf, StandardCharsets.UTF_8), testMessage2);
 
       TTransportException expectedException = null;
       try {
@@ -214,10 +222,17 @@ public class TestTSaslTransports {
       throw e;
     } finally {
       serverThread.interrupt();
-      try {
-        serverThread.join();
-      } catch (InterruptedException e) {
-        // Ah well.
+      boolean interrupted = false;
+      while (true) {
+        try {
+          serverThread.join();
+          break;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
       }
       assertNull(serverThread.thrown);
     }
@@ -258,25 +273,40 @@ public class TestTSaslTransports {
             TTransportException.class,
             () -> {
               TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
+              Map<String, String> effectiveProps = nonNullProps(UNWRAPPED_PROPS);
               TTransport saslClientTransport =
                   new TSaslClientTransport(
                       UNWRAPPED_MECHANISM,
                       PRINCIPAL,
                       SERVICE,
                       HOST,
-                      UNWRAPPED_PROPS,
+                      effectiveProps,
                       new TestSaslCallbackHandler("NOT THE PASSWORD"),
                       clientSocket);
               saslClientTransport.open();
             },
             "Was able to open transport with bad password");
     LOGGER.error("Exception for bad password", tte);
-    assertNotNull(tte.getMessage());
-    assertTrue(tte.getMessage().contains("Invalid response"));
+    String errorMessage = tte.getMessage();
+    assertNotNull(errorMessage);
+    assertTrue(errorMessage.contains("Invalid response"));
     serverThread.interrupt();
-    serverThread.join();
-    assertNotNull(serverThread.thrown);
-    assertTrue(serverThread.thrown.getMessage().contains("Invalid response"));
+    boolean interrupted = false;
+    while (true) {
+      try {
+        serverThread.join();
+        break;
+      } catch (InterruptedException e) {
+        interrupted = true;
+      }
+    }
+    if (interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    Throwable thrown = serverThread.thrown;
+    assertNotNull(thrown);
+    assertNotNull(thrown.getMessage());
+    assertTrue(thrown.getMessage().contains("Invalid response"));
   }
 
   @Test
@@ -286,8 +316,8 @@ public class TestTSaslTransports {
 
   public static class TestTSaslTransportsWithServer extends ServerTestBase {
 
-    private Thread serverThread;
-    private TServer server;
+    private @Nullable Thread serverThread;
+    private @Nullable TServer server;
 
     @Override
     public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
@@ -305,17 +335,18 @@ public class TestTSaslTransports {
     public void startServer(
         final TProcessor processor,
         final TProtocolFactory protoFactory,
-        final TTransportFactory factory)
+        final @Nullable TTransportFactory factory)
         throws Exception {
       serverThread =
           new Thread() {
+            @Override
             public void run() {
               try {
                 // Transport
                 TServerSocket socket =
                     new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(PORT));
 
-                TTransportFactory factory =
+                TTransportFactory serverFactory =
                     new TSaslServerTransport.Factory(
                         WRAPPED_MECHANISM,
                         SERVICE,
@@ -326,7 +357,7 @@ public class TestTSaslTransports {
                     new TSimpleServer(
                         new Args(socket)
                             .processor(processor)
-                            .transportFactory(factory)
+                            .transportFactory(serverFactory)
                             .protocolFactory(protoFactory));
 
                 // Run it
@@ -344,11 +375,22 @@ public class TestTSaslTransports {
 
     @Override
     public void stopServer() throws Exception {
-      server.stop();
-      try {
-        serverThread.join();
-      } catch (InterruptedException e) {
-        LOGGER.debug("interrupted during sleep", e);
+      if (server != null) {
+        server.stop();
+      }
+      if (serverThread != null) {
+        boolean interrupted = false;
+        while (true) {
+          try {
+            serverThread.join();
+            break;
+          } catch (InterruptedException e) {
+            interrupted = true;
+          }
+        }
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
       }
     }
   }
@@ -358,7 +400,7 @@ public class TestTSaslTransports {
     private final String username;
     private boolean hasProvidedInitialResponse;
 
-    public AnonymousClient(String username) {
+    AnonymousClient(String username) {
       this.username = username;
     }
 
@@ -398,7 +440,7 @@ public class TestTSaslTransports {
     }
 
     @Override
-    public Object getNegotiatedProperty(String propName) {
+    public @Nullable Object getNegotiatedProperty(String propName) {
       return null;
     }
 
@@ -407,7 +449,7 @@ public class TestTSaslTransports {
   }
 
   private static class AnonymousServer implements SaslServer {
-    private String user;
+    private @Nullable String user;
 
     @Override
     public String getMechanismName() {
@@ -415,6 +457,7 @@ public class TestTSaslTransports {
     }
 
     @Override
+    @SuppressWarnings("NullAway")
     public byte[] evaluateResponse(byte[] response) throws SaslException {
       this.user = new String(response, StandardCharsets.UTF_8);
       return null;
@@ -426,7 +469,7 @@ public class TestTSaslTransports {
     }
 
     @Override
-    public String getAuthorizationID() {
+    public @Nullable String getAuthorizationID() {
       return user;
     }
 
@@ -441,7 +484,7 @@ public class TestTSaslTransports {
     }
 
     @Override
-    public Object getNegotiatedProperty(String propName) {
+    public @Nullable Object getNegotiatedProperty(String propName) {
       return null;
     }
 
@@ -452,7 +495,7 @@ public class TestTSaslTransports {
   public static class SaslAnonymousFactory implements SaslClientFactory, SaslServerFactory {
 
     @Override
-    public SaslClient createSaslClient(
+    public @Nullable SaslClient createSaslClient(
         String[] mechanisms,
         String authorizationId,
         String protocol,
@@ -468,7 +511,7 @@ public class TestTSaslTransports {
     }
 
     @Override
-    public SaslServer createSaslServer(
+    public @Nullable SaslServer createSaslServer(
         String mechanism,
         String protocol,
         String serverName,
@@ -492,7 +535,7 @@ public class TestTSaslTransports {
 
   public static class SaslAnonymousProvider extends java.security.Provider {
     public SaslAnonymousProvider() {
-      super("ThriftSaslAnonymous", 1.0, "Thrift Anonymous SASL provider");
+      super("ThriftSaslAnonymous", "1.0", "Thrift Anonymous SASL provider");
       put("SaslClientFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
       put("SaslServerFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
     }
@@ -500,10 +543,10 @@ public class TestTSaslTransports {
 
   private static class MockTTransport extends TTransport {
 
-    byte[] badHeader = null;
+    private final byte[] badHeader;
     private final TMemoryInputTransport readBuffer;
 
-    public MockTTransport(int mode) throws TTransportException {
+    MockTTransport(int mode) throws TTransportException {
       readBuffer = new TMemoryInputTransport();
       if (mode == 1) {
         // Invalid status byte
@@ -514,6 +557,8 @@ public class TestTSaslTransports {
       } else if (mode == 3) {
         // Valid status byte, excessively large, bogus payload length
         badHeader = new byte[] {(byte) 0x01, (byte) 0x64, (byte) 0x00, (byte) 0x00, (byte) 0x00};
+      } else {
+        badHeader = new byte[0];
       }
       readBuffer.reset(badHeader);
     }

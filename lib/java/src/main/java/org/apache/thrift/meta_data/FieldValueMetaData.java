@@ -24,6 +24,7 @@ import org.apache.thrift.protocol.TType;
 /**
  * FieldValueMetaData and collection of subclasses to store metadata about the value(s) of a field
  */
+@SuppressWarnings("NullAway") // typedefName intentionally null when isTypedefType is false
 public class FieldValueMetaData implements java.io.Serializable {
   public final byte type;
 

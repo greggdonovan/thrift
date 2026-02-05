@@ -37,6 +37,13 @@ import org.apache.thrift.transport.TTransportException;
  *
  * <p>Please see the C++ class header for a detailed description of the protocol's wire format.
  */
+@SuppressWarnings({
+  "MissingOverride", // Factory inner class implements interface method
+  "StatementSwitchToExpressionSwitch", // Statement switches clearer for type dispatch
+  "JdkObsolete", // Stack used for context stack matching C++ implementation
+  "IntLiteralCast", // Intentional byte literal casts for protocol bytes
+  "UnnecessaryParentheses" // Parentheses aid readability in bit manipulation
+})
 public class TJSONProtocol extends TProtocol {
 
   /** Factory for JSON protocol objects */

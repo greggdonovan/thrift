@@ -25,6 +25,7 @@ import org.apache.thrift.async.AsyncMethodCallback;
 import thrift.test.voidmethexceptions.TAppService01;
 import thrift.test.voidmethexceptions.TExampleException;
 
+@SuppressWarnings("NullAway")
 public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncIface {
 
   @Override

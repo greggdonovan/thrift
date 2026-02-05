@@ -20,6 +20,7 @@ package org.apache.thrift.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
@@ -43,8 +44,8 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.layered.TFramedTransport;
-import org.apache.thrift.transport.layered.TFramedTransport.Factory;
 import org.junit.jupiter.api.Test;
+import org.jspecify.annotations.Nullable;
 import thrift.test.Insanity;
 import thrift.test.Numberz;
 import thrift.test.ThriftTest;
@@ -251,8 +252,8 @@ public abstract class ServerTestBase {
       second_map.put(Numberz.SIX, looney);
 
       Map<Long, Map<Numberz, Insanity>> insane = new HashMap<>();
-      insane.put((long) 1, first_map);
-      insane.put((long) 2, second_map);
+      insane.put(1L, first_map);
+      insane.put(2L, second_map);
 
       return insane;
     }
@@ -285,7 +286,6 @@ public abstract class ServerTestBase {
         Xtruct result = new Xtruct();
         result.string_thing = arg;
       }
-      return;
     }
 
     @Override
@@ -336,7 +336,7 @@ public abstract class ServerTestBase {
   }
 
   public abstract void startServer(
-      TProcessor processor, TProtocolFactory protoFactory, TTransportFactory factory)
+      TProcessor processor, TProtocolFactory protoFactory, @Nullable TTransportFactory factory)
       throws Exception;
 
   public abstract void stopServer() throws Exception;
@@ -390,7 +390,7 @@ public abstract class ServerTestBase {
 
     insane = new Insanity();
     insane.userMap = new HashMap<>();
-    insane.userMap.put(Numberz.FIVE, (long) 5000);
+    insane.userMap.put(Numberz.FIVE, 5000L);
     Xtruct truck = new Xtruct();
     truck.string_thing = "Truck";
     truck.byte_thing = (byte) 8;
@@ -405,6 +405,10 @@ public abstract class ServerTestBase {
       Map<Numberz, Insanity> val = whoa.get(key);
       System.out.print(key + " => {");
 
+      if (val == null) {
+        System.out.print("null}, ");
+        continue;
+      }
       for (Numberz k2 : val.keySet()) {
         Insanity v2 = val.get(k2);
         System.out.print(k2 + " => {");
@@ -585,10 +589,10 @@ public abstract class ServerTestBase {
   }
 
   private static class CallCountingTransportFactory extends TTransportFactory {
-    public int count = 0;
-    private final Factory factory;
+    int count = 0;
+    private final TFramedTransport.Factory factory;
 
-    public CallCountingTransportFactory(Factory factory) {
+    CallCountingTransportFactory(TFramedTransport.Factory factory) {
       this.factory = factory;
     }
 
@@ -637,6 +641,7 @@ public abstract class ServerTestBase {
       testClient.testException("TException");
       assert false;
     } catch (TException e) {
+      assertNotNull(e);
     }
     testClient.testException("no Exception");
   }
@@ -645,9 +650,14 @@ public abstract class ServerTestBase {
 
     TestHandler handler = new TestHandler();
 
+    @SuppressWarnings("NullAway")
+    private static void completeVoid(AsyncMethodCallback<Void> resultHandler) {
+      resultHandler.onComplete(null);
+    }
+
     @Override
     public void testVoid(AsyncMethodCallback<Void> resultHandler) throws TException {
-      resultHandler.onComplete(null);
+      completeVoid(resultHandler);
     }
 
     @Override
@@ -789,7 +799,7 @@ public abstract class ServerTestBase {
         // Unspecified exception should yield a TApplicationException on client side
         throw new RuntimeException(arg);
       }
-      resultHandler.onComplete(null);
+      completeVoid(resultHandler);
     }
 
     @Override
@@ -802,7 +812,7 @@ public abstract class ServerTestBase {
     public void testOneway(int secondsToSleep, AsyncMethodCallback<Void> resultHandler)
         throws TException {
       handler.testOneway(secondsToSleep);
-      resultHandler.onComplete(null);
+      completeVoid(resultHandler);
     }
   }
 }

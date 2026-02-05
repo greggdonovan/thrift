@@ -35,16 +35,17 @@ import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TestTSaslTransports;
 import org.apache.thrift.transport.TestTSaslTransports.TestSaslCallbackHandler;
 import org.apache.thrift.transport.sasl.TSaslNegotiationException;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
 public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTransportsWithServer {
 
-  private TSaslNonblockingServer server;
+  private @Nullable TSaslNonblockingServer server;
 
   @Override
   public void startServer(
-      TProcessor processor, TProtocolFactory protoFactory, TTransportFactory factory)
+      TProcessor processor, TProtocolFactory protoFactory, @Nullable TTransportFactory factory)
       throws Exception {
     TNonblockingServerTransport serverSocket =
         new TNonblockingServerSocket(
@@ -52,7 +53,6 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
     TSaslNonblockingServer.Args args =
         new TSaslNonblockingServer.Args(serverSocket)
             .processor(processor)
-            .transportFactory(factory)
             .protocolFactory(protoFactory)
             .addSaslMechanism(
                 TestTSaslTransports.WRAPPED_MECHANISM,
@@ -60,13 +60,18 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
                 TestTSaslTransports.HOST,
                 TestTSaslTransports.WRAPPED_PROPS,
                 new TestSaslCallbackHandler(TestTSaslTransports.PASSWORD));
+    if (factory != null) {
+      args.transportFactory(factory);
+    }
     server = new TSaslNonblockingServer(args);
     server.serve();
   }
 
   @Override
   public void stopServer() throws Exception {
-    server.shutdown();
+    if (server != null) {
+      server.shutdown();
+    }
   }
 
   @Override
@@ -100,7 +105,8 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
               AUTHENTICATION_FAILURE,
               "Authentication failed with " + TestTSaslTransports.WRAPPED_MECHANISM);
       assertTrue(
-          error.getMessage().contains(serverSideError.getSummary()),
+          error.getMessage() != null
+              && error.getMessage().contains(serverSideError.getSummary()),
           "Server should return error message \"" + serverSideError.getSummary() + "\"");
     } finally {
       stopServer();
