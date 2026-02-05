@@ -99,7 +99,7 @@ publishing {
 
 // Signing configuration, optional, only when release and publish is activated
 signing {
-    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
+    required = { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
     sign publishing.publications.mavenJava
 }
 

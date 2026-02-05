@@ -50,12 +50,12 @@ ext.commonsLang3Version = property('commons-lang3.version')
 // In this section you declare where to find the dependencies of your project
 repositories {
     maven {
-        name 'Maven Central Repository'
-        url mvnRepo
+        name = 'Maven Central Repository'
+        url = mvnRepo
     }
     maven {
-        name 'Apache Maven Repository'
-        url apacheRepo
+        name = 'Apache Maven Repository'
+        url = apacheRepo
     }
 }
 
