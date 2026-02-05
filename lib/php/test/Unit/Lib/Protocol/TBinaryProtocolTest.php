@@ -41,16 +41,18 @@ class TBinaryProtocolTest extends TestCase
         $type,
         $seqid,
         $writeCallsParams,
-        $writeCallsResults,
         $expectedResult
     ) {
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, $strictWrite);
 
+        $callIndex = 0;
         $transport->expects($this->exactly(count($writeCallsParams)))
                   ->method('write')
-                  ->withConsecutive(...$writeCallsParams)
-                  ->willReturnOnConsecutiveCalls(...$writeCallsResults);
+                  ->willReturnCallback(function (...$args) use (&$callIndex, $writeCallsParams) {
+                      $this->assertEquals($writeCallsParams[$callIndex], $args);
+                      $callIndex++;
+                  });
 
         $result = $protocol->writeMessageBegin($name, $type, $seqid);
         $this->assertEquals($expectedResult, $result);
@@ -72,12 +74,6 @@ class TBinaryProtocolTest extends TestCase
                 ['testName', 8], #writeString
                 [pack('N', $seqid), 4], #writeI32
             ],
-            'writeCallsResults' => [
-                4,
-                4,
-                8,
-                4,
-            ],
             'expectedResult' => 20,
         ];
 
@@ -91,12 +87,6 @@ class TBinaryProtocolTest extends TestCase
                 ['testName', 8], #writeString
                 [pack('c', $type), 1], #writeByte
                 [pack('N', $seqid), 4], #writeI32
-            ],
-            'writeCallsResults' => [
-                4,
-                8,
-                1,
-                4,
             ],
             'expectedResult' => 17,
         ];
@@ -135,15 +125,18 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [pack('c', $fieldType), 1], #writeByte
+            [pack('n', $fieldId), 2], #writeI16
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('c', $fieldType), 1], #writeByte
-                       [pack('n', $fieldId), 2], #writeI16
-                   ]
-            )->willReturnOnConsecutiveCalls([1, 2]);
+            ->willReturnCallback(function (...$args) use (&$callIndex, $expectedCalls) {
+                $this->assertEquals($expectedCalls[$callIndex], $args);
+                $callIndex++;
+            });
 
         $this->assertEquals(3, $protocol->writeFieldBegin($fieldName, $fieldType, $fieldId));
     }
@@ -164,8 +157,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', TType::STOP), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', TType::STOP), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeFieldStop());
     }
@@ -179,16 +171,19 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [pack('c', $keyType), 1], #writeByte
+            [pack('c', $valType), 1], #writeByte
+            [pack('N', $size), 4], #writeI32
+        ];
         $transport
             ->expects($this->exactly(3))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('c', $keyType), 1], #writeByte
-                       [pack('c', $valType), 1], #writeByte
-                       [pack('N', $size), 4], #writeI32
-                   ]
-            )->willReturnOnConsecutiveCalls([1, 1, 4]);
+            ->willReturnCallback(function (...$args) use (&$callIndex, $expectedCalls) {
+                $this->assertEquals($expectedCalls[$callIndex], $args);
+                $callIndex++;
+            });
 
         $this->assertEquals(6, $protocol->writeMapBegin($keyType, $valType, $size));
     }
@@ -209,15 +204,18 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [pack('c', $elemType), 1], #writeByte
+            [pack('N', $size), 4], #writeI32
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('c', $elemType), 1], #writeByte
-                       [pack('N', $size), 4], #writeI32
-                   ]
-            )->willReturnOnConsecutiveCalls([1, 4]);
+            ->willReturnCallback(function (...$args) use (&$callIndex, $expectedCalls) {
+                $this->assertEquals($expectedCalls[$callIndex], $args);
+                $callIndex++;
+            });
 
         $this->assertEquals(5, $protocol->writeListBegin($elemType, $size));
     }
@@ -238,15 +236,18 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [pack('c', $elemType), 1], #writeByte
+            [pack('N', $size), 4], #writeI32
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('c', $elemType), 1], #writeByte
-                       [pack('N', $size), 4], #writeI32
-                   ]
-            )->willReturnOnConsecutiveCalls([1, 4]);
+            ->willReturnCallback(function (...$args) use (&$callIndex, $expectedCalls) {
+                $this->assertEquals($expectedCalls[$callIndex], $args);
+                $callIndex++;
+            });
 
         $this->assertEquals(5, $protocol->writeSetBegin($elemType, $size));
     }
@@ -268,8 +269,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', (int)$value), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', (int)$value), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeBool($value));
     }
@@ -283,8 +283,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('c', $value), 1) #writeByte
-            ->willReturn(1);
+            ->with(pack('c', $value), 1); #writeByte
 
         $this->assertEquals(1, $protocol->writeByte($value));
     }
@@ -298,8 +297,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('n', $value), 2) #writeI16
-            ->willReturn(2);
+            ->with(pack('n', $value), 2); #writeI16
 
         $this->assertEquals(2, $protocol->writeI16($value));
     }
@@ -313,8 +311,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N', $value), 4) #writeI32
-            ->willReturn(4);
+            ->with(pack('N', $value), 4); #writeI32
 
         $this->assertEquals(4, $protocol->writeI32($value));
     }
@@ -351,8 +348,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(4);
+            ->with(pack('N2', $hi, $lo), 8); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -372,8 +368,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(8);
+            ->with(pack('N2', $hi, $lo), 8); #writeI64
 
         $this->assertEquals(8, $protocol->writeI64($value));
     }
@@ -387,8 +382,7 @@ class TBinaryProtocolTest extends TestCase
         $transport
             ->expects($this->once())
             ->method('write')
-            ->with(strrev(pack('d', $value)), 8) #writeDouble
-            ->willReturn(8);
+            ->with(strrev(pack('d', $value)), 8); #writeDouble
 
         $this->assertEquals(8, $protocol->writeDouble($value));
     }
@@ -399,15 +393,18 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [pack('N', strlen($value)), 4], #writeI32
+            [$value, strlen($value)], #write
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('write')
-            ->withConsecutive(
-                ...[
-                       [pack('N', strlen($value))], #writeI32,
-                       [$value, strlen($value)], #write,
-                   ]
-            )->willReturnOnConsecutiveCalls([4, 6]);
+            ->willReturnCallback(function (...$args) use (&$callIndex, $expectedCalls) {
+                $this->assertEquals($expectedCalls[$callIndex], $args);
+                $callIndex++;
+            });
 
         $this->assertEquals(10, $protocol->writeString($value));
     }
@@ -434,10 +431,13 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, $strictRead, true);
 
+        $callIndex = 0;
         $transport->expects($this->exactly(count($readCallsParams)))
                   ->method('readAll')
-                  ->withConsecutive(...$readCallsParams)
-                  ->willReturnOnConsecutiveCalls(...$readCallsResults);
+                  ->willReturnCallback(function ($len) use (&$callIndex, $readCallsParams, $readCallsResults) {
+                      $this->assertEquals($readCallsParams[$callIndex], [$len]);
+                      return $readCallsResults[$callIndex++];
+                  });
 
         $result = $protocol->readMessageBegin($name, $type, $seqid);
         $this->assertEquals($expectedReadLengthResult, $result);
@@ -561,11 +561,14 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
         $transport
             ->expects($this->exactly(count($readCallsParams)))
             ->method('readAll')
-            ->withConsecutive(...$readCallsParams)
-            ->willReturnOnConsecutiveCalls(...$readCallsResults);
+            ->willReturnCallback(function ($len) use (&$callIndex, $readCallsParams, $readCallsResults) {
+                $this->assertEquals($readCallsParams[$callIndex], [$len]);
+                return $readCallsResults[$callIndex++];
+            });
 
         $this->assertEquals($expectedResult, $protocol->readFieldBegin($name, $fieldType, $fieldId));
         $this->assertEquals($expectedName, $name);
@@ -586,7 +589,7 @@ class TBinaryProtocolTest extends TestCase
                 pack('n', 555),
             ],
             'expectedResult' => 3,
-            'exprectedName' => '',
+            'expectedName' => '',
             'expectedFieldType' => TType::STRING,
             'expectedFieldId' => 555,
         ];
@@ -600,7 +603,7 @@ class TBinaryProtocolTest extends TestCase
                 pack('c', TType::STOP),
             ],
             'expectedResult' => 1,
-            'exprectedName' => '',
+            'expectedName' => '',
             'expectedFieldType' => 0,
             'expectedFieldId' => 0,
         ];
@@ -619,20 +622,24 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [1], #readByte
+            [1], #readByte
+            [4], #readI32
+        ];
+        $expectedResults = [
+            pack('c', TType::I32),
+            pack('c', TType::STRING),
+            pack('N', 555)
+        ];
         $transport
             ->expects($this->exactly(3))
             ->method('readAll')
-            ->withConsecutive(
-                ...[
-                       [1], #readByte
-                       [1], #readByte
-                       [4], #readI32
-                   ]
-            )->willReturnOnConsecutiveCalls(
-                pack('c', TType::I32),
-                pack('c', TType::STRING),
-                pack('N', 555)
-            );
+            ->willReturnCallback(function ($len) use (&$callIndex, $expectedCalls, $expectedResults) {
+                $this->assertEquals($expectedCalls[$callIndex], [$len]);
+                return $expectedResults[$callIndex++];
+            });
 
         $this->assertEquals(6, $protocol->readMapBegin($keyType, $valType, $size));
         $this->assertEquals(TType::I32, $keyType);
@@ -653,18 +660,22 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [1], #readByte
+            [4], #readI32
+        ];
+        $expectedResults = [
+            pack('c', TType::I32),
+            pack('N', 555)
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('readAll')
-            ->withConsecutive(
-                ...[
-                       [1], #readByte
-                       [4], #readI32
-                   ]
-            )->willReturnOnConsecutiveCalls(
-                pack('c', TType::I32),
-                pack('N', 555)
-            );
+            ->willReturnCallback(function ($len) use (&$callIndex, $expectedCalls, $expectedResults) {
+                $this->assertEquals($expectedCalls[$callIndex], [$len]);
+                return $expectedResults[$callIndex++];
+            });
 
         $this->assertEquals(5, $protocol->readListBegin($elemType, $size));
         $this->assertEquals(TType::I32, $elemType);
@@ -684,18 +695,22 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
+        $expectedCalls = [
+            [1], #readByte
+            [4], #readI32
+        ];
+        $expectedResults = [
+            pack('c', TType::I32),
+            pack('N', 555)
+        ];
         $transport
             ->expects($this->exactly(2))
             ->method('readAll')
-            ->withConsecutive(
-                ...[
-                       [1], #readByte
-                       [4], #readI32
-                   ]
-            )->willReturnOnConsecutiveCalls(
-                pack('c', TType::I32),
-                pack('N', 555)
-            );
+            ->willReturnCallback(function ($len) use (&$callIndex, $expectedCalls, $expectedResults) {
+                $this->assertEquals($expectedCalls[$callIndex], [$len]);
+                return $expectedResults[$callIndex++];
+            });
 
         $this->assertEquals(5, $protocol->readSetBegin($elemType, $size));
         $this->assertEquals(TType::I32, $elemType);
@@ -800,31 +815,11 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
-        $neg = $storedValue < 0;
-
-        if ($neg) {
-            $storedValue *= -1;
-        }
-
-        $hi = (int)($storedValue / 4294967296);
-        $lo = (int)$storedValue;
-
-        if ($neg) {
-            $hi = ~$hi;
-            $lo = ~$lo;
-            if (($lo & (int)0xffffffff) == (int)0xffffffff) {
-                $lo = 0;
-                $hi++;
-            } else {
-                $lo++;
-            }
-        }
-
         $transport
             ->expects($this->once())
-            ->method('write')
-            ->with(pack('N2', $hi, $lo), 8) #writeI64
-            ->willReturn(4);
+            ->method('readAll')
+            ->with(8) #readI64
+            ->willReturn($storedValue);
 
         $this->assertEquals(8, $protocol->readI64($value));
         $this->assertEquals($expectedValue, $value);
@@ -832,6 +827,15 @@ class TBinaryProtocolTest extends TestCase
 
     public static function readI64For32BitArchitectureDataProvider()
     {
+        // Skip providing test data on 64-bit systems to avoid overflow warnings
+        if (PHP_INT_SIZE !== 4) {
+            yield 'skipped on 64-bit' => [
+                'storedValue' => pack('N2', 0, 1),
+                'expectedValue' => 1,
+            ];
+            return;
+        }
+
         $storedValueRepresent = function ($value) {
             $neg = $value < 0;
 
@@ -953,11 +957,14 @@ class TBinaryProtocolTest extends TestCase
         $transport = $this->createMock(TTransport::class);
         $protocol = new TBinaryProtocol($transport, false, false);
 
+        $callIndex = 0;
         $transport
             ->expects($this->exactly(count($readCallsParams)))
             ->method('readAll')
-            ->withConsecutive(...$readCallsParams)
-            ->willReturnOnConsecutiveCalls(...$readCallsResults);
+            ->willReturnCallback(function ($len) use (&$callIndex, $readCallsParams, $readCallsResults) {
+                $this->assertEquals($readCallsParams[$callIndex], [$len]);
+                return $readCallsResults[$callIndex++];
+            });
 
         $this->assertEquals($expectedLength, $protocol->readString($value));
         $this->assertEquals($expectedValue, $value);

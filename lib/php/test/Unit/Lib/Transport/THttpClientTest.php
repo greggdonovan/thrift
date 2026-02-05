@@ -39,7 +39,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $prop = $ref->getProperty('timeout_');
-        $prop->setAccessible(true);
         $this->assertEquals(1000, $prop->getValue($transport));
     }
 
@@ -70,7 +69,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('handle_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, $handle);
 
         $this->assertNull($transport->close());
@@ -109,7 +107,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('handle_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, $handle);
 
         $this->assertEquals($expectedResult, $transport->read($readLen));
@@ -157,7 +154,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $prop = $ref->getProperty('buf_');
-        $prop->setAccessible(true);
 
         $transport->write('1234567890');
 
@@ -320,7 +316,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('headers_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, ['test' => '1234567890']);
 
         $transport->addHeaders(['test2' => '12345']);

@@ -38,7 +38,6 @@ class TServerSocketTest extends TestCase
 
         $reflection = new \ReflectionClass($socket);
         $property = $reflection->getProperty('acceptTimeout_');
-        $property->setAccessible(true);
 
         $this->assertEquals(1000, $property->getValue($socket));
     }
@@ -57,7 +56,6 @@ class TServerSocketTest extends TestCase
 
         $reflection = new \ReflectionClass($socket);
         $property = $reflection->getProperty('listener_');
-        $property->setAccessible(true);
 
         $this->assertIsResource($property->getValue($socket));
 
@@ -96,7 +94,6 @@ class TServerSocketTest extends TestCase
 
         $reflection = new \ReflectionClass($result);
         $property = $reflection->getProperty('handle_');
-        $property->setAccessible(true);
         $this->assertEquals($transportHandle, $property->getValue($result));
     }
 

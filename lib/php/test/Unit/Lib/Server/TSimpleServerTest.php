@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Server\Fixture\TestProcessor;
 use Thrift\Factory\TProtocolFactory;
 use Thrift\Factory\TTransportFactoryInterface;
+use Thrift\Protocol\TProtocol;
 use Thrift\Server\TServerTransport;
 use Thrift\Server\TSimpleServer;
 use Thrift\Transport\TTransport;
@@ -109,17 +110,17 @@ class TSimpleServerTest extends TestCase
 
         $this->inputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createMock(TServerTransport::class));
+            ->willReturn($this->createMock(TTransport::class));
         $this->outputTransportFactory->expects($this->exactly($serveLoopCount))
             ->method('getTransport')
-            ->willReturn($this->createMock(TServerTransport::class));
+            ->willReturn($this->createMock(TTransport::class));
 
-        $inputProtocol = $this->createMock(TServerTransport::class);
+        $inputProtocol = $this->createMock(TProtocol::class);
         $this->inputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($inputProtocol);
 
-        $outputProtocol = $this->createMock(TServerTransport::class);
+        $outputProtocol = $this->createMock(TProtocol::class);
         $this->outputProtocolFactory->expects($this->exactly($serveLoopCount))
             ->method('getProtocol')
             ->willReturn($outputProtocol);

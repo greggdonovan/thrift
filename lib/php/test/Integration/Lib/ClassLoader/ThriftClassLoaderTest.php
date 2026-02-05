@@ -49,7 +49,7 @@ class ThriftClassLoaderTest extends TestCase
 
         $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
             ->expects($useApcu ? $this->any() : $this->never())
-             ->with($apcuPrefix . $class, $this->anything())
+             ->with($apcuPrefix . $class, self::anything())
              ->willReturn(true);
 
         $loader = new ThriftClassLoader($useApcu, $apcuPrefix);

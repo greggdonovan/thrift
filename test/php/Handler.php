@@ -2,87 +2,87 @@
 
 class Handler implements \ThriftTest\ThriftTestIf
 {
-    public function testVoid(): void
+    public function testVoid()
     {
         return;
     }
 
-    public function testString(string $thing): string
+    public function testString($thing)
     {
         return $thing;
     }
 
-    public function testBool(bool $thing): bool
+    public function testBool($thing)
     {
         return $thing;
     }
 
-    public function testByte(int $thing): int
+    public function testByte($thing)
     {
         return $thing;
     }
 
-    public function testI32(int $thing): int
+    public function testI32($thing)
     {
         return $thing;
     }
 
-    public function testI64(int $thing): int
+    public function testI64($thing)
     {
         return $thing;
     }
 
-    public function testDouble(float $thing): float
+    public function testDouble($thing)
     {
         return $thing;
     }
 
-    public function testBinary(string $thing): string
+    public function testBinary($thing)
     {
         return $thing;
     }
 
-    public function testStruct(\ThriftTest\Xtruct $thing): \ThriftTest\Xtruct
+    public function testStruct(\ThriftTest\Xtruct $thing)
     {
         return $thing;
     }
 
-    public function testNest(\ThriftTest\Xtruct2 $thing): \ThriftTest\Xtruct2
+    public function testNest(\ThriftTest\Xtruct2 $thing)
     {
         return $thing;
     }
 
-    public function testMap(array $thing): array
+    public function testMap(array $thing)
     {
         return $thing;
     }
 
-    public function testStringMap(array $thing): array
+    public function testStringMap(array $thing)
     {
         return $thing;
     }
 
-    public function testSet(array $thing): array
+    public function testSet(array $thing)
     {
         return $thing;
     }
 
-    public function testList(array $thing): array
+    public function testList(array $thing)
     {
         return $thing;
     }
 
-    public function testEnum(int $thing): int
+    public function testEnum($thing)
     {
         return $thing;
     }
 
-    public function testTypedef(int $thing): int
+    public function testTypedef($thing)
     {
         return $thing;
     }
 
-    public function testMapMap(int $hello): array
+    public function testMapMap($hello)
     {
         return [
             -4 => [-4 => -4, -3 => -3, -2 => -2, -1 => -1],
@@ -90,7 +90,7 @@ class Handler implements \ThriftTest\ThriftTestIf
         ];
     }
 
-    public function testInsanity(\ThriftTest\Insanity $argument): array
+    public function testInsanity(\ThriftTest\Insanity $argument)
     {
         $result = [];
         $result[1] = [];
@@ -101,14 +101,8 @@ class Handler implements \ThriftTest\ThriftTestIf
         return $result;
     }
 
-    public function testMulti(
-        int $arg0,
-        int $arg1,
-        int $arg2,
-        array $arg3,
-        int $arg4,
-        int $arg5
-    ): \ThriftTest\Xtruct {
+    public function testMulti($arg0, $arg1, $arg2, array $arg3, $arg4, $arg5)
+    {
         $result = new \ThriftTest\Xtruct();
         $result->string_thing = 'Hello2';
         $result->byte_thing = $arg0;
@@ -117,7 +111,7 @@ class Handler implements \ThriftTest\ThriftTestIf
         return $result;
     }
 
-    public function testException(string $arg): void
+    public function testException($arg)
     {
         if ($arg === 'Xception') {
             $e = new \ThriftTest\Xception();
@@ -130,7 +124,7 @@ class Handler implements \ThriftTest\ThriftTestIf
         }
     }
 
-    public function testMultiException(string $arg0, string $arg1): \ThriftTest\Xtruct
+    public function testMultiException($arg0, $arg1)
     {
         if ($arg0 === 'Xception') {
             $e = new \ThriftTest\Xception();
@@ -150,7 +144,7 @@ class Handler implements \ThriftTest\ThriftTestIf
         return $result;
     }
 
-    public function testOneway(int $secondsToSleep): void
+    public function testOneway($secondsToSleep)
     {
         sleep($secondsToSleep);
     }

@@ -51,11 +51,11 @@ class TSSLSocketTest extends TestCase
              ->expects($this->exactly($streamSocketClientCallCount))
              ->with(
                  'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                  STREAM_CLIENT_CONNECT,
-                 $this->anything() #$context
+                 self::anything() #$context
              )
              ->willReturn(false);
 
@@ -113,11 +113,11 @@ class TSSLSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                  STREAM_CLIENT_CONNECT,
-                 $this->anything() #$context
+                 self::anything() #$context
              )
              ->willReturn(fopen('php://memory', 'r+'));
 
@@ -152,11 +152,11 @@ class TSSLSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                  STREAM_CLIENT_CONNECT,
-                 $this->anything() #$context
+                 self::anything() #$context
              )
              ->willReturnCallback(
                  function ($host, &$error_code, &$error_message, $timeout, $flags, $context) {
@@ -200,9 +200,9 @@ class TSSLSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  'ssl://' . $host . ':' . $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                  STREAM_CLIENT_CONNECT,
                  $context #$context
              )

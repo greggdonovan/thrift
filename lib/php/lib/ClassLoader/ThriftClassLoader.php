@@ -115,10 +115,12 @@ class ThriftClassLoader
     protected function findFileInApcu(string $class): string|false
     {
         if (false === $file = apcu_fetch($this->apcu_prefix . $class)) {
-            apcu_store($this->apcu_prefix . $class, $file = $this->findFile($class));
+            $file = $this->findFile($class);
+            // Store false for not-found classes to avoid repeated lookups
+            apcu_store($this->apcu_prefix . $class, $file ?? false);
         }
 
-        return $file;
+        return $file ?? false;
     }
 
     /**

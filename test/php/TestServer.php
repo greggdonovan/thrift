@@ -45,10 +45,10 @@ HELP;
 
 $port = $opts['port'] ?? 9090;
 $transport = $opts['transport'] ?? 'buffered';
-
+$protocol = $opts['protocol'] ?? 'binary';
 
 $loader = new Thrift\ClassLoader\ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../../lib/php/test/Resources/packages/phpcm');
+$loader->registerDefinition('ThriftTest', __DIR__ . '/gen-php');
 $loader->register();
 
 $sslOptions = \stream_context_create(
@@ -74,13 +74,25 @@ $serverTransport = new \Thrift\Server\TServerSocket('localhost', $port);
 $handler = new Handler();
 $processor = new ThriftTest\ThriftTestProcessor($handler);
 
+switch ($protocol) {
+    case 'compact':
+        $protocolFactory = new \Thrift\Factory\TCompactProtocolFactory();
+        break;
+    case 'json':
+        $protocolFactory = new \Thrift\Factory\TJSONProtocolFactory();
+        break;
+    case 'binary':
+    default:
+        $protocolFactory = new \Thrift\Factory\TBinaryProtocolFactory();
+}
+
 $server = new \Thrift\Server\TSimpleServer(
     $processor,
     $serverTransport,
     $serverTransportFactory,
     $serverTransportFactory,
-    new \Thrift\Factory\TBinaryProtocolFactory(),
-    new \Thrift\Factory\TBinaryProtocolFactory()
+    $protocolFactory,
+    $protocolFactory
 );
 
 echo "Starting the Test server...\n";

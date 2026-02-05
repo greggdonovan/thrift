@@ -96,7 +96,7 @@ class TFramedTransport extends TTransport
             return $this->transport_->read($len);
         }
 
-        if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
+        if ($this->rBuf_ === null || TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
             $this->readFrame();
         }
 
@@ -105,7 +105,7 @@ class TFramedTransport extends TTransport
             $out = $this->rBuf_;
             $this->rBuf_ = null;
 
-            return $out;
+            return $out ?? '';
         }
 
         // Return TStringFuncFactory::create()->substr
@@ -122,7 +122,7 @@ class TFramedTransport extends TTransport
      */
     public function putBack(string $data): void
     {
-        if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
+        if ($this->rBuf_ === null || TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
             $this->rBuf_ = $data;
         } else {
             $this->rBuf_ = ($data . $this->rBuf_);

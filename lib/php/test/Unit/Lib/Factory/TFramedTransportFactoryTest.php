@@ -41,11 +41,8 @@ class TFramedTransportFactoryTest extends TestCase
 
         $ref = new \ReflectionClass($framedTransport);
         $refRead = $ref->getProperty('read_');
-        $refRead->setAccessible(true);
         $refWrite = $ref->getProperty('write_');
-        $refWrite->setAccessible(true);
         $refTrans = $ref->getProperty('transport_');
-        $refTrans->setAccessible(true);
 
         $this->assertTrue($refRead->getValue($framedTransport));
         $this->assertTrue($refWrite->getValue($framedTransport));

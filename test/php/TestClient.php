@@ -15,13 +15,9 @@ if (!isset($MODE)) {
 }
 
 
-if ($GEN_DIR == 'gen-php') {
-  $loader->addPsr4('', $GEN_DIR);
-} else {
-  $loader = new ThriftClassLoader();
-  $loader->registerDefinition('ThriftTest', $GEN_DIR);
-  $loader->register();
-}
+$thriftLoader = new ThriftClassLoader();
+$thriftLoader->registerDefinition('ThriftTest', __DIR__ . '/' . $GEN_DIR);
+$thriftLoader->register();
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one

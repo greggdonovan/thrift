@@ -52,44 +52,51 @@ class TProtocolDecoratorTest extends TestCase
 
     public static function methodDecorationDataProvider()
     {
-        yield 'writeMessageBegin' => ['writeMessageBegin', ['name', 'type', 'seqid']];
+        // Write methods with proper typed arguments
+        yield 'writeMessageBegin' => ['writeMessageBegin', ['testName', 1, 100]];
         yield 'writeMessageEnd' => ['writeMessageEnd', []];
-        yield 'writeStructBegin' => ['writeStructBegin', ['name']];
+        yield 'writeStructBegin' => ['writeStructBegin', ['structName']];
         yield 'writeStructEnd' => ['writeStructEnd', []];
-        yield 'writeFieldBegin' => ['writeFieldBegin', ['name', 'type', 'id']];
+        yield 'writeFieldBegin' => ['writeFieldBegin', ['fieldName', 1, 1]];
         yield 'writeFieldEnd' => ['writeFieldEnd', []];
         yield 'writeFieldStop' => ['writeFieldStop', []];
-        yield 'writeMapBegin' => ['writeMapBegin', ['keyType', 'valType', 'size']];
+        yield 'writeMapBegin' => ['writeMapBegin', [1, 2, 10]];
         yield 'writeMapEnd' => ['writeMapEnd', []];
-        yield 'writeListBegin' => ['writeListBegin', ['elemType', 'size']];
+        yield 'writeListBegin' => ['writeListBegin', [1, 10]];
         yield 'writeListEnd' => ['writeListEnd', []];
-        yield 'writeSetBegin' => ['writeSetBegin', ['elemType', 'size']];
+        yield 'writeSetBegin' => ['writeSetBegin', [1, 10]];
         yield 'writeSetEnd' => ['writeSetEnd', []];
-        yield 'writeBool' => ['writeBool', ['value']];
-        yield 'writeByte' => ['writeByte', ['value']];
-        yield 'writeI16' => ['writeI16', ['value']];
-        yield 'writeI32' => ['writeI32', ['value']];
-        yield 'writeI64' => ['writeI64', ['value']];
-        yield 'writeDouble' => ['writeDouble', ['value']];
-        yield 'writeString' => ['writeString', ['value']];
-        yield 'readMessageBegin' => ['readMessageBegin', ['name', 'type', 'seqid']];
+        yield 'writeBool' => ['writeBool', [true]];
+        yield 'writeByte' => ['writeByte', [1]];
+        yield 'writeI16' => ['writeI16', [100]];
+        yield 'writeI32' => ['writeI32', [1000]];
+        yield 'writeI64' => ['writeI64', [10000]];
+        yield 'writeDouble' => ['writeDouble', [1.5]];
+        yield 'writeString' => ['writeString', ['testString']];
+        // Read methods use reference parameters passed by value in test
+        $name = null;
+        $type = null;
+        $seqid = null;
+        $size = null;
+        $value = null;
+        yield 'readMessageBegin' => ['readMessageBegin', [&$name, &$type, &$seqid]];
         yield 'readMessageEnd' => ['readMessageEnd', []];
-        yield 'readStructBegin' => ['readStructBegin', ['name']];
+        yield 'readStructBegin' => ['readStructBegin', [&$name]];
         yield 'readStructEnd' => ['readStructEnd', []];
-        yield 'readFieldBegin' => ['readFieldBegin', ['name', 'type', 'id']];
+        yield 'readFieldBegin' => ['readFieldBegin', [&$name, &$type, &$seqid]];
         yield 'readFieldEnd' => ['readFieldEnd', []];
-        yield 'readMapBegin' => ['readMapBegin', ['keyType', 'valType', 'size']];
+        yield 'readMapBegin' => ['readMapBegin', [&$type, &$seqid, &$size]];
         yield 'readMapEnd' => ['readMapEnd', []];
-        yield 'readListBegin' => ['readListBegin', ['elemType', 'size']];
+        yield 'readListBegin' => ['readListBegin', [&$type, &$size]];
         yield 'readListEnd' => ['readListEnd', []];
-        yield 'readSetBegin' => ['readSetBegin', ['elemType', 'size']];
+        yield 'readSetBegin' => ['readSetBegin', [&$type, &$size]];
         yield 'readSetEnd' => ['readSetEnd', []];
-        yield 'readBool' => ['readBool', ['value']];
-        yield 'readByte' => ['readByte', ['value']];
-        yield 'readI16' => ['readI16', ['value']];
-        yield 'readI32' => ['readI32', ['value']];
-        yield 'readI64' => ['readI64', ['value']];
-        yield 'readDouble' => ['readDouble', ['value']];
-        yield 'readString' => ['readString', ['value']];
+        yield 'readBool' => ['readBool', [&$value]];
+        yield 'readByte' => ['readByte', [&$value]];
+        yield 'readI16' => ['readI16', [&$value]];
+        yield 'readI32' => ['readI32', [&$value]];
+        yield 'readI64' => ['readI64', [&$value]];
+        yield 'readDouble' => ['readDouble', [&$value]];
+        yield 'readString' => ['readString', [&$value]];
     }
 }

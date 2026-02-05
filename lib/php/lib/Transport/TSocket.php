@@ -90,8 +90,9 @@ class TSocket extends TTransport
 
     /**
      * Debug handler
+     * @var callable|null
      */
-    protected ?callable $debugHandler_ = null;
+    protected mixed $debugHandler_ = null;
 
     /**
      * Socket constructor

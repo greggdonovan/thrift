@@ -958,8 +958,17 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
     }
     generate_php_doc(out, *m_iter);
     string access = (getters_setters_) ? "private" : "public";
-    string php_type = php_type_declaration(t);
-    indent(out) << access << " ?" << php_type << " $" << (*m_iter)->get_name() << " = " << dval << ";" << '\n';
+    string field_name = (*m_iter)->get_name();
+    // Skip type declarations for inherited exception properties (message, code, file, line)
+    // as PHP doesn't allow redeclaring them with types
+    bool skip_type = is_exception && (field_name == "message" || field_name == "code" ||
+                                       field_name == "file" || field_name == "line");
+    if (skip_type) {
+      indent(out) << access << " $" << field_name << " = " << dval << ";" << '\n';
+    } else {
+      string php_type = php_type_declaration(t);
+      indent(out) << access << " ?" << php_type << " $" << field_name << " = " << dval << ";" << '\n';
+    }
   }
 
   out << '\n';
@@ -2781,7 +2790,7 @@ string t_php_generator::type_to_cast(t_type* type) {
     case t_base_type::TYPE_I64:
       return "(int)";
     case t_base_type::TYPE_DOUBLE:
-      return "(double)";
+      return "(float)";
     case t_base_type::TYPE_STRING:
       return "(string)";
     default:
@@ -2821,7 +2830,12 @@ string t_php_generator::php_type_declaration(t_type* type) {
   } else if (type->is_enum()) {
     return "int";
   } else if (type->is_struct() || type->is_xception()) {
-    return "\\" + php_namespace(type->get_program()) + type->get_name();
+    string ns = php_namespace(type->get_program());
+    // If namespace already starts with \, don't add another one
+    if (ns.empty() || ns[0] != '\\') {
+      ns = "\\" + ns;
+    }
+    return ns + type->get_name();
   } else if (type->is_map() || type->is_set() || type->is_list()) {
     return "array";
   }

@@ -42,11 +42,8 @@ class TBinaryProtocolFactoryTest extends TestCase
 
         $ref = new \ReflectionClass($protocol);
         $refStrictRead = $ref->getProperty('strictRead_');
-        $refStrictRead->setAccessible(true);
         $refStrictWrite = $ref->getProperty('strictWrite_');
-        $refStrictWrite->setAccessible(true);
         $refTrans = $ref->getProperty('trans_');
-        $refTrans->setAccessible(true);
 
         $this->assertEquals($strictRead, $refStrictRead->getValue($protocol));
         $this->assertEquals($strictWrite, $refStrictWrite->getValue($protocol));

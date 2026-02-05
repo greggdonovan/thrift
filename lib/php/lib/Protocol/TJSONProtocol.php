@@ -200,13 +200,17 @@ class TJSONProtocol extends TProtocol
     {
         $this->context_->write();
 
-        if (is_numeric($b) && $this->context_->escapeNum()) {
+        // Only add quotes for actual numeric types (int/float), not strings that look numeric.
+        // json_encode already adds quotes around strings, so we only need escapeNum for numbers.
+        $isNumericType = is_int($b) || is_float($b);
+
+        if ($isNumericType && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
         }
 
         $this->trans_->write(json_encode($b, JSON_UNESCAPED_UNICODE));
 
-        if (is_numeric($b) && $this->context_->escapeNum()) {
+        if ($isNumericType && $this->context_->escapeNum()) {
             $this->trans_->write(self::QUOTE);
         }
     }
@@ -632,7 +636,7 @@ class TJSONProtocol extends TProtocol
         $type = $this->readJSONInteger();
         $seqid = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     /**
@@ -707,7 +711,7 @@ class TJSONProtocol extends TProtocol
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     public function readListEnd(): int
@@ -723,7 +727,7 @@ class TJSONProtocol extends TProtocol
         $elemType = $this->getTypeIDForTypeName($this->readJSONString(false));
         $size = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     public function readSetEnd(): int
@@ -737,28 +741,28 @@ class TJSONProtocol extends TProtocol
     {
         $bool = $this->readJSONInteger() == 0 ? false : true;
 
-        return 0;
+        return 1;
     }
 
     public function readByte(&$byte): int
     {
         $byte = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     public function readI16(&$i16): int
     {
         $i16 = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     public function readI32(&$i32): int
     {
         $i32 = $this->readJSONInteger();
 
-        return 0;
+        return 1;
     }
 
     public function readI64(&$i64): int
@@ -769,20 +773,20 @@ class TJSONProtocol extends TProtocol
             $i64 = $this->readJSONInteger();
         }
 
-        return 0;
+        return 1;
     }
 
     public function readDouble(&$dub): int
     {
         $dub = $this->readJSONDouble();
 
-        return 0;
+        return 1;
     }
 
     public function readString(&$str): int
     {
         $str = $this->readJSONString(false);
 
-        return 0;
+        return 1;
     }
 }

@@ -31,6 +31,21 @@ class TPhpStreamTest extends TestCase
 {
     use PHPMock;
 
+    /**
+     * Helper method to properly evaluate PHPUnit constraints when comparing expected vs actual args.
+     */
+    private function assertArgsMatch(array $expected, array $actual): void
+    {
+        // Only check expected arguments (ignore extra optional parameters added by php-mock)
+        foreach ($expected as $i => $exp) {
+            if ($exp instanceof \PHPUnit\Framework\Constraint\Constraint) {
+                $this->assertThat($actual[$i], $exp);
+            } else {
+                $this->assertEquals($exp, $actual[$i]);
+            }
+        }
+    }
+
     #[DataProvider('fopenDataProvider')]
     public function testOpen(
         $mode,
@@ -50,10 +65,13 @@ class TPhpStreamTest extends TestCase
              ->expects(!empty($sapiName) ? $this->once() : $this->never())
              ->willReturn($sapiName);
 
+        $fopenCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'fopen')
              ->expects($this->exactly(count($fopenResult)))
-             ->withConsecutive(...$fopenParams)
-             ->willReturnOnConsecutiveCalls(...$fopenResult);
+             ->willReturnCallback(function (...$args) use (&$fopenCallIndex, $fopenParams, $fopenResult) {
+                 $this->assertArgsMatch($fopenParams[$fopenCallIndex], $args);
+                 return $fopenResult[$fopenCallIndex++];
+             });
 
         if ($expectedException) {
             $this->expectException($expectedException);
@@ -135,10 +153,13 @@ class TPhpStreamTest extends TestCase
             $fopenResult[$num] = $result ? fopen(...$result) : $result;
         }
 
+        $fopenCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'fopen')
              ->expects($this->exactly(count($fopenParams)))
-             ->withConsecutive(...$fopenParams)
-             ->willReturnOnConsecutiveCalls(...$fopenResult);
+             ->willReturnCallback(function (...$args) use (&$fopenCallIndex, $fopenParams, $fopenResult) {
+                 $this->assertArgsMatch($fopenParams[$fopenCallIndex], $args);
+                 return $fopenResult[$fopenCallIndex++];
+             });
 
         $this->getFunctionMock('Thrift\Transport', 'fclose')
              ->expects($this->exactly(count($fopenParams)))
@@ -188,7 +209,7 @@ class TPhpStreamTest extends TestCase
     ) {
         $this->getFunctionMock('Thrift\Transport', 'fread')
              ->expects($this->once())
-             ->with($this->anything(), 5)
+             ->with(self::anything(), 5)
              ->willReturn($freadResult);
 
         if ($expectedException) {
@@ -235,10 +256,13 @@ class TPhpStreamTest extends TestCase
         $expectedExceptionMessage,
         $expectedExceptionCode
     ) {
+        $fwriteCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'fwrite')
              ->expects($this->exactly(count($fwriteParams)))
-             ->withConsecutive(...$fwriteParams)
-             ->willReturnOnConsecutiveCalls(...$fwriteResult);
+             ->willReturnCallback(function (...$args) use (&$fwriteCallIndex, $fwriteParams, $fwriteResult) {
+                 $this->assertArgsMatch($fwriteParams[$fwriteCallIndex], $args);
+                 return $fwriteResult[$fwriteCallIndex++];
+             });
 
         if ($expectedException) {
             $this->expectException($expectedException);
@@ -254,7 +278,7 @@ class TPhpStreamTest extends TestCase
     {
         yield 'success' => [
             'buf' => '12345',
-            'fwriteParams' => [[$this->anything(), '12345']],
+            'fwriteParams' => [[self::anything(), '12345']],
             'fwriteResult' => [5],
             'expectedException' => null,
             'expectedExceptionMessage' => '',
@@ -262,7 +286,7 @@ class TPhpStreamTest extends TestCase
         ];
         yield 'several iteration' => [
             'buf' => '1234567890',
-            'fwriteParams' => [[$this->anything(), '1234567890'], [$this->anything(), '67890']],
+            'fwriteParams' => [[self::anything(), '1234567890'], [self::anything(), '67890']],
             'fwriteResult' => [5, 5],
             'expectedException' => null,
             'expectedExceptionMessage' => '',
@@ -270,7 +294,7 @@ class TPhpStreamTest extends TestCase
         ];
         yield 'fail' => [
             'buf' => '1234567890',
-            'fwriteParams' => [[$this->anything(), '1234567890']],
+            'fwriteParams' => [[self::anything(), '1234567890']],
             'fwriteResult' => [false],
             'expectedException' => TException::class,
             'expectedExceptionMessage' => 'TPhpStream: Could not write 10 bytes',
