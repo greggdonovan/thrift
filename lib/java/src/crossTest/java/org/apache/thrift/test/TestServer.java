@@ -154,16 +154,13 @@ public class TestServer {
           if (args[i].startsWith("--port")) {
             port = Integer.valueOf(args[i].split("=")[1]);
           } else if (args[i].startsWith("--server-type")) {
-            server_type = args[i].split("=")[1];
-            server_type.trim();
+            server_type = args[i].split("=")[1].trim();
           } else if (args[i].startsWith("--port")) {
             port = Integer.parseInt(args[i].split("=")[1]);
           } else if (args[i].startsWith("--protocol")) {
-            protocol_type = args[i].split("=")[1];
-            protocol_type.trim();
+            protocol_type = args[i].split("=")[1].trim();
           } else if (args[i].startsWith("--transport")) {
-            transport_type = args[i].split("=")[1];
-            transport_type.trim();
+            transport_type = args[i].split("=")[1].trim();
           } else if (args[i].equals("--ssl")) {
             ssl = true;
           } else if (args[i].equals("--zlib")) {

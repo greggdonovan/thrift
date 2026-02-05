@@ -66,8 +66,7 @@ public class TestNonblockingClient extends TestClient {
     try {
       for (int i = 0; i < args.length; ++i) {
         if (args[i].startsWith("--host")) {
-          host = args[i].split("=")[1];
-          host.trim();
+          host = args[i].split("=")[1].trim();
         } else if (args[i].startsWith("--port")) {
           port = Integer.valueOf(args[i].split("=")[1]);
         } else if (args[i].startsWith("--n") || args[i].startsWith("--testloops")) {
@@ -75,8 +74,7 @@ public class TestNonblockingClient extends TestClient {
         } else if (args[i].equals("--timeout")) {
           socketTimeout = Integer.valueOf(args[i].split("=")[1]);
         } else if (args[i].startsWith("--protocol")) {
-          protocol_type = args[i].split("=")[1];
-          protocol_type.trim();
+          protocol_type = args[i].split("=")[1].trim();
         } else if (args[i].equals("--ssl")) {
           ssl = true;
         } else if (args[i].equals("--help")) {

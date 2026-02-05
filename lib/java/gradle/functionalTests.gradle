@@ -57,6 +57,11 @@ dependencies {
     crossTestImplementation sourceSets.test.output
 }
 
+tasks.named('compileCrossTestJava', JavaCompile).configure {
+    // Cross-test harness sources are intentionally permissive and are not held to -Werror.
+    options.compilerArgs.removeAll(['-Werror'])
+}
+
 // I am using shadow plugin to make a self contained functional test Uber JAR that
 // eliminates startup problems with wrapping the cross-check harness in Gradle.
 // This is used by the runner scripts as the single classpath entry which
@@ -75,6 +80,7 @@ shadowJar {
     from sourceSets.test.output
     from sourceSets.crossTest.output
     configurations = [project.configurations.crossTestRuntime]
+    includeEmptyDirs = false
 }
 
 // Common script runner configuration elements
