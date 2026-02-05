@@ -103,7 +103,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   public abstract int getMinSerializedSize(byte type) throws TException;
 
   public interface WriteCallback<T> {
-    void call(T e) throws TException;
+    void call(@org.jspecify.annotations.Nullable T e) throws TException;
   }
 
   public interface ReadCallback<T, R> {
@@ -446,6 +446,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
     this.skip(fieldType, Integer.MAX_VALUE);
   }
 
+  @SuppressWarnings("StatementSwitchToExpressionSwitch")
   public void skip(byte fieldType, int maxDepth) throws TException {
     if (maxDepth <= 0) {
       throw new TException("Maximum skip depth exceeded");
