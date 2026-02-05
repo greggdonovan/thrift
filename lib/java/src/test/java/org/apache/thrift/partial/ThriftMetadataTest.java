@@ -246,13 +246,8 @@ public class ThriftMetadataTest {
       case TType.MAP -> MapMetaData.class;
       case TType.SET -> SetMetaData.class;
       case TType.ENUM -> EnumMetaData.class;
-      case TType.BOOL,
-          TType.BYTE,
-          TType.I16,
-          TType.I32,
-          TType.I64,
-          TType.DOUBLE,
-          TType.STRING -> FieldValueMetaData.class;
+      case TType.BOOL, TType.BYTE, TType.I16, TType.I32, TType.I64, TType.DOUBLE, TType.STRING ->
+          FieldValueMetaData.class;
       default -> throw ThriftMetadata.unsupportedFieldTypeException(ttype);
     };
   }
@@ -264,13 +259,8 @@ public class ThriftMetadataTest {
       case TType.MAP -> ThriftMetadata.ThriftMap.class;
       case TType.SET -> ThriftMetadata.ThriftSet.class;
       case TType.ENUM -> ThriftMetadata.ThriftEnum.class;
-      case TType.BOOL,
-          TType.BYTE,
-          TType.I16,
-          TType.I32,
-          TType.I64,
-          TType.DOUBLE,
-          TType.STRING -> ThriftMetadata.ThriftPrimitive.class;
+      case TType.BOOL, TType.BYTE, TType.I16, TType.I32, TType.I64, TType.DOUBLE, TType.STRING ->
+          ThriftMetadata.ThriftPrimitive.class;
       default -> throw ThriftMetadata.unsupportedFieldTypeException(ttype);
     };
   }

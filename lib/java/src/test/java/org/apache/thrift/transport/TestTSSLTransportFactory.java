@@ -29,7 +29,6 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
 import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.Nullable;
 
 public class TestTSSLTransportFactory extends ServerTestBase {
   private @Nullable Thread serverThread;

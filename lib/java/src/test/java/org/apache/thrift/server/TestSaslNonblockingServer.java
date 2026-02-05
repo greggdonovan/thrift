@@ -105,8 +105,7 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
               AUTHENTICATION_FAILURE,
               "Authentication failed with " + TestTSaslTransports.WRAPPED_MECHANISM);
       assertTrue(
-          error.getMessage() != null
-              && error.getMessage().contains(serverSideError.getSummary()),
+          error.getMessage() != null && error.getMessage().contains(serverSideError.getSummary()),
           "Server should return error message \"" + serverSideError.getSummary() + "\"");
     } finally {
       stopServer();

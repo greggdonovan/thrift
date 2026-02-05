@@ -30,12 +30,14 @@ public class TestDeepCopy {
     assertNotSame(
         foo.getS().orElseThrow().toArray(new DeepCopyBar[0])[0],
         deepCopyFoo.getS().orElseThrow().toArray(new DeepCopyBar[0])[0]);
-    assertNotSame(foo.getM().orElseThrow().get("test 3"), deepCopyFoo.getM().orElseThrow().get("test 3"));
+    assertNotSame(
+        foo.getM().orElseThrow().get("test 3"), deepCopyFoo.getM().orElseThrow().get("test 3"));
 
     assertNotSame(foo.getLi().orElseThrow().get(0), deepCopyFoo.getLi().orElseThrow().get(0));
     assertNotSame(
         foo.getSi().orElseThrow().toArray(new thrift.test.Object[0])[0],
         deepCopyFoo.getSi().orElseThrow().toArray(new thrift.test.Object[0])[0]);
-    assertNotSame(foo.getMi().orElseThrow().get("test 3"), deepCopyFoo.getMi().orElseThrow().get("test 3"));
+    assertNotSame(
+        foo.getMi().orElseThrow().get("test 3"), deepCopyFoo.getMi().orElseThrow().get("test 3"));
   }
 }

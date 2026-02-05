@@ -63,7 +63,8 @@ public class ServerSaslPeer implements SaslPeer {
     if (qop == null) {
       return false;
     }
-    @SuppressWarnings("StringSplitter") // Regex split is correct for parsing comma-separated QOP values
+    @SuppressWarnings(
+        "StringSplitter") // Regex split is correct for parsing comma-separated QOP values
     String[] words = qop.toString().split("\\s*,\\s*");
     for (String word : words) {
       String lowerCaseWord = word.toLowerCase(Locale.ROOT);

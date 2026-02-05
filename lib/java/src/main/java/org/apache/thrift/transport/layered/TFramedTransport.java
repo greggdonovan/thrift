@@ -38,6 +38,7 @@ public class TFramedTransport extends TLayeredTransport {
 
   /** Buffer for input */
   private final TMemoryInputTransport readBuffer_;
+
   private static final byte[] EMPTY_BUFFER = new byte[0];
 
   public static class Factory extends TTransportFactory {
