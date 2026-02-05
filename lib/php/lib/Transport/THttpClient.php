@@ -35,66 +35,52 @@ class THttpClient extends TTransport
 {
     /**
      * The host to connect to
-     *
-     * @var string
      */
-    protected $host_;
+    protected string $host_;
 
     /**
      * The port to connect on
-     *
-     * @var int
      */
-    protected $port_;
+    protected int $port_;
 
     /**
      * The URI to request
-     *
-     * @var string
      */
-    protected $uri_;
+    protected string $uri_;
 
     /**
      * The scheme to use for the request, i.e. http, https
-     *
-     * @var string
      */
-    protected $scheme_;
+    protected string $scheme_;
 
     /**
      * Buffer for the HTTP request data
-     *
-     * @var string
      */
-    protected $buf_;
+    protected string $buf_;
 
     /**
      * Input socket stream.
-     *
-     * @var resource
      */
-    protected $handle_;
+    protected mixed $handle_ = null;
 
     /**
      * Read timeout
-     *
-     * @var float
      */
-    protected $timeout_;
+    protected ?float $timeout_ = null;
 
     /**
      * http headers
      *
-     * @var array
+     * @var array<string, string>
      */
-    protected $headers_;
+    protected array $headers_;
 
     /**
      * Context additional options
      *
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $context_;
+    protected array $context_;
 
     /**
      * Make a new HTTP client.
@@ -103,10 +89,15 @@ class THttpClient extends TTransport
      * @param int    $port
      * @param string $uri
      * @param string $scheme
-     * @param array  $context
+     * @param array<string, mixed>  $context
      */
-    public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = array())
-    {
+    public function __construct(
+        string $host,
+        int $port = 80,
+        string $uri = '',
+        string $scheme = 'http',
+        array $context = []
+    ) {
         if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
@@ -117,16 +108,14 @@ class THttpClient extends TTransport
         $this->buf_ = '';
         $this->handle_ = null;
         $this->timeout_ = null;
-        $this->headers_ = array();
+        $this->headers_ = [];
         $this->context_ = $context;
     }
 
     /**
      * Set read timeout
-     *
-     * @param float $timeout
      */
-    public function setTimeoutSecs($timeout)
+    public function setTimeoutSecs(float $timeout): void
     {
         $this->timeout_ = $timeout;
     }
@@ -134,9 +123,9 @@ class THttpClient extends TTransport
     /**
      * Whether this transport is open.
      *
-     * @return boolean true if open
+     * @return bool true if open
      */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
@@ -146,14 +135,14 @@ class THttpClient extends TTransport
      *
      * @throws TTransportException if cannot open
      */
-    public function open()
+    public function open(): void
     {
     }
 
     /**
      * Close the transport.
      */
-    public function close()
+    public function close(): void
     {
         if ($this->handle_) {
             @fclose($this->handle_);
@@ -168,7 +157,7 @@ class THttpClient extends TTransport
      * @return string The data that has been read
      * @throws TTransportException if cannot read any more data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         $data = @fread($this->handle_, $len);
         if ($data === false || $data === '') {
@@ -197,7 +186,7 @@ class THttpClient extends TTransport
      * @param string $buf The data to write
      * @throws TTransportException if writing fails
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->buf_ .= $buf;
     }
@@ -207,19 +196,19 @@ class THttpClient extends TTransport
      *
      * @throws TTransportException if a writing error occurs
      */
-    public function flush()
+    public function flush(): void
     {
         // God, PHP really has some esoteric ways of doing simple things.
         $host = $this->host_ . ($this->port_ != 80 ? ':' . $this->port_ : '');
 
-        $headers = array();
-        $defaultHeaders = array(
+        $headers = [];
+        $defaultHeaders = [
             'Host' => $host,
             'Accept' => 'application/x-thrift',
             'User-Agent' => 'PHP/THttpClient',
             'Content-Type' => 'application/x-thrift',
             'Content-Length' => TStringFuncFactory::create()->strlen($this->buf_)
-        );
+        ];
 
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
             $headers[] = "$key: $value";
@@ -227,14 +216,14 @@ class THttpClient extends TTransport
 
         $options = $this->context_;
 
-        $baseHttpOptions = isset($options["http"]) ? $options["http"] : array();
+        $baseHttpOptions = isset($options["http"]) ? $options["http"] : [];
 
-        $httpOptions = $baseHttpOptions + array(
+        $httpOptions = $baseHttpOptions + [
             'method' => 'POST',
             'header' => implode("\r\n", $headers),
             'max_redirects' => 1,
             'content' => $this->buf_
-        );
+        ];
         if ($this->timeout_ > 0) {
             $httpOptions['timeout'] = $this->timeout_;
         }
@@ -257,7 +246,12 @@ class THttpClient extends TTransport
         }
     }
 
-    public function addHeaders($headers)
+    /**
+     * Add headers to the HTTP request
+     *
+     * @param array<string, string> $headers
+     */
+    public function addHeaders(array $headers): void
     {
         $this->headers_ = array_merge($this->headers_, $headers);
     }

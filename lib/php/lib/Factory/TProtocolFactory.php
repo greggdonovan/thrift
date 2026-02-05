@@ -23,6 +23,7 @@
 namespace Thrift\Factory;
 
 use Thrift\Protocol\TProtocol;
+use Thrift\Transport\TTransport;
 
 /**
  * Protocol factory creates protocol objects from transports
@@ -32,7 +33,8 @@ interface TProtocolFactory
     /**
      * Build a protocol from the base transport
      *
+     * @param TTransport $trans The transport to build a protocol from
      * @return TProtocol protocol
      */
-    public function getProtocol($trans);
+    public function getProtocol(TTransport $trans): TProtocol;
 }

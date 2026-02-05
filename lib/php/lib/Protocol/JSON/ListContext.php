@@ -26,15 +26,15 @@ use Thrift\Protocol\TJSONProtocol;
 
 class ListContext extends BaseContext
 {
-    private $first_ = true;
-    private $p_;
+    private bool $first_ = true;
+    private TJSONProtocol $p_;
 
-    public function __construct($p)
+    public function __construct(TJSONProtocol $p)
     {
         $this->p_ = $p;
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first_) {
             $this->first_ = false;
@@ -43,7 +43,7 @@ class ListContext extends BaseContext
         }
     }
 
-    public function read()
+    public function read(): void
     {
         if ($this->first_) {
             $this->first_ = false;

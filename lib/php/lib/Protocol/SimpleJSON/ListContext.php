@@ -26,15 +26,15 @@ use Thrift\Protocol\TSimpleJSONProtocol;
 
 class ListContext extends Context
 {
-    protected $first_ = true;
-    private $p_;
+    protected bool $first_ = true;
+    private TSimpleJSONProtocol $p_;
 
-    public function __construct($p)
+    public function __construct(TSimpleJSONProtocol $p)
     {
         $this->p_ = $p;
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first_) {
             $this->first_ = false;

@@ -22,6 +22,7 @@
 namespace Thrift\Server;
 
 use Thrift\Transport\TSSLSocket;
+use Thrift\Transport\TTransport;
 
 /**
  * Socket implementation of a server agent.
@@ -31,21 +32,20 @@ use Thrift\Transport\TSSLSocket;
 class TSSLServerSocket extends TServerSocket
 {
     /**
-     * Remote port
+     * Stream context for SSL
      *
      * @var resource
      */
-    protected $context_ = null;
+    protected mixed $context_;
 
     /**
      * ServerSocket constructor
      *
      * @param string $host Host to listen on
      * @param int $port Port to listen on
-     * @param resource $context Stream context
-     * @return void
+     * @param resource|null $context Stream context
      */
-    public function __construct($host = 'localhost', $port = 9090, $context = null)
+    public function __construct(string $host = 'localhost', int $port = 9090, mixed $context = null)
     {
         $ssl_host = $this->getSSLHost($host);
         parent::__construct($ssl_host, $port);
@@ -56,7 +56,7 @@ class TSSLServerSocket extends TServerSocket
         $this->context_ = $context;
     }
 
-    public function getSSLHost($host)
+    public function getSSLHost(string $host): string
     {
         $transport_protocol_loc = strpos($host, "://");
         if ($transport_protocol_loc === false) {
@@ -70,7 +70,7 @@ class TSSLServerSocket extends TServerSocket
      *
      * @return void
      */
-    public function listen()
+    public function listen(): void
     {
         $this->listener_ = @stream_socket_server(
             $this->host_ . ':' . $this->port_,
@@ -84,9 +84,9 @@ class TSSLServerSocket extends TServerSocket
     /**
      * Implementation of accept. If not client is accepted in the given time
      *
-     * @return TSocket
+     * @return TTransport|null
      */
-    protected function acceptImpl()
+    protected function acceptImpl(): ?TTransport
     {
         $handle = @stream_socket_accept($this->listener_, $this->acceptTimeout_ / 1000.0);
         if (!$handle) {

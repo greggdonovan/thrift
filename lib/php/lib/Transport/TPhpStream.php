@@ -37,21 +37,33 @@ class TPhpStream extends TTransport
     const MODE_R = 1;
     const MODE_W = 2;
 
-    private $inStream_ = null;
+    /**
+     * Input stream resource
+     */
+    private mixed $inStream_ = null;
 
-    private $outStream_ = null;
+    /**
+     * Output stream resource
+     */
+    private mixed $outStream_ = null;
 
-    private $read_ = false;
+    /**
+     * Whether read mode is enabled
+     */
+    private int $read_ = 0;
 
-    private $write_ = false;
+    /**
+     * Whether write mode is enabled
+     */
+    private int $write_ = 0;
 
-    public function __construct($mode)
+    public function __construct(int $mode)
     {
         $this->read_ = $mode & self::MODE_R;
         $this->write_ = $mode & self::MODE_W;
     }
 
-    public function open()
+    public function open(): void
     {
         if ($this->read_) {
             $this->inStream_ = @fopen($this->inStreamName(), 'r');
@@ -67,7 +79,7 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function close()
+    public function close(): void
     {
         if ($this->read_) {
             @fclose($this->inStream_);
@@ -79,14 +91,14 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return
             (!$this->read_ || is_resource($this->inStream_)) &&
             (!$this->write_ || is_resource($this->outStream_));
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         $data = @fread($this->inStream_, $len);
         if ($data === false || $data === '') {
@@ -96,7 +108,7 @@ class TPhpStream extends TTransport
         return $data;
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
         while (TStringFuncFactory::create()->strlen($buf) > 0) {
             $got = @fwrite($this->outStream_, $buf);
@@ -109,12 +121,12 @@ class TPhpStream extends TTransport
         }
     }
 
-    public function flush()
+    public function flush(): void
     {
         @fflush($this->outStream_);
     }
 
-    private function inStreamName()
+    private function inStreamName(): string
     {
         if (php_sapi_name() == 'cli') {
             return 'php://stdin';

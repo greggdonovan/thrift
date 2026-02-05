@@ -22,6 +22,7 @@
 
 namespace Thrift\Base;
 
+use Thrift\Protocol\TProtocol;
 use Thrift\Type\TType;
 
 /**
@@ -34,7 +35,10 @@ use Thrift\Type\TType;
 #[\AllowDynamicProperties]
 abstract class TBase
 {
-    public static $tmethod = array(
+    /**
+     * @var array<int, string>
+     */
+    public static array $tmethod = array(
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',
@@ -44,11 +48,15 @@ abstract class TBase
         TType::STRING => 'String'
     );
 
-    abstract public function read($input);
+    abstract public function read(TProtocol $input): int;
 
-    abstract public function write($output);
+    abstract public function write(TProtocol $output): int;
 
-    public function __construct($spec = null, $vals = null)
+    /**
+     * @param array<int, array<string, mixed>>|null $spec
+     * @param array<string, mixed>|null $vals
+     */
+    public function __construct(?array $spec = null, ?array $vals = null)
     {
         if (is_array($spec) && is_array($vals)) {
             foreach ($spec as $fid => $fspec) {
@@ -60,12 +68,16 @@ abstract class TBase
         }
     }
 
-    public function __wakeup()
+    public function __wakeup(): void
     {
         $this->__construct(get_object_vars($this));
     }
 
-    private function _readMap(&$var, $spec, $input)
+    /**
+     * @param array<string|int, mixed> $var
+     * @param array<string, mixed> $spec
+     */
+    private function _readMap(array &$var, array $spec, TProtocol $input): int
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -133,7 +145,11 @@ abstract class TBase
         return $xfer;
     }
 
-    private function _readList(&$var, $spec, $input, $set = false)
+    /**
+     * @param array<int|string, mixed> $var
+     * @param array<string, mixed> $spec
+     */
+    private function _readList(array &$var, array $spec, TProtocol $input, bool $set = false): int
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -188,7 +204,10 @@ abstract class TBase
         return $xfer;
     }
 
-    protected function _read($class, $spec, $input)
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
+    protected function _read(string $class, array $spec, TProtocol $input): int
     {
         $xfer = 0;
         $fname = null;
@@ -239,7 +258,11 @@ abstract class TBase
         return $xfer;
     }
 
-    private function _writeMap($var, $spec, $output)
+    /**
+     * @param array<string|int, mixed> $var
+     * @param array<string, mixed> $spec
+     */
+    private function _writeMap(array $var, array $spec, TProtocol $output): int
     {
         $xfer = 0;
         $ktype = $spec['ktype'];
@@ -299,7 +322,11 @@ abstract class TBase
         return $xfer;
     }
 
-    private function _writeList($var, $spec, $output, $set = false)
+    /**
+     * @param array<string|int, mixed> $var
+     * @param array<string, mixed> $spec
+     */
+    private function _writeList(array $var, array $spec, TProtocol $output, bool $set = false): int
     {
         $xfer = 0;
         $etype = $spec['etype'];
@@ -344,7 +371,10 @@ abstract class TBase
         return $xfer;
     }
 
-    protected function _write($class, $spec, $output)
+    /**
+     * @param array<int, array<string, mixed>> $spec
+     */
+    protected function _write(string $class, array $spec, TProtocol $output): int
     {
         $xfer = 0;
         $xfer += $output->writeStructBegin($class);

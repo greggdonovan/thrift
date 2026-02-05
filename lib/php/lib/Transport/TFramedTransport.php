@@ -34,62 +34,52 @@ class TFramedTransport extends TTransport
 {
     /**
      * Underlying transport object.
-     *
-     * @var TTransport
      */
-    private $transport_;
+    private ?TTransport $transport_;
 
     /**
      * Buffer for read data.
-     *
-     * @var string
      */
-    private $rBuf_;
+    private ?string $rBuf_ = null;
 
     /**
      * Buffer for queued output data
-     *
-     * @var string
      */
-    private $wBuf_;
+    private string $wBuf_ = '';
 
     /**
      * Whether to frame reads
-     *
-     * @var bool
      */
-    private $read_;
+    private bool $read_;
 
     /**
      * Whether to frame writes
-     *
-     * @var bool
      */
-    private $write_;
+    private bool $write_;
 
     /**
      * Constructor.
      *
-     * @param TTransport $transport Underlying transport
+     * @param TTransport|null $transport Underlying transport
      */
-    public function __construct($transport = null, $read = true, $write = true)
+    public function __construct(?TTransport $transport = null, bool $read = true, bool $write = true)
     {
         $this->transport_ = $transport;
         $this->read_ = $read;
         $this->write_ = $write;
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return $this->transport_->isOpen();
     }
 
-    public function open()
+    public function open(): void
     {
         $this->transport_->open();
     }
 
-    public function close()
+    public function close(): void
     {
         $this->transport_->close();
     }
@@ -100,7 +90,7 @@ class TFramedTransport extends TTransport
      *
      * @param int $len How much data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         if (!$this->read_) {
             return $this->transport_->read($len);
@@ -130,7 +120,7 @@ class TFramedTransport extends TTransport
      *
      * @param string $data data to return
      */
-    public function putBack($data)
+    public function putBack(string $data): void
     {
         if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
             $this->rBuf_ = $data;
@@ -142,7 +132,7 @@ class TFramedTransport extends TTransport
     /**
      * Reads a chunk of data into the internal read buffer.
      */
-    private function readFrame()
+    private function readFrame(): void
     {
         $buf = $this->transport_->readAll(4);
         $val = unpack('N', $buf);
@@ -155,17 +145,14 @@ class TFramedTransport extends TTransport
      * Writes some data to the pending output buffer.
      *
      * @param string $buf The data
-     * @param int $len Limit of bytes to write
      */
-    public function write($buf, $len = null)
+    public function write(string $buf): void
     {
         if (!$this->write_) {
-            return $this->transport_->write($buf, $len);
+            $this->transport_->write($buf);
+            return;
         }
 
-        if ($len !== null && $len < TStringFuncFactory::create()->strlen($buf)) {
-            $buf = TStringFuncFactory::create()->substr($buf, 0, $len);
-        }
         $this->wBuf_ .= $buf;
     }
 
@@ -173,10 +160,11 @@ class TFramedTransport extends TTransport
      * Writes the output buffer to the stream in the format of a 4-byte length
      * followed by the actual data.
      */
-    public function flush()
+    public function flush(): void
     {
         if (!$this->write_ || TStringFuncFactory::create()->strlen($this->wBuf_) == 0) {
-            return $this->transport_->flush();
+            $this->transport_->flush();
+            return;
         }
 
         $out = pack('N', TStringFuncFactory::create()->strlen($this->wBuf_));

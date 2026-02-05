@@ -26,8 +26,8 @@ use Thrift\Transport\TTransport;
 interface TTransportFactoryInterface
 {
     /**
-     * @param TTransport $transport
-     * @return TTransport
+     * @param TTransport $transport The transport to wrap
+     * @return TTransport The wrapped transport
      */
-    public function getTransport(TTransport $transport);
+    public function getTransport(TTransport $transport): TTransport;
 }

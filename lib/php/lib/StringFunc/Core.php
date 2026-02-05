@@ -24,28 +24,18 @@ namespace Thrift\StringFunc;
 
 class Core implements TStringFunc
 {
-    /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
-     */
-    public function substr($str, $start, $length = null)
+    public function substr(string $str, int $start, ?int $length = null): string
     {
         // specifying a null $length would return an empty string
         if ($length === null) {
-            return substr((string) $str, $start);
+            return substr($str, $start);
         }
 
-        return substr((string) $str, $start, $length);
+        return substr($str, $start, $length);
     }
 
-    /**
-     * @param string $str
-     * @return int
-     */
-    public function strlen($str)
+    public function strlen(string $str): int
     {
-        return strlen((string) $str);
+        return strlen($str);
     }
 }

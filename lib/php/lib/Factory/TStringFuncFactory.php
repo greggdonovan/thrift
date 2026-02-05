@@ -28,15 +28,13 @@ use Thrift\StringFunc\TStringFunc;
 
 class TStringFuncFactory
 {
-    private static $_instance;
+    private static ?TStringFunc $_instance = null;
 
     /**
      * Get the Singleton instance of TStringFunc implementation that is
      * compatible with the current system's mbstring.func_overload settings.
-     *
-     * @return TStringFunc
      */
-    public static function create()
+    public static function create(): TStringFunc
     {
         if (!self::$_instance) {
             self::_setInstance();
@@ -45,7 +43,7 @@ class TStringFuncFactory
         return self::$_instance;
     }
 
-    private static function _setInstance()
+    private static function _setInstance(): void
     {
         /**
          * Cannot use str* functions for byte counting because multibyte

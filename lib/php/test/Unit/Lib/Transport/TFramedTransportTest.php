@@ -21,6 +21,7 @@
 
 namespace Test\Thrift\Unit\Lib\Transport;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Transport\TFramedTransport;
 use Thrift\Transport\TTransport;
@@ -81,9 +82,7 @@ class TFramedTransportTest extends TestCase
         $this->assertEquals('abcdetest', $property->getValue($framedTransport));
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $readAllowed,
         $readBuffer,
@@ -112,7 +111,7 @@ class TFramedTransportTest extends TestCase
         $this->assertEquals($expectedReadResult, $framedTransport->read($readLength));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'read not allowed' => [
             'readAllowed' => false,
@@ -143,9 +142,7 @@ class TFramedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeDataProvider
-     */
+    #[DataProvider('writeDataProvider')]
     public function testWrite(
         $writeAllowed,
         $writeData,
@@ -169,7 +166,7 @@ class TFramedTransportTest extends TestCase
         $this->assertEquals($expectedWriteBufferValue, $property->getValue($framedTransport));
     }
 
-    public function writeDataProvider()
+    public static function writeDataProvider()
     {
         yield 'write not allowed' => [
             'writeAllowed' => false,
@@ -191,9 +188,7 @@ class TFramedTransportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $writeAllowed,
         $writeBuffer,
@@ -219,7 +214,7 @@ class TFramedTransportTest extends TestCase
         $this->assertNull($framedTransport->flush());
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         yield 'write not allowed' => [
             'writeAllowed' => false,

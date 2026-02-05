@@ -35,21 +35,21 @@ abstract class TTransport
     /**
      * Whether this transport is open.
      *
-     * @return boolean true if open
+     * @return bool true if open
      */
-    abstract public function isOpen();
+    abstract public function isOpen(): bool;
 
     /**
      * Open the transport for reading/writing
      *
      * @throws TTransportException if cannot open
      */
-    abstract public function open();
+    abstract public function open(): void;
 
     /**
      * Close the transport.
      */
-    abstract public function close();
+    abstract public function close(): void;
 
     /**
      * Read some data into the array.
@@ -58,7 +58,7 @@ abstract class TTransport
      * @return string The data that has been read
      * @throws TTransportException if cannot read any more data
      */
-    abstract public function read($len);
+    abstract public function read(int $len): string;
 
     /**
      * Guarantees that the full amount of data is read.
@@ -66,10 +66,8 @@ abstract class TTransport
      * @return string The data, of exact length
      * @throws TTransportException if cannot read data
      */
-    public function readAll($len)
+    public function readAll(int $len): string
     {
-        // return $this->read($len);
-
         $data = '';
         $got = 0;
         while (($got = TStringFuncFactory::create()->strlen($data)) < $len) {
@@ -85,14 +83,14 @@ abstract class TTransport
      * @param string $buf The data to write
      * @throws TTransportException if writing fails
      */
-    abstract public function write($buf);
+    abstract public function write(string $buf): void;
 
     /**
      * Flushes any pending data out of a buffer
      *
      * @throws TTransportException if a writing error occurs
      */
-    public function flush()
+    public function flush(): void
     {
     }
 }

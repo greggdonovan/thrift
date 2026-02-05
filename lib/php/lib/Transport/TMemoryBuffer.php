@@ -27,7 +27,7 @@ use Thrift\Exception\TTransportException;
 use Thrift\Factory\TStringFuncFactory;
 
 /**
- * A memory buffer is a tranpsort that simply reads from and writes to an
+ * A memory buffer is a transport that simply reads from and writes to an
  * in-memory string buffer. Anytime you call write on it, the data is simply
  * placed into a buffer, and anytime you call read, data is read from that
  * buffer.
@@ -36,36 +36,36 @@ use Thrift\Factory\TStringFuncFactory;
  */
 class TMemoryBuffer extends TTransport
 {
-    protected $buf_ = '';
+    protected string $buf_ = '';
 
     /**
      * Constructor. Optionally pass an initial value
      * for the buffer.
      */
-    public function __construct($buf = '')
+    public function __construct(string $buf = '')
     {
         $this->buf_ = $buf;
     }
 
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
 
-    public function open()
+    public function open(): void
     {
     }
 
-    public function close()
+    public function close(): void
     {
     }
 
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->buf_ .= $buf;
     }
 
-    public function read($len)
+    public function read(int $len): string
     {
         $bufLength = TStringFuncFactory::create()->strlen($this->buf_);
 
@@ -90,17 +90,17 @@ class TMemoryBuffer extends TTransport
         return $ret;
     }
 
-    public function getBuffer()
+    public function getBuffer(): string
     {
         return $this->buf_;
     }
 
-    public function available()
+    public function available(): int
     {
         return TStringFuncFactory::create()->strlen($this->buf_);
     }
 
-    public function putBack($data)
+    public function putBack(string $data): void
     {
         $this->buf_ = $data . $this->buf_;
     }

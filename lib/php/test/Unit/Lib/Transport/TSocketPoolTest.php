@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Transport\TSocketPool;
@@ -36,9 +37,7 @@ class TSocketPoolTest extends TestCase
         self::defineFunctionMock('Thrift\Transport', 'function_exists');
     }
 
-    /**
-     * @dataProvider constructDataProvider
-     */
+    #[DataProvider('constructDataProvider')]
     public function testConstruct(
         $hosts,
         $ports,
@@ -56,7 +55,7 @@ class TSocketPoolTest extends TestCase
     }
 
 
-    public function constructDataProvider()
+    public static function constructDataProvider()
     {
         yield 'one server' => [
             ['localhost'],
@@ -170,9 +169,7 @@ class TSocketPoolTest extends TestCase
         $this->assertEquals(false, $alwaysTryLast->getValue($socketPool));
     }
 
-    /**
-     * @dataProvider openDataProvider
-     */
+    #[DataProvider('openDataProvider')]
     public function testOpen(
         $hosts,
         $ports,
@@ -273,7 +270,7 @@ class TSocketPoolTest extends TestCase
         $this->assertNull($socketPool->open());
     }
 
-    public function openDataProvider()
+    public static function openDataProvider()
     {
         $default = [
             'hosts' => ['localhost'],

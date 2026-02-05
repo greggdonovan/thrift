@@ -22,6 +22,7 @@
 
 namespace Test\Thrift\Unit\Lib\Protocol;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Protocol\TMultiplexedProtocol;
 use Thrift\Protocol\TProtocol;
@@ -30,9 +31,7 @@ use Thrift\Type\TMessageType;
 class TMultiplexedProtocolTest extends TestCase
 {
 
-    /**
-     * @dataProvider writeMessageBeginDataProvider
-     */
+    #[DataProvider('writeMessageBeginDataProvider')]
     public function testWriteMessageBegin(
         $serviceName,
         $name,
@@ -50,7 +49,7 @@ class TMultiplexedProtocolTest extends TestCase
         $multiplexedProtocol->writeMessageBegin($name, $type, $seqid);
     }
 
-    public function writeMessageBeginDataProvider()
+    public static function writeMessageBeginDataProvider()
     {
         yield 'messageTypeCall' => [
             'serviceName' => 'serviceName',

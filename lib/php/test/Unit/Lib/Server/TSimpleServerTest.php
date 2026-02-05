@@ -21,6 +21,7 @@
 
 namespace Test\Thrift\Unit\Lib\Server;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Test\Thrift\Unit\Lib\Server\Fixture\TestProcessor;
@@ -93,9 +94,7 @@ class TSimpleServerTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider serveDataProvider
-     */
+    #[DataProvider('serveDataProvider')]
     public function testServe(
         $serveLoopCount,
         array $processLoopResult
@@ -147,7 +146,7 @@ class TSimpleServerTest extends TestCase
         $this->server->serve();
     }
 
-    public function serveDataProvider()
+    public static function serveDataProvider()
     {
         yield 'one serve loop' => [
             'serveLoopCount' => 1,

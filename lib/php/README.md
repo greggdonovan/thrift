@@ -21,9 +21,11 @@ under the License.
 
 # Using Thrift with PHP
 
-Thrift requires PHP 7.1 Thrift makes as few assumptions about your PHP
-environment as possible while trying to make some more advanced PHP
-features (i.e. APCu cacheing using asbolute path URLs) as simple as possible.
+Thrift requires PHP 8.2 or later. The library uses modern PHP features
+including typed properties, typed method signatures, and PHP 8 attributes.
+Thrift makes as few assumptions about your PHP environment as possible
+while trying to make some more advanced PHP features (i.e. APCu caching
+using absolute path URLs) as simple as possible.
 
 To use Thrift in your PHP codebase, take the following steps:
 
@@ -52,6 +54,18 @@ apcu_fetch(), apcu_store()
     Thrift will fill in null stub function definitions.
 
 # Breaking Changes
+
+## Next Release (PHP 8.2+ Modernization)
+
+1. **Minimum PHP version increased to 8.2.** PHP 7.x and PHP 8.0/8.1 are no longer supported.
+
+2. **All library classes now use typed properties and method signatures.** Generated code is also typed.
+
+3. **PHPUnit upgraded to 10.5+.** Tests use PHP 8 attributes (`#[DataProvider]`) instead of docblock annotations.
+
+4. **Phan static analysis added.** Run `vendor/bin/phan --config-file lib/php/.phan/config.php` for type checking.
+
+5. **Enum constants now use typed syntax:** `public const int NAME = value;` instead of `const NAME = value;`
 
 ## 0.12.0
 

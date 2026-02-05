@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
@@ -31,9 +32,7 @@ class TSocketTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider openExceptionDataProvider
-     */
+    #[DataProvider('openExceptionDataProvider')]
     public function testOpenException(
         $host,
         $port,
@@ -68,7 +67,7 @@ class TSocketTest extends TestCase
         $socket->open();
     }
 
-    public function openExceptionDataProvider()
+    public static function openExceptionDataProvider()
     {
         yield 'host is empty' => [
             'host' => '',
@@ -290,9 +289,7 @@ class TSocketTest extends TestCase
         $transport->open();
     }
 
-    /**
-     * @dataProvider open_THRIFT_5132_DataProvider
-     */
+    #[DataProvider('open_THRIFT_5132_DataProvider')]
     public function testOpen_THRIFT_5132(
         $socketImportResult
     ) {
@@ -337,7 +334,7 @@ class TSocketTest extends TestCase
         $this->assertTrue($transport->isOpen());
     }
 
-    public function open_THRIFT_5132_DataProvider()
+    public static function open_THRIFT_5132_DataProvider()
     {
         yield 'socket_import_stream success' => [
             'socketImportResult' => true,
@@ -411,9 +408,7 @@ class TSocketTest extends TestCase
         $this->assertEquals(999000, $property->getValue($transport));
     }
 
-    /**
-     * @dataProvider hostDataProvider
-     */
+    #[DataProvider('hostDataProvider')]
     public function testGetHost($host, $expected)
     {
         $port = 9090;
@@ -428,7 +423,7 @@ class TSocketTest extends TestCase
         $this->assertEquals($expected, $transport->getHost());
     }
 
-    public function hostDataProvider()
+    public static function hostDataProvider()
     {
         yield 'localhost' => ['localhost', 'localhost'];
         yield 'ssl_localhost' => ['ssl://localhost', 'ssl://localhost'];
@@ -475,9 +470,7 @@ class TSocketTest extends TestCase
         $this->assertNull($property->getValue($transport));
     }
 
-    /**
-     * @dataProvider writeFailDataProvider
-     */
+    #[DataProvider('writeFailDataProvider')]
     public function testWriteFail(
         $streamSelectResult,
         $fwriteCallCount,
@@ -549,7 +542,7 @@ class TSocketTest extends TestCase
         });
     }
 
-    public function writeFailDataProvider()
+    public static function writeFailDataProvider()
     {
         yield 'stream_select timeout' => [
             'streamSelectResult' => 0,
@@ -597,9 +590,7 @@ class TSocketTest extends TestCase
         });
     }
 
-    /**
-     * @dataProvider readFailDataProvider
-     */
+    #[DataProvider('readFailDataProvider')]
     public function testReadFail(
         $streamSelectResult,
         $freadResult,
@@ -652,7 +643,7 @@ class TSocketTest extends TestCase
         $transport->read(5);
     }
 
-    public function readFailDataProvider()
+    public static function readFailDataProvider()
     {
         yield 'stream_select timeout' => [
             'streamSelectResult' => 0,

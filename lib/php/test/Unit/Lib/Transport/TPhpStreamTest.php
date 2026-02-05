@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Transport\TPhpStream;
@@ -30,9 +31,7 @@ class TPhpStreamTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider fopenDataProvider
-     */
+    #[DataProvider('fopenDataProvider')]
     public function testOpen(
         $mode,
         $sapiName,
@@ -66,7 +65,7 @@ class TPhpStreamTest extends TestCase
         $transport->open();
     }
 
-    public function fopenDataProvider()
+    public static function fopenDataProvider()
     {
         yield 'readCli' => [
             'mode' => TPhpStream::MODE_R,
@@ -125,9 +124,7 @@ class TPhpStreamTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider closeDataProvider
-     */
+    #[DataProvider('closeDataProvider')]
     public function testClose(
         $mode,
         $fopenParams,
@@ -160,7 +157,7 @@ class TPhpStreamTest extends TestCase
         $this->assertFalse($transport->isOpen());
     }
 
-    public function closeDataProvider()
+    public static function closeDataProvider()
     {
         $read = ['php://temp', 'r'];
         $write = ['php://temp', 'w'];
@@ -181,9 +178,7 @@ class TPhpStreamTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $freadResult,
         $expectedResult,
@@ -206,7 +201,7 @@ class TPhpStreamTest extends TestCase
         $this->assertEquals($expectedResult, $transport->read(5));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'success' => [
             'freadResult' => '12345',
@@ -231,9 +226,7 @@ class TPhpStreamTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider writeDataProvider
-     */
+    #[DataProvider('writeDataProvider')]
     public function testWrite(
         $buf,
         $fwriteParams,
@@ -257,7 +250,7 @@ class TPhpStreamTest extends TestCase
         $transport->write($buf);
     }
 
-    public function writeDataProvider()
+    public static function writeDataProvider()
     {
         yield 'success' => [
             'buf' => '12345',

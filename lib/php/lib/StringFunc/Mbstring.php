@@ -24,13 +24,7 @@ namespace Thrift\StringFunc;
 
 class Mbstring implements TStringFunc
 {
-    /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
-     */
-    public function substr($str, $start, $length = null)
+    public function substr(string $str, int $start, ?int $length = null): string
     {
         /**
          * We need to set the charset parameter, which is the second
@@ -43,15 +37,11 @@ class Mbstring implements TStringFunc
             $length = $this->strlen($str) - $start;
         }
 
-        return mb_substr((string) $str, $start, $length, '8bit');
+        return mb_substr($str, $start, $length, '8bit');
     }
 
-    /**
-     * @param string $str
-     * @return int
-     */
-    public function strlen($str)
+    public function strlen(string $str): int
     {
-        return mb_strlen((string) $str, '8bit');
+        return mb_strlen($str, '8bit');
     }
 }

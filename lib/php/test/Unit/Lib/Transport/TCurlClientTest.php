@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\TCurlClient;
@@ -166,9 +167,7 @@ class TCurlClientTest extends TestCase
         $this->assertEquals(['test' => '1234567890', 'test2' => '12345'], $propRequest->getValue($transport));
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $host,
         $port,
@@ -245,7 +244,7 @@ class TCurlClientTest extends TestCase
         $transport->flush();
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         $request = 'request';
 

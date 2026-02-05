@@ -163,7 +163,7 @@ class TCompactProtocol extends TProtocol
         parent::__construct($trans);
     }
 
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         $written =
             $this->writeUByte(TCompactProtocol::PROTOCOL_ID) +
@@ -176,14 +176,14 @@ class TCompactProtocol extends TProtocol
         return $written;
     }
 
-    public function writeMessageEnd()
+    public function writeMessageEnd(): int
     {
         $this->state = TCompactProtocol::STATE_CLEAR;
 
         return 0;
     }
 
-    public function writeStructBegin($name)
+    public function writeStructBegin(string $name): int
     {
         $this->structs[] = array($this->state, $this->lastFid);
         $this->state = TCompactProtocol::STATE_FIELD_WRITE;
@@ -192,7 +192,7 @@ class TCompactProtocol extends TProtocol
         return 0;
     }
 
-    public function writeStructEnd()
+    public function writeStructEnd(): int
     {
         $old_values = array_pop($this->structs);
         $this->state = $old_values[0];
@@ -201,7 +201,7 @@ class TCompactProtocol extends TProtocol
         return 0;
     }
 
-    public function writeFieldStop()
+    public function writeFieldStop(): int
     {
         return $this->writeByte(0);
     }
@@ -221,7 +221,7 @@ class TCompactProtocol extends TProtocol
         return $written;
     }
 
-    public function writeFieldBegin($field_name, $field_type, $field_id)
+    public function writeFieldBegin(string $field_name, int $field_type, int $field_id): int
     {
         if ($field_type == TTYPE::BOOL) {
             $this->state = TCompactProtocol::STATE_BOOL_WRITE;
@@ -235,7 +235,7 @@ class TCompactProtocol extends TProtocol
         }
     }
 
-    public function writeFieldEnd()
+    public function writeFieldEnd(): int
     {
         $this->state = TCompactProtocol::STATE_FIELD_WRITE;
 
@@ -259,7 +259,7 @@ class TCompactProtocol extends TProtocol
         return $written;
     }
 
-    public function writeMapBegin($key_type, $val_type, $size)
+    public function writeMapBegin(int $key_type, int $val_type, int $size): int
     {
         $written = 0;
         if ($size == 0) {
@@ -281,32 +281,32 @@ class TCompactProtocol extends TProtocol
         return 0;
     }
 
-    public function writeMapEnd()
+    public function writeMapEnd(): int
     {
         return $this->writeCollectionEnd();
     }
 
-    public function writeListBegin($elem_type, $size)
+    public function writeListBegin(int $elem_type, int $size): int
     {
         return $this->writeCollectionBegin($elem_type, $size);
     }
 
-    public function writeListEnd()
+    public function writeListEnd(): int
     {
         return $this->writeCollectionEnd();
     }
 
-    public function writeSetBegin($elem_type, $size)
+    public function writeSetBegin(int $elem_type, int $size): int
     {
         return $this->writeCollectionBegin($elem_type, $size);
     }
 
-    public function writeSetEnd()
+    public function writeSetEnd(): int
     {
         return $this->writeCollectionEnd();
     }
 
-    public function writeBool($value)
+    public function writeBool(bool $value): int
     {
         if ($this->state == TCompactProtocol::STATE_BOOL_WRITE) {
             $ctype = TCompactProtocol::COMPACT_FALSE;
@@ -322,7 +322,7 @@ class TCompactProtocol extends TProtocol
         }
     }
 
-    public function writeByte($value)
+    public function writeByte(int $value): int
     {
         $data = pack('c', $value);
         $this->trans_->write($data, 1);
@@ -337,21 +337,21 @@ class TCompactProtocol extends TProtocol
         return 1;
     }
 
-    public function writeI16($value)
+    public function writeI16(int $value): int
     {
         $thing = $this->toZigZag($value, 16);
 
         return $this->writeVarint($thing);
     }
 
-    public function writeI32($value)
+    public function writeI32(int $value): int
     {
         $thing = $this->toZigZag($value, 32);
 
         return $this->writeVarint($thing);
     }
 
-    public function writeDouble($value)
+    public function writeDouble(float $value): int
     {
         $data = pack('d', $value);
         $this->trans_->write($data, 8);
@@ -359,7 +359,7 @@ class TCompactProtocol extends TProtocol
         return 8;
     }
 
-    public function writeString($value)
+    public function writeString(string $value): int
     {
         $len = TStringFuncFactory::create()->strlen($value);
         $result = $this->writeVarint($len);
@@ -370,7 +370,7 @@ class TCompactProtocol extends TProtocol
         return $result + $len;
     }
 
-    public function readFieldBegin(&$name, &$field_type, &$field_id)
+    public function readFieldBegin(&$name, &$field_type, &$field_id): int
     {
         $result = $this->readUByte($compact_type_and_delta);
 
@@ -404,7 +404,7 @@ class TCompactProtocol extends TProtocol
         return $result;
     }
 
-    public function readFieldEnd()
+    public function readFieldEnd(): int
     {
         $this->state = TCompactProtocol::STATE_FIELD_READ;
 
@@ -420,7 +420,7 @@ class TCompactProtocol extends TProtocol
         return 1;
     }
 
-    public function readByte(&$value)
+    public function readByte(&$value): int
     {
         $data = $this->trans_->readAll(1);
         $arr = unpack('c', $data);
@@ -437,7 +437,7 @@ class TCompactProtocol extends TProtocol
         return $result;
     }
 
-    public function readMessageBegin(&$name, &$type, &$seqid)
+    public function readMessageBegin(&$name, &$type, &$seqid): int
     {
         $protoId = 0;
         $result = $this->readUByte($protoId);
@@ -457,12 +457,12 @@ class TCompactProtocol extends TProtocol
         return $result;
     }
 
-    public function readMessageEnd()
+    public function readMessageEnd(): int
     {
         return 0;
     }
 
-    public function readStructBegin(&$name)
+    public function readStructBegin(&$name): int
     {
         $name = ''; // unused
         $this->structs[] = array($this->state, $this->lastFid);
@@ -472,7 +472,7 @@ class TCompactProtocol extends TProtocol
         return 0;
     }
 
-    public function readStructEnd()
+    public function readStructEnd(): int
     {
         $last = array_pop($this->structs);
         $this->state = $last[0];
@@ -496,7 +496,7 @@ class TCompactProtocol extends TProtocol
         return $result;
     }
 
-    public function readMapBegin(&$key_type, &$val_type, &$size)
+    public function readMapBegin(&$key_type, &$val_type, &$size): int
     {
         $result = $this->readVarint($size);
         $types = 0;
@@ -518,32 +518,32 @@ class TCompactProtocol extends TProtocol
         return 0;
     }
 
-    public function readMapEnd()
+    public function readMapEnd(): int
     {
         return $this->readCollectionEnd();
     }
 
-    public function readListBegin(&$elem_type, &$size)
+    public function readListBegin(&$elem_type, &$size): int
     {
         return $this->readCollectionBegin($elem_type, $size);
     }
 
-    public function readListEnd()
+    public function readListEnd(): int
     {
         return $this->readCollectionEnd();
     }
 
-    public function readSetBegin(&$elem_type, &$size)
+    public function readSetBegin(&$elem_type, &$size): int
     {
         return $this->readCollectionBegin($elem_type, $size);
     }
 
-    public function readSetEnd()
+    public function readSetEnd(): int
     {
         return $this->readCollectionEnd();
     }
 
-    public function readBool(&$value)
+    public function readBool(&$value): int
     {
         if ($this->state == TCompactProtocol::STATE_BOOL_READ) {
             $value = $this->boolValue;
@@ -556,17 +556,17 @@ class TCompactProtocol extends TProtocol
         }
     }
 
-    public function readI16(&$value)
+    public function readI16(&$value): int
     {
         return $this->readZigZag($value);
     }
 
-    public function readI32(&$value)
+    public function readI32(&$value): int
     {
         return $this->readZigZag($value);
     }
 
-    public function readDouble(&$value)
+    public function readDouble(&$value): int
     {
         $data = $this->trans_->readAll(8);
         $arr = unpack('d', $data);
@@ -575,7 +575,7 @@ class TCompactProtocol extends TProtocol
         return 8;
     }
 
-    public function readString(&$value)
+    public function readString(&$value): int
     {
         $result = $this->readVarint($len);
         if ($len) {
@@ -598,7 +598,7 @@ class TCompactProtocol extends TProtocol
 
     // Read and write I64 as two 32 bit numbers $hi and $lo
 
-    public function readI64(&$value)
+    public function readI64(&$value): int
     {
         // Read varint from wire
         $hi = 0;
@@ -676,7 +676,7 @@ class TCompactProtocol extends TProtocol
         return $idx;
     }
 
-    public function writeI64($value)
+    public function writeI64(int $value): int
     {
         // If we are in an I32 range, use the easy method below.
         if (($value > 4294967296) || ($value < -4294967296)) {

@@ -26,16 +26,16 @@ use Thrift\Protocol\TJSONProtocol;
 
 class PairContext extends BaseContext
 {
-    private $first_ = true;
-    private $colon_ = true;
-    private $p_ = null;
+    private bool $first_ = true;
+    private bool $colon_ = true;
+    private TJSONProtocol $p_;
 
-    public function __construct($p)
+    public function __construct(TJSONProtocol $p)
     {
         $this->p_ = $p;
     }
 
-    public function write()
+    public function write(): void
     {
         if ($this->first_) {
             $this->first_ = false;
@@ -46,7 +46,7 @@ class PairContext extends BaseContext
         }
     }
 
-    public function read()
+    public function read(): void
     {
         if ($this->first_) {
             $this->first_ = false;
@@ -57,7 +57,7 @@ class PairContext extends BaseContext
         }
     }
 
-    public function escapeNum()
+    public function escapeNum(): bool
     {
         return $this->colon_;
     }

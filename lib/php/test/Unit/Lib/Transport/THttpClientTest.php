@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\THttpClient;
@@ -76,9 +77,7 @@ class THttpClientTest extends TestCase
         $this->assertNull($propRequest->getValue($transport));
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $readLen,
         $freadResult,
@@ -116,7 +115,7 @@ class THttpClientTest extends TestCase
         $this->assertEquals($expectedResult, $transport->read($readLen));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'read success' => [
             'readLen' => 10,
@@ -165,9 +164,7 @@ class THttpClientTest extends TestCase
         $this->assertEquals('1234567890', $prop->getValue($transport));
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $host,
         $port,
@@ -216,7 +213,7 @@ class THttpClientTest extends TestCase
         $this->assertNull($transport->flush());
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         $default = [
             'host' => 'localhost',

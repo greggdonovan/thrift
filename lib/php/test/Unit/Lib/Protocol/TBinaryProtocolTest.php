@@ -22,6 +22,7 @@
 
 namespace Test\Thrift\Unit\Lib\Protocol;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TBinaryProtocol;
@@ -33,9 +34,7 @@ class TBinaryProtocolTest extends TestCase
     private const VERSION_MASK = 0xffff0000;
     private const VERSION_1 = 0x80010000;
 
-    /**
-     * @dataProvider writeMessageBeginDataProvider
-     */
+    #[DataProvider('writeMessageBeginDataProvider')]
     public function testWriteMessageBegin(
         $strictWrite,
         $name,
@@ -57,7 +56,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedResult, $result);
     }
 
-    public function writeMessageBeginDataProvider()
+    public static function writeMessageBeginDataProvider()
     {
         $type = TType::STRING;
         $seqid = 555;
@@ -413,9 +412,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals(10, $protocol->writeString($value));
     }
 
-    /**
-     * @dataProvider readMessageBeginDataProvider
-     */
+    #[DataProvider('readMessageBeginDataProvider')]
     public function testReadMessageBegin(
         $strictRead,
         $readCallsParams,
@@ -449,7 +446,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedSeqid, $seqid);
     }
 
-    public function readMessageBeginDataProvider()
+    public static function readMessageBeginDataProvider()
     {
         yield 'strictRead=true' => [
             'strictRead' => true,
@@ -551,9 +548,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals(0, $protocol->readStructEnd());
     }
 
-    /**
-     * @dataProvider readFieldBeginDataProvider
-     */
+    #[DataProvider('readFieldBeginDataProvider')]
     public function testReadFieldBegin(
         $storedFieldType,
         $readCallsParams,
@@ -578,7 +573,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedFieldId, $fieldId);
     }
 
-    public function readFieldBeginDataProvider()
+    public static function readFieldBeginDataProvider()
     {
         yield 'default' => [
             'storedFieldType' => TType::STRING,
@@ -745,9 +740,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals(1, $value);
     }
 
-    /**
-     * @dataProvider readI16DataProvider
-     */
+    #[DataProvider('readI16DataProvider')]
     public function testReadI16(
         $storedValue,
         $expectedValue
@@ -765,15 +758,13 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedValue, $value);
     }
 
-    public function readI16DataProvider()
+    public static function readI16DataProvider()
     {
         yield 'positive' => [1, 1];
         yield 'negative' => [-1, -1];
     }
 
-    /**
-     * @dataProvider readI16DataProvider
-     */
+    #[DataProvider('readI16DataProvider')]
     public function testReadI32(
         $storedValue,
         $expectedValue
@@ -791,15 +782,13 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedValue, $value);
     }
 
-    public function readI32DataProvider()
+    public static function readI32DataProvider()
     {
         yield 'positive' => [1, 1];
         yield 'negative' => [-1, -1];
     }
 
-    /**
-     * @dataProvider readI64For32BitArchitectureDataProvider
-     */
+    #[DataProvider('readI64For32BitArchitectureDataProvider')]
     public function testReadI64For32BitArchitecture(
         $storedValue,
         $expectedValue
@@ -841,7 +830,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedValue, $value);
     }
 
-    public function readI64For32BitArchitectureDataProvider()
+    public static function readI64For32BitArchitectureDataProvider()
     {
         $storedValueRepresent = function ($value) {
             $neg = $value < 0;
@@ -888,9 +877,7 @@ class TBinaryProtocolTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider readI64For64BitArchitectureDataProvider
-     */
+    #[DataProvider('readI64For64BitArchitectureDataProvider')]
     public function testReadI64For64BitArchitecture(
         $storedValue,
         $expectedValue
@@ -911,7 +898,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedValue, $value);
     }
 
-    public function readI64For64BitArchitectureDataProvider()
+    public static function readI64For64BitArchitectureDataProvider()
     {
         $storedValueRepresent = function ($value) {
             $hi = $value >> 32;
@@ -956,9 +943,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals(789, $value);
     }
 
-    /**
-     * @dataProvider readStringDataProvider
-     */
+    #[DataProvider('readStringDataProvider')]
     public function testReadString(
         $readCallsParams,
         $readCallsResults,
@@ -978,7 +963,7 @@ class TBinaryProtocolTest extends TestCase
         $this->assertEquals($expectedValue, $value);
     }
 
-    public function readStringDataProvider()
+    public static function readStringDataProvider()
     {
         $storedValue = '';
         yield 'empty' => [

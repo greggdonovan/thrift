@@ -18,7 +18,7 @@ abstract class TServerTransport
      * @abstract
      * @return void
      */
-    abstract public function listen();
+    abstract public function listen(): void;
 
     /**
      * Close the server
@@ -26,16 +26,16 @@ abstract class TServerTransport
      * @abstract
      * @return void
      */
-    abstract public function close();
+    abstract public function close(): void;
 
     /**
      * Subclasses should use this to implement
      * accept.
      *
      * @abstract
-     * @return TTransport
+     * @return TTransport|null
      */
-    abstract protected function acceptImpl();
+    abstract protected function acceptImpl(): ?TTransport;
 
     /**
      * Uses the accept implemtation. If null is returned, an
@@ -44,7 +44,7 @@ abstract class TServerTransport
      * @throws TTransportException
      * @return TTransport
      */
-    public function accept()
+    public function accept(): TTransport
     {
         $transport = $this->acceptImpl();
 
