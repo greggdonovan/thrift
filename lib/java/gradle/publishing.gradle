@@ -43,11 +43,6 @@ java {
     withSourcesJar()
 }
 
-// skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
-components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
-    skip()
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
