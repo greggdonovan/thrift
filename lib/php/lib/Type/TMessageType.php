@@ -27,10 +27,10 @@ namespace Thrift\Type;
  */
 final class TMessageType
 {
-    public const int CALL  = 1;
-    public const int REPLY = 2;
-    public const int EXCEPTION = 3;
-    public const int ONEWAY = 4;
+    public const CALL  = 1;
+    public const REPLY = 2;
+    public const EXCEPTION = 3;
+    public const ONEWAY = 4;
 
     private function __construct()
     {

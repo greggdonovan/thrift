@@ -564,7 +564,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     generate_php_doc(f_enum, *c_iter);
-    indent(f_enum) << "public const int " << (*c_iter)->get_name() << " = " << value << ";" << '\n'
+    indent(f_enum) << "public const " << (*c_iter)->get_name() << " = " << value << ";" << '\n'
                    << '\n';
   }
 

@@ -27,13 +27,13 @@ namespace Thrift\Exception;
  */
 class TProtocolException extends TException
 {
-    public const int UNKNOWN = 0;
-    public const int INVALID_DATA = 1;
-    public const int NEGATIVE_SIZE = 2;
-    public const int SIZE_LIMIT = 3;
-    public const int BAD_VERSION = 4;
-    public const int NOT_IMPLEMENTED = 5;
-    public const int DEPTH_LIMIT = 6;
+    public const UNKNOWN = 0;
+    public const INVALID_DATA = 1;
+    public const NEGATIVE_SIZE = 2;
+    public const SIZE_LIMIT = 3;
+    public const BAD_VERSION = 4;
+    public const NOT_IMPLEMENTED = 5;
+    public const DEPTH_LIMIT = 6;
 
     public function __construct(?string $message = null, int $code = 0)
     {

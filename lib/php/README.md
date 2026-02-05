@@ -65,7 +65,7 @@ apcu_fetch(), apcu_store()
 
 4. **Phan static analysis added.** Run `vendor/bin/phan --config-file lib/php/.phan/config.php` for type checking.
 
-5. **Enum constants now use typed syntax:** `public const int NAME = value;` instead of `const NAME = value;`
+5. **Enum constants now use explicit visibility:** `public const NAME = value;` instead of `const NAME = value;`
 
 ## 0.12.0
 

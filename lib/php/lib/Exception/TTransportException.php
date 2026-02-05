@@ -27,11 +27,11 @@ namespace Thrift\Exception;
  */
 class TTransportException extends TException
 {
-    public const int UNKNOWN = 0;
-    public const int NOT_OPEN = 1;
-    public const int ALREADY_OPEN = 2;
-    public const int TIMED_OUT = 3;
-    public const int END_OF_FILE = 4;
+    public const UNKNOWN = 0;
+    public const NOT_OPEN = 1;
+    public const ALREADY_OPEN = 2;
+    public const TIMED_OUT = 3;
+    public const END_OF_FILE = 4;
 
     public function __construct(?string $message = null, int $code = 0)
     {

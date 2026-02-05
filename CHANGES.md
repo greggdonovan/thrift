@@ -7,7 +7,7 @@
 - Modernized PHP library for PHP 8.2+ with full type declarations
 - Added typed properties and method signatures throughout the library
 - Updated code generator to emit typed PHP 8.2+ code
-- Enum constants now use `public const int NAME = value;` syntax
+- Enum constants now use `public const NAME = value;` syntax with explicit visibility
 - Generated struct properties use nullable types (e.g., `?string $name = null`)
 - Constructor parameters are now typed (`?array $vals = null`)
 - `read()` and `write()` methods now have `: int` return types

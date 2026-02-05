@@ -35,17 +35,17 @@ class TApplicationException extends TException
         2 => ['var' => 'code', 'type' => TType::I32],
     ];
 
-    public const int UNKNOWN = 0;
-    public const int UNKNOWN_METHOD = 1;
-    public const int INVALID_MESSAGE_TYPE = 2;
-    public const int WRONG_METHOD_NAME = 3;
-    public const int BAD_SEQUENCE_ID = 4;
-    public const int MISSING_RESULT = 5;
-    public const int INTERNAL_ERROR = 6;
-    public const int PROTOCOL_ERROR = 7;
-    public const int INVALID_TRANSFORM = 8;
-    public const int INVALID_PROTOCOL = 9;
-    public const int UNSUPPORTED_CLIENT_TYPE = 10;
+    public const UNKNOWN = 0;
+    public const UNKNOWN_METHOD = 1;
+    public const INVALID_MESSAGE_TYPE = 2;
+    public const WRONG_METHOD_NAME = 3;
+    public const BAD_SEQUENCE_ID = 4;
+    public const MISSING_RESULT = 5;
+    public const INTERNAL_ERROR = 6;
+    public const PROTOCOL_ERROR = 7;
+    public const INVALID_TRANSFORM = 8;
+    public const INVALID_PROTOCOL = 9;
+    public const UNSUPPORTED_CLIENT_TYPE = 10;
 
     public function __construct(?string $message = null, int $code = 0)
     {
