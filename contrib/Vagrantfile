@@ -81,8 +81,8 @@ sudo apt-get install -qq xdg-utils dmd-bin
 
 # Customize the system
 # ---
-# Default java to latest 1.8 version
-update-java-alternatives -s java-1.8.0-openjdk-amd64 
+# Default java to latest 17 version
+update-java-alternatives -s java-1.17.0-openjdk-amd64
 
 # PHPUnit package broken in ubuntu. see https://bugs.launchpad.net/ubuntu/+source/phpunit/+bug/701544
 sudo apt-get upgrade pear

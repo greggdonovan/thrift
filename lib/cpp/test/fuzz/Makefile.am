@@ -34,49 +34,49 @@ libfuzztest_gen_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 noinst_HEADERS = FuzzCommon.tcc
 
 # Fuzzing executables
-AM_CPPFLAGS = -I$(top_srcdir)/lib/cpp/src -I$(top_srcdir)/lib/cpp/src/thrift -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(top_srcdir)/lib/cpp/src -I$(top_srcdir)/lib/cpp/src/thrift -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.
 
 check_PROGRAMS = FuzzParseCompact FuzzParseBinary FuzzRoundtripCompact FuzzRoundtripBinary FuzzParseJson FuzzRoundtripJson
 
 FuzzParseCompact_SOURCES = FuzzParseCompact.cpp FuzzCommon.tcc
 FuzzParseCompact_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzParseCompact_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzParseCompact_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
 FuzzRoundtripCompact_SOURCES = FuzzRoundtripCompact.cpp FuzzCommon.tcc
 FuzzRoundtripCompact_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzRoundtripCompact_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzRoundtripCompact_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
 FuzzParseBinary_SOURCES = FuzzParseBinary.cpp FuzzCommon.tcc
 FuzzParseBinary_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzParseBinary_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzParseBinary_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
 FuzzRoundtripBinary_SOURCES = FuzzRoundtripBinary.cpp FuzzCommon.tcc
 FuzzRoundtripBinary_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzRoundtripBinary_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzRoundtripBinary_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
 FuzzParseJson_SOURCES = FuzzParseJson.cpp FuzzCommon.tcc
 FuzzParseJson_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzParseJson_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzParseJson_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
 FuzzRoundtripJson_SOURCES = FuzzRoundtripJson.cpp FuzzCommon.tcc
 FuzzRoundtripJson_LDADD = libfuzztest_gen.la $(top_builddir)/lib/cpp/libthrift.la
 FuzzRoundtripJson_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CPPFLAGS) -g
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 FuzzRoundtripJson_LDFLAGS = $(AM_LDFLAGS) -fsanitize=fuzzer
 endif
 
@@ -93,4 +93,4 @@ clean-local:
 
 CLEANFILES = gen-cpp/*
 
-EXTRA_DIST = CMakeLists.txt FuzzParseCompact.cpp FuzzParseBinary.cpp FuzzRoundtripCompact.cpp FuzzRoundtripBinary.cpp FuzzParseJson.cpp FuzzRoundtripJson.cpp 
+EXTRA_DIST = CMakeLists.txt FuzzParseCompact.cpp FuzzParseBinary.cpp FuzzRoundtripCompact.cpp FuzzRoundtripBinary.cpp FuzzParseJson.cpp FuzzRoundtripJson.cpp
