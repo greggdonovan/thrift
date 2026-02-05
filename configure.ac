@@ -110,6 +110,22 @@ AM_CONDITIONAL([USING_CLANG], [test "x$CLANG" = "xyes"])
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
+# Check whether clang libFuzzer is available for linking
+have_clang_fuzzer=no
+if test "x$CLANG" = "xyes"; then
+  AC_MSG_CHECKING([for clang libFuzzer])
+  save_CXXFLAGS="$CXXFLAGS"
+  save_LDFLAGS="$LDFLAGS"
+  CXXFLAGS="$CXXFLAGS -fsanitize=fuzzer"
+  LDFLAGS="$LDFLAGS -fsanitize=fuzzer"
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([], [return 0;])],
+    [have_clang_fuzzer=yes], [have_clang_fuzzer=no])
+  CXXFLAGS="$save_CXXFLAGS"
+  LDFLAGS="$save_LDFLAGS"
+  AC_MSG_RESULT([$have_clang_fuzzer])
+fi
+AM_CONDITIONAL([HAVE_CLANG_FUZZER], [test "x$have_clang_fuzzer" = "xyes"])
+
 AM_EXTRA_RECURSIVE_TARGETS([style])
 AC_SUBST(CPPSTYLE_CMD, 'find . -type f \( -iname "*.h" -or -iname "*.cpp" -or -iname "*.cc" -or -iname "*.tcc" \) -printf "Reformatting: %h/%f\n" -exec clang-format -i {} \;')
 # '
@@ -151,12 +167,30 @@ have_cpp=no
 if test "$with_cpp" = "yes";  then
   AX_BOOST_BASE([1.56.0])
   if test "x$succeeded" = "xyes" ; then
-    AC_SUBST([BOOST_LIB_DIR], [$(echo "$BOOST_LDFLAGS" | sed -e 's/^\-L//')])
-    AC_SUBST([BOOST_CHRONO_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_chrono.a")])
-    AC_SUBST([BOOST_FILESYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_filesystem.a")])
-    AC_SUBST([BOOST_SYSTEM_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_system.a")])
-    AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
-    AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
+    BOOST_LIB_DIR=$(echo "$BOOST_LDFLAGS" | awk '{print $1}' | sed -e 's/^\-L//')
+    AC_SUBST([BOOST_LIB_DIR], [$BOOST_LIB_DIR])
+    AS_IF([test -f "$BOOST_LIB_DIR/libboost_chrono.a"],
+          [BOOST_CHRONO_LDADD="$BOOST_LIB_DIR/libboost_chrono.a"],
+          [BOOST_CHRONO_LDADD="-lboost_chrono"])
+    AS_IF([test -f "$BOOST_LIB_DIR/libboost_filesystem.a"],
+          [BOOST_FILESYSTEM_LDADD="$BOOST_LIB_DIR/libboost_filesystem.a"],
+          [BOOST_FILESYSTEM_LDADD="-lboost_filesystem"])
+    AS_IF([test -f "$BOOST_LIB_DIR/libboost_system.a"],
+          [BOOST_SYSTEM_LDADD="$BOOST_LIB_DIR/libboost_system.a"],
+          [AS_IF([test -f "$BOOST_LIB_DIR/libboost_system.dylib" || test -f "$BOOST_LIB_DIR/libboost_system.so"],
+                 [BOOST_SYSTEM_LDADD="-lboost_system"],
+                 [BOOST_SYSTEM_LDADD=""])])
+    AS_IF([test -f "$BOOST_LIB_DIR/libboost_unit_test_framework.a"],
+          [BOOST_TEST_LDADD="$BOOST_LIB_DIR/libboost_unit_test_framework.a"],
+          [BOOST_TEST_LDADD="-lboost_unit_test_framework"])
+    AS_IF([test -f "$BOOST_LIB_DIR/libboost_thread.a"],
+          [BOOST_THREAD_LDADD="$BOOST_LIB_DIR/libboost_thread.a"],
+          [BOOST_THREAD_LDADD="-lboost_thread"])
+    AC_SUBST([BOOST_CHRONO_LDADD])
+    AC_SUBST([BOOST_FILESYSTEM_LDADD])
+    AC_SUBST([BOOST_SYSTEM_LDADD])
+    AC_SUBST([BOOST_TEST_LDADD])
+    AC_SUBST([BOOST_THREAD_LDADD])
     have_cpp="yes"
   fi
 
