@@ -78,7 +78,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   }
 
   protected void checkReadBytesAvailable(TMap map) throws TException {
-    long elemSize = getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
+    long elemSize = (long) getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
     trans_.checkReadBytesAvailable(map.size * elemSize);
   }
 
