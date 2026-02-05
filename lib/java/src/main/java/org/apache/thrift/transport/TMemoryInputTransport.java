@@ -19,10 +19,11 @@
 package org.apache.thrift.transport;
 
 import org.apache.thrift.TConfiguration;
+import org.jspecify.annotations.Nullable;
 
 public final class TMemoryInputTransport extends TEndpointTransport {
 
-  private byte[] buf_;
+  private byte @Nullable [] buf_;
   private int pos_;
   private int endPos_;
 
@@ -107,18 +108,21 @@ public final class TMemoryInputTransport extends TEndpointTransport {
   }
 
   @Override
-  public byte[] getBuffer() {
+  public byte @Nullable [] getBuffer() {
     return buf_;
   }
 
+  @Override
   public int getBufferPosition() {
     return pos_;
   }
 
+  @Override
   public int getBytesRemainingInBuffer() {
     return endPos_ - pos_;
   }
 
+  @Override
   public void consumeBuffer(int len) {
     pos_ += len;
   }

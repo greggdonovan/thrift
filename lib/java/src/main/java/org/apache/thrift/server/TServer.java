@@ -25,6 +25,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportFactory;
+import org.jspecify.annotations.Nullable;
 
 /** Generic interface for a Thrift server. */
 public abstract class TServer {
@@ -37,7 +38,7 @@ public abstract class TServer {
 
   public abstract static class AbstractServerArgs<T extends AbstractServerArgs<T>> {
     final TServerTransport serverTransport;
-    TProcessorFactory processorFactory;
+    @Nullable TProcessorFactory processorFactory;
     TTransportFactory inputTransportFactory = new TTransportFactory();
     TTransportFactory outputTransportFactory = new TTransportFactory();
     TProtocolFactory inputProtocolFactory = new TBinaryProtocol.Factory();
@@ -91,7 +92,7 @@ public abstract class TServer {
   }
 
   /** Core processor */
-  protected TProcessorFactory processorFactory_;
+  protected @Nullable TProcessorFactory processorFactory_;
 
   /** Server transport */
   protected TServerTransport serverTransport_;
@@ -110,7 +111,7 @@ public abstract class TServer {
 
   private volatile boolean isServing;
 
-  protected TServerEventHandler eventHandler_;
+  protected @Nullable TServerEventHandler eventHandler_;
 
   // Flag for stopping the server
   // Please see THRIFT-1795 for the usage of this flag
@@ -146,7 +147,7 @@ public abstract class TServer {
     eventHandler_ = eventHandler;
   }
 
-  public TServerEventHandler getEventHandler() {
+  public @Nullable TServerEventHandler getEventHandler() {
     return eventHandler_;
   }
 

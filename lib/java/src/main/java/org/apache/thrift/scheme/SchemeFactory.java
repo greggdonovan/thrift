@@ -20,5 +20,6 @@ package org.apache.thrift.scheme;
 
 public interface SchemeFactory {
 
+  @SuppressWarnings("TypeParameterUnusedInFormals")
   <S extends IScheme> S getScheme();
 }

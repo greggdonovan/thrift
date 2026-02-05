@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Locale;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import org.jspecify.annotations.Nullable;
@@ -169,6 +170,7 @@ public final class TBaseHelper {
 
   /** Comparator to compare items inside a structure (e.g. a list, set, or map). */
   private static class NestedStructureComparator implements Comparator, Serializable {
+    @Override
     public int compare(Object oA, Object oB) {
       if (oA == null && oB == null) {
         return 0;
@@ -230,9 +232,10 @@ public final class TBaseHelper {
 
   public static String paddedByteString(byte b) {
     int extended = (b | 0x100) & 0x1ff;
-    return Integer.toHexString(extended).toUpperCase().substring(1);
+    return Integer.toHexString(extended).toUpperCase(Locale.ROOT).substring(1);
   }
 
+  @SuppressWarnings("ByteBufferBackingArray") // wrapsFullArray checks hasArray() and arrayOffset()
   public static byte[] byteBufferToByteArray(ByteBuffer byteBuffer) {
     if (wrapsFullArray(byteBuffer)) {
       return byteBuffer.array();
