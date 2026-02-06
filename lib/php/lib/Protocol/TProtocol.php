@@ -37,12 +37,12 @@ abstract class TProtocol
      *
      * @var TTransport
      */
-    protected $trans_;
+    protected TTransport $trans_;
 
     /**
      * @param TTransport $trans
      */
-    protected function __construct($trans)
+    protected function __construct(TTransport $trans)
     {
         $this->trans_ = $trans;
     }
@@ -52,7 +52,7 @@ abstract class TProtocol
      *
      * @return TTransport
      */
-    public function getTransport()
+    public function getTransport(): TTransport
     {
         return $this->trans_;
     }
@@ -64,12 +64,12 @@ abstract class TProtocol
      * @param int $type message type TMessageType::CALL or TMessageType::REPLY
      * @param int $seqid The sequence id of this message
      */
-    abstract public function writeMessageBegin($name, $type, $seqid);
+    abstract public function writeMessageBegin(string $name, int $type, int $seqid): int;
 
     /**
      * Close the message
      */
-    abstract public function writeMessageEnd();
+    abstract public function writeMessageEnd(): int;
 
     /**
      * Writes a struct header.
@@ -78,7 +78,7 @@ abstract class TProtocol
      * @throws TException on write error
      * @return int How many bytes written
      */
-    abstract public function writeStructBegin($name);
+    abstract public function writeStructBegin(string $name): int;
 
     /**
      * Close a struct.
@@ -86,7 +86,7 @@ abstract class TProtocol
      * @throws TException on write error
      * @return int How many bytes written
      */
-    abstract public function writeStructEnd();
+    abstract public function writeStructEnd(): int;
 
     /*
      * Starts a field.
@@ -97,37 +97,37 @@ abstract class TProtocol
      * @throws TException on write error
      * @return int How many bytes written
      */
-    abstract public function writeFieldBegin($fieldName, $fieldType, $fieldId);
+    abstract public function writeFieldBegin(string $fieldName, int $fieldType, int $fieldId): int;
 
-    abstract public function writeFieldEnd();
+    abstract public function writeFieldEnd(): int;
 
-    abstract public function writeFieldStop();
+    abstract public function writeFieldStop(): int;
 
-    abstract public function writeMapBegin($keyType, $valType, $size);
+    abstract public function writeMapBegin(int $keyType, int $valType, int $size): int;
 
-    abstract public function writeMapEnd();
+    abstract public function writeMapEnd(): int;
 
-    abstract public function writeListBegin($elemType, $size);
+    abstract public function writeListBegin(int $elemType, int $size): int;
 
-    abstract public function writeListEnd();
+    abstract public function writeListEnd(): int;
 
-    abstract public function writeSetBegin($elemType, $size);
+    abstract public function writeSetBegin(int $elemType, int $size): int;
 
-    abstract public function writeSetEnd();
+    abstract public function writeSetEnd(): int;
 
-    abstract public function writeBool($bool);
+    abstract public function writeBool(bool $bool): int;
 
-    abstract public function writeByte($byte);
+    abstract public function writeByte(int $byte): int;
 
-    abstract public function writeI16($i16);
+    abstract public function writeI16(int $i16): int;
 
-    abstract public function writeI32($i32);
+    abstract public function writeI32(int $i32): int;
 
-    abstract public function writeI64($i64);
+    abstract public function writeI64(int $i64): int;
 
-    abstract public function writeDouble($dub);
+    abstract public function writeDouble(float $dub): int;
 
-    abstract public function writeString($str);
+    abstract public function writeString(string $str): int;
 
     /**
      * Reads the message header
@@ -136,46 +136,46 @@ abstract class TProtocol
      * @param int $type message type TMessageType::CALL or TMessageType::REPLY
      * @parem int $seqid The sequence id of this message
      */
-    abstract public function readMessageBegin(&$name, &$type, &$seqid);
+    abstract public function readMessageBegin(&$name, &$type, &$seqid): int;
 
     /**
      * Read the close of message
      */
-    abstract public function readMessageEnd();
+    abstract public function readMessageEnd(): int;
 
-    abstract public function readStructBegin(&$name);
+    abstract public function readStructBegin(&$name): int;
 
-    abstract public function readStructEnd();
+    abstract public function readStructEnd(): int;
 
-    abstract public function readFieldBegin(&$name, &$fieldType, &$fieldId);
+    abstract public function readFieldBegin(&$name, &$fieldType, &$fieldId): int;
 
-    abstract public function readFieldEnd();
+    abstract public function readFieldEnd(): int;
 
-    abstract public function readMapBegin(&$keyType, &$valType, &$size);
+    abstract public function readMapBegin(&$keyType, &$valType, &$size): int;
 
-    abstract public function readMapEnd();
+    abstract public function readMapEnd(): int;
 
-    abstract public function readListBegin(&$elemType, &$size);
+    abstract public function readListBegin(&$elemType, &$size): int;
 
-    abstract public function readListEnd();
+    abstract public function readListEnd(): int;
 
-    abstract public function readSetBegin(&$elemType, &$size);
+    abstract public function readSetBegin(&$elemType, &$size): int;
 
-    abstract public function readSetEnd();
+    abstract public function readSetEnd(): int;
 
-    abstract public function readBool(&$bool);
+    abstract public function readBool(&$bool): int;
 
-    abstract public function readByte(&$byte);
+    abstract public function readByte(&$byte): int;
 
-    abstract public function readI16(&$i16);
+    abstract public function readI16(&$i16): int;
 
-    abstract public function readI32(&$i32);
+    abstract public function readI32(&$i32): int;
 
-    abstract public function readI64(&$i64);
+    abstract public function readI64(&$i64): int;
 
-    abstract public function readDouble(&$dub);
+    abstract public function readDouble(&$dub): int;
 
-    abstract public function readString(&$str);
+    abstract public function readString(&$str): int;
 
     /**
      * The skip function is a utility to parse over unrecognized date without
@@ -183,7 +183,7 @@ abstract class TProtocol
      *
      * @param int $type What type is it (defined in TType::class)
      */
-    public function skip($type)
+    public function skip(int $type): int
     {
         switch ($type) {
             case TType::BOOL:
@@ -256,7 +256,7 @@ abstract class TProtocol
      * @param TTransport $itrans TTransport object
      * @param int $type Field type
      */
-    public static function skipBinary($itrans, $type)
+    public static function skipBinary(TTransport $itrans, int $type): int
     {
         switch ($type) {
             case TType::BOOL:

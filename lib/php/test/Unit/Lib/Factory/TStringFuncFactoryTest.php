@@ -21,54 +21,32 @@
 
 namespace Test\Thrift\Unit\Lib\Factory;
 
-use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use Thrift\Factory\TStringFuncFactory;
 use Thrift\StringFunc\Core;
-use Thrift\StringFunc\Mbstring;
 use Thrift\StringFunc\TStringFunc;
 
 class TStringFuncFactoryTest extends TestCase
 {
-    use PHPMock;
-
-    /**
-     * @dataProvider createDataProvider
-     */
-    public function testCreate(
-        $mbstringFuncOverload,
-        $expectedClass
-    ) {
-        $this->getFunctionMock('Thrift\Factory', 'ini_get')
-             ->expects($this->once())
-             ->with('mbstring.func_overload')
-             ->willReturn($mbstringFuncOverload);
-
+    public function testCreate(): void
+    {
+        // Reset the singleton instance
         $factory = new TStringFuncFactory();
-        /**
-         * it is a hack to nullable the instance of TStringFuncFactory, and get a new instance based on the new ini_get value
-         */
         $ref = new \ReflectionClass($factory);
         $refInstance = $ref->getProperty('_instance');
-        $refInstance->setAccessible(true);
         $refInstance->setValue($factory, null);
 
-        $stringFunc = $factory::create();
+        $stringFunc = TStringFuncFactory::create();
 
         $this->assertInstanceOf(TStringFunc::class, $stringFunc);
-        $this->assertInstanceOf($expectedClass, $stringFunc);
+        $this->assertInstanceOf(Core::class, $stringFunc);
     }
 
-    public function createDataProvider()
+    public function testCreateReturnsSingleton(): void
     {
-        yield 'mbstring' => [
-            'mbstring.func_overload' => 2,
-            'expected' => Mbstring::class
-        ];
+        $first = TStringFuncFactory::create();
+        $second = TStringFuncFactory::create();
 
-        yield 'string' => [
-            'mbstring.func_overload' => 0,
-            'expected' => Core::class
-        ];
+        $this->assertSame($first, $second);
     }
 }

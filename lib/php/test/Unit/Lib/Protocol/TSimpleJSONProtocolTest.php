@@ -22,6 +22,7 @@
 
 namespace Test\Thrift\Unit\Lib\Protocol;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Protocol\TSimpleJSONProtocol;
@@ -37,8 +38,8 @@ class TSimpleJSONProtocolTest extends TestCase
      * - see http://wiki.apache.org/thrift/ThriftUsageJava
      * - use JSON instead
      *
-     * @dataProvider readDataProvider
      */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $methodName,
         $methodArguments
@@ -51,7 +52,7 @@ class TSimpleJSONProtocolTest extends TestCase
         $protocol->$methodName(...$methodArguments);
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'readMessageBegin' => [
             'methodName' => 'readMessageBegin',

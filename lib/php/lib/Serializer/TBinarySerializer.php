@@ -26,6 +26,7 @@ namespace Thrift\Serializer;
 use Thrift\Transport\TMemoryBuffer;
 use Thrift\Protocol\TBinaryProtocolAccelerated;
 use Thrift\Type\TMessageType;
+use Thrift\Base\TBase;
 
 /**
  * Utility class for serializing and deserializing
@@ -38,7 +39,12 @@ class TBinarySerializer
     // a transport in which to serialize an object. It has to
     // be a string. Otherwise we will break the compatibility with
     // normal deserialization.
-    public static function serialize($object)
+    /**
+     * Serialize a thrift object to binary.
+     *
+     * @param TBase|object $object The object to serialize (must have getName() and write() methods)
+     */
+    public static function serialize(object $object): string
     {
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocolAccelerated($transport);
@@ -61,7 +67,12 @@ class TBinarySerializer
         return $transport->getBuffer();
     }
 
-    public static function deserialize($string_object, $class_name, $buffer_size = 8192)
+    /**
+     * Deserialize binary data to a thrift object.
+     *
+     * @return TBase|object The deserialized object
+     */
+    public static function deserialize(string $string_object, string $class_name, int $buffer_size = 8192): object
     {
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocolAccelerated($transport);

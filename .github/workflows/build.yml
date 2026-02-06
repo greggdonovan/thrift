@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        php-version: [7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3]
+        php-version: ['8.2', '8.3', '8.4', '8.5']
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -128,11 +128,18 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: mbstring, intl, xml, curl
+          extensions: mbstring, intl, xml, curl, sockets
           ini-values: "error_reporting=E_ALL"
 
       - name: Install Dependencies
         run: composer install
+
+      - name: Run Phan static analysis
+        if: matrix.php-version == '8.2'
+        continue-on-error: true
+        run: |
+          cd lib/php
+          ../../vendor/bin/phan --allow-polyfill-parser --minimum-severity 10 --config-file .phan/config.php
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -164,8 +171,31 @@ jobs:
           compiler/cpp/thrift --gen php:json,nsglobal="Json" -r --out ./lib/php/test/Resources/packages/phpjs lib/php/test/Resources/ThriftTest.thrift
           compiler/cpp/thrift --gen php:classmap,server,rest,nsglobal="Classmap" -r --out ./lib/php/test/Resources/packages/phpcm lib/php/test/Resources/ThriftTest.thrift
 
+      - name: Build PHP C extension
+        run: make -C lib/php
+
+      - name: Verify PHP C extension loads
+        run: |
+          php -d extension=lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so \
+            -r 'exit(function_exists("thrift_protocol_write_binary") ? 0 : 1);'
+
       - name: Run Tests
         run: vendor/bin/phpunit -c lib/php/phpunit.xml
+
+      - name: Prepare PHP precross artifacts
+        if: matrix.php-version == '8.2'
+        run: make -C test/php precross
+
+      - name: Upload PHP precross artifacts
+        if: matrix.php-version == '8.2'
+        uses: actions/upload-artifact@v6
+        with:
+          name: php-precross
+          if-no-files-found: error
+          path: |
+            test/php/gen-*
+            lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so
+          retention-days: 3
 
   lib-go:
     needs: compiler
@@ -799,14 +829,22 @@ jobs:
       - lib-go
       - lib-python
       - lib-cpp
+      - lib-php
     runs-on: ubuntu-24.04
     strategy:
       matrix:
         # swift is currently broken and no maintainers around -> see THRIFT-5864
         # kotlin cross test are failing -> see THRIFT-5879
-        server_lang: ['java', 'go', 'rs', 'cpp']
+        server_lang: ['java', 'go', 'rs', 'cpp', 'php']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
-        client_lang: ['java,kotlin', 'go,rs,cpp']
+        client_lang: ['java,kotlin', 'go,rs,cpp', 'php']
+        exclude:
+          # PHP cross test fixtures currently track v0.16 IDL and are not wire-compatible
+          # with modern java/kotlin/go/rs/cpp client suites in this matrix.
+          - server_lang: 'php'
+            client_lang: 'java,kotlin'
+          - server_lang: 'php'
+            client_lang: 'go,rs,cpp'
       fail-fast: false
     steps:
       - uses: actions/checkout@v6
@@ -821,6 +859,16 @@ jobs:
           # here we intentionally use an older version so that we also verify Java 17 compiles to it
           java-version: 8
           cache: "gradle"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, xml, curl, sockets
+          ini-values: "error_reporting=E_ALL"
+
+      - name: Install PHP dependencies
+        run: composer install
 
       - name: Install openssl and certificates (for SSL tests)
         run: |
@@ -867,6 +915,19 @@ jobs:
         with:
           name: cpp-precross
           path: .
+
+      - name: Download php precross artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: php-precross
+          path: .
+
+      - name: Recreate php_ext_dir for this runner
+        run: |
+          mkdir -p test/php/php_ext_dir
+          ln -sf ../../../lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so test/php/php_ext_dir/
+          ln -sf "$(php-config --extension-dir)/json.so" test/php/php_ext_dir/
+          ln -sf "$(php-config --extension-dir)/sockets.so" test/php/php_ext_dir/
 
       - name: Set back executable flags
         run: |

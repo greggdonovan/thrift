@@ -73,13 +73,14 @@ class TMultiplexedProtocol extends TProtocolDecorator
      * @param int    $type  Message type.
      * @param int    $seqid The sequence id of this message.
      */
-    public function writeMessageBegin($name, $type, $seqid)
+    public function writeMessageBegin(string $name, int $type, int $seqid): int
     {
         if ($type == TMessageType::CALL || $type == TMessageType::ONEWAY) {
             $nameWithService = $this->serviceName_ . self::SEPARATOR . $name;
-            parent::writeMessageBegin($nameWithService, $type, $seqid);
+
+            return parent::writeMessageBegin($nameWithService, $type, $seqid);
         } else {
-            parent::writeMessageBegin($name, $type, $seqid);
+            return parent::writeMessageBegin($name, $type, $seqid);
         }
     }
 }

@@ -26,7 +26,7 @@ use Thrift\Exception\TException;
 
 class CollectionMapKeyException extends TException
 {
-    public function __construct($message)
+    public function __construct(string $message)
     {
         parent::__construct($message);
     }

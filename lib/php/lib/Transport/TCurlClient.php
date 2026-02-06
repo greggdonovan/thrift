@@ -33,70 +33,57 @@ use Thrift\Factory\TStringFuncFactory;
  */
 class TCurlClient extends TTransport
 {
-    private static $curlHandle;
+    /**
+     * Shared cURL handle
+     */
+    private static ?\CurlHandle $curlHandle = null;
 
     /**
      * The host to connect to
-     *
-     * @var string
      */
-    protected $host_;
+    protected string $host_;
 
     /**
      * The port to connect on
-     *
-     * @var int
      */
-    protected $port_;
+    protected int $port_;
 
     /**
      * The URI to request
-     *
-     * @var string
      */
-    protected $uri_;
+    protected string $uri_;
 
     /**
      * The scheme to use for the request, i.e. http, https
-     *
-     * @var string
      */
-    protected $scheme_;
+    protected string $scheme_;
 
     /**
      * Buffer for the HTTP request data
-     *
-     * @var string
      */
-    protected $request_;
+    protected string $request_;
 
     /**
      * Buffer for the HTTP response data.
-     *
-     * @var binary string
      */
-    protected $response_;
+    protected ?string $response_ = null;
 
     /**
      * Read timeout
-     *
-     * @var float
      */
-    protected $timeout_;
+    protected ?float $timeout_ = null;
 
     /**
      * Connection timeout
-     *
-     * @var float
      */
-    protected $connectionTimeout_;
+    protected ?float $connectionTimeout_ = null;
 
     /**
      * http headers
      *
-     * @var array
+     * @var array<string, string>
      */
-    protected $headers_;
+    protected array $headers_;
 
     /**
      * Make a new HTTP client.
@@ -104,9 +91,14 @@ class TCurlClient extends TTransport
      * @param string $host
      * @param int $port
      * @param string $uri
+     * @param string $scheme
      */
-    public function __construct($host, $port = 80, $uri = '', $scheme = 'http')
-    {
+    public function __construct(
+        string $host,
+        int $port = 80,
+        string $uri = '',
+        string $scheme = 'http'
+    ) {
         if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri[0] != '/')) {
             $uri = '/' . $uri;
         }
@@ -118,25 +110,21 @@ class TCurlClient extends TTransport
         $this->response_ = null;
         $this->timeout_ = null;
         $this->connectionTimeout_ = null;
-        $this->headers_ = array();
+        $this->headers_ = [];
     }
 
     /**
      * Set read timeout
-     *
-     * @param float $timeout
      */
-    public function setTimeoutSecs($timeout)
+    public function setTimeoutSecs(float $timeout): void
     {
         $this->timeout_ = $timeout;
     }
 
     /**
      * Set connection timeout
-     *
-     * @param float $connectionTimeout
      */
-    public function setConnectionTimeoutSecs($connectionTimeout)
+    public function setConnectionTimeoutSecs(float $connectionTimeout): void
     {
         $this->connectionTimeout_ = $connectionTimeout;
     }
@@ -144,9 +132,9 @@ class TCurlClient extends TTransport
     /**
      * Whether this transport is open.
      *
-     * @return boolean true if open
+     * @return bool true if open
      */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return true;
     }
@@ -156,14 +144,14 @@ class TCurlClient extends TTransport
      *
      * @throws TTransportException if cannot open
      */
-    public function open()
+    public function open(): void
     {
     }
 
     /**
      * Close the transport.
      */
-    public function close()
+    public function close(): void
     {
         $this->request_ = '';
         $this->response_ = null;
@@ -176,10 +164,10 @@ class TCurlClient extends TTransport
      * @return string The data that has been read
      * @throws TTransportException if cannot read any more data
      */
-    public function read($len)
+    public function read(int $len): string
     {
-        if ($len >= strlen($this->response_)) {
-            return $this->response_;
+        if ($this->response_ === null || $len >= strlen($this->response_)) {
+            return $this->response_ ?? '';
         } else {
             $ret = substr($this->response_, 0, $len);
             $this->response_ = substr($this->response_, $len);
@@ -195,7 +183,7 @@ class TCurlClient extends TTransport
      * @return string The data, of exact length
      * @throws TTransportException if cannot read data
      */
-    public function readAll($len)
+    public function readAll(int $len): string
     {
         $data = $this->read($len);
 
@@ -212,7 +200,7 @@ class TCurlClient extends TTransport
      * @param string $buf The data to write
      * @throws TTransportException if writing fails
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $this->request_ .= $buf;
     }
@@ -222,10 +210,10 @@ class TCurlClient extends TTransport
      *
      * @throws TTransportException if a writing error occurs
      */
-    public function flush()
+    public function flush(): void
     {
         if (!self::$curlHandle) {
-            register_shutdown_function(array('Thrift\\Transport\\TCurlClient', 'closeCurlHandle'));
+            register_shutdown_function([self::class, 'closeCurlHandle']);
             self::$curlHandle = curl_init();
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
@@ -237,12 +225,12 @@ class TCurlClient extends TTransport
         $host = $this->host_ . ($this->port_ != 80 ? ':' . $this->port_ : '');
         $fullUrl = $this->scheme_ . "://" . $host . $this->uri_;
 
-        $headers = array();
-        $defaultHeaders = array(
+        $headers = [];
+        $defaultHeaders = [
             'Accept' => 'application/x-thrift',
             'Content-Type' => 'application/x-thrift',
             'Content-Length' => TStringFuncFactory::create()->strlen($this->request_)
-        );
+        ];
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
             $headers[] = "$key: $value";
         }
@@ -252,30 +240,31 @@ class TCurlClient extends TTransport
         if ($this->timeout_ > 0) {
             if ($this->timeout_ < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_TIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, (int)(1000 * $this->timeout_));
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, (int)$this->timeout_);
             }
         }
         if ($this->connectionTimeout_ > 0) {
             if ($this->connectionTimeout_ < 1.0) {
                 // Timestamps smaller than 1 second are ignored when CURLOPT_CONNECTTIMEOUT is used
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, (int)(1000 * $this->connectionTimeout_));
             } else {
-                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout_);
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, (int)$this->connectionTimeout_);
             }
         }
         curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request_);
         $this->request_ = '';
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
-        $this->response_ = curl_exec(self::$curlHandle);
+        $response = curl_exec(self::$curlHandle);
+        $this->response_ = is_string($response) ? $response : null;
         $responseError = curl_error(self::$curlHandle);
 
         $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
 
         // Handle non 200 status code / connect failure
-        if ($this->response_ === false || $code !== 200) {
+        if ($this->response_ === null || $code !== 200) {
             curl_close(self::$curlHandle);
             self::$curlHandle = null;
             $this->response_ = null;
@@ -290,7 +279,7 @@ class TCurlClient extends TTransport
         }
     }
 
-    public static function closeCurlHandle()
+    public static function closeCurlHandle(): void
     {
         try {
             if (self::$curlHandle) {
@@ -303,7 +292,12 @@ class TCurlClient extends TTransport
         }
     }
 
-    public function addHeaders($headers)
+    /**
+     * Add headers to the HTTP request
+     *
+     * @param array<string, string> $headers
+     */
+    public function addHeaders(array $headers): void
     {
         $this->headers_ = array_merge($this->headers_, $headers);
     }

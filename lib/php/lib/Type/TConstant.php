@@ -28,7 +28,7 @@ namespace Thrift\Type;
 abstract class TConstant
 {
     /**
-     * Don't instanciate this class
+     * Don't instantiate this class
      */
     protected function __construct()
     {
@@ -36,10 +36,8 @@ abstract class TConstant
 
     /**
      * Get a constant value
-     * @param  string $constant
-     * @return mixed
      */
-    public static function get($constant)
+    public static function get(string $constant): mixed
     {
         if (is_null(static::$$constant)) {
             static::$$constant = call_user_func(

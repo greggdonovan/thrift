@@ -34,26 +34,23 @@ use Thrift\Factory\TStringFuncFactory;
 class TSSLSocket extends TSocket
 {
     /**
-     * Remote port
-     *
-     * @var null|resource
+     * Stream context for SSL connections
      */
-    protected $context_ = null;
+    protected mixed $context_ = null;
 
     /**
      * Socket constructor
      *
      * @param string $host Remote hostname
      * @param int $port Remote port
-     * @param resource $context Stream context
-     * @param bool $persist Whether to use a persistent socket
-     * @param string $debugHandler Function to call for error logging
+     * @param mixed $context Stream context
+     * @param callable|null $debugHandler Function to call for error logging
      */
     public function __construct(
-        $host = 'localhost',
-        $port = 9090,
-        $context = null,
-        $debugHandler = null
+        string $host = 'localhost',
+        int $port = 9090,
+        mixed $context = null,
+        ?callable $debugHandler = null
     ) {
         $this->host_ = $this->getSSLHost($host);
         $this->port_ = $port;
@@ -62,7 +59,7 @@ class TSSLSocket extends TSocket
             $context = stream_context_create();
         }
         $this->context_ = $context;
-        $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
+        $this->debugHandler_ = $debugHandler ?? 'error_log';
     }
 
     /**
@@ -71,9 +68,9 @@ class TSSLSocket extends TSocket
      * the host name.
      *
      * @param string $host Host to listen on
-     * @return string $host   Host name with transport protocol
+     * @return string Host name with transport protocol
      */
-    private function getSSLHost($host)
+    private function getSSLHost(string $host): string
     {
         $transport_protocol_loc = strpos($host, "://");
         if ($transport_protocol_loc === false) {
@@ -85,7 +82,7 @@ class TSSLSocket extends TSocket
     /**
      * Connects the socket.
      */
-    public function open()
+    public function open(): void
     {
         if ($this->isOpen()) {
             throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);

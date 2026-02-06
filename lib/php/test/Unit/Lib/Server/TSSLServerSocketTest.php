@@ -57,8 +57,8 @@ class TSSLServerSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  'ssl://somehost:999', #$address
-                 $this->anything(), #&$error_code
-                 $this->anything(), #&$error_string
+                 self::anything(), #&$error_code
+                 self::anything(), #&$error_string
                  STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, #int $flags
                  $this->callback(function ($context) use ($options) {
                      $contextOptions = stream_context_get_options($context);
@@ -71,7 +71,6 @@ class TSSLServerSocketTest extends TestCase
 
         $reflection = new \ReflectionClass($socket);
         $property = $reflection->getProperty('listener_');
-        $property->setAccessible(true);
 
         $this->assertIsResource($property->getValue($socket));
 
@@ -94,8 +93,8 @@ class TSSLServerSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  'ssl://somehost:999', #$address
-                 $this->anything(), #&$error_code
-                 $this->anything(), #&$error_string
+                 self::anything(), #&$error_code
+                 self::anything(), #&$error_string
                  STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, #int $flags
                  $this->callback(function ($context) {
                      $contextOptions = stream_context_get_options($context);
@@ -118,7 +117,6 @@ class TSSLServerSocketTest extends TestCase
 
         $reflection = new \ReflectionClass($result);
         $property = $reflection->getProperty('handle_');
-        $property->setAccessible(true);
         $this->assertEquals($transportHandle, $property->getValue($result));
     }
 

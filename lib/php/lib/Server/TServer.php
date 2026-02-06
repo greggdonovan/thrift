@@ -14,46 +14,34 @@ abstract class TServer
 {
     /**
      * Processor to handle new clients
-     *
-     * @var TProcessor
      */
-    protected $processor_;
+    protected object $processor_;
 
     /**
      * Server transport to be used for listening
      * and accepting new clients
-     *
-     * @var TServerTransport
      */
-    protected $transport_;
+    protected TServerTransport $transport_;
 
     /**
      * Input transport factory
-     *
-     * @var TTransportFactoryInterface
      */
-    protected $inputTransportFactory_;
+    protected TTransportFactoryInterface $inputTransportFactory_;
 
     /**
      * Output transport factory
-     *
-     * @var TTransportFactoryInterface
      */
-    protected $outputTransportFactory_;
+    protected TTransportFactoryInterface $outputTransportFactory_;
 
     /**
      * Input protocol factory
-     *
-     * @var TProtocolFactory
      */
-    protected $inputProtocolFactory_;
+    protected TProtocolFactory $inputProtocolFactory_;
 
     /**
      * Output protocol factory
-     *
-     * @var TProtocolFactory
      */
-    protected $outputProtocolFactory_;
+    protected TProtocolFactory $outputProtocolFactory_;
 
     /**
      * Sets up all the factories, etc
@@ -64,10 +52,9 @@ abstract class TServer
      * @param TTransportFactoryInterface $outputTransportFactory
      * @param TProtocolFactory $inputProtocolFactory
      * @param TProtocolFactory $outputProtocolFactory
-     * @return void
      */
     public function __construct(
-        $processor,
+        object $processor,
         TServerTransport $transport,
         TTransportFactoryInterface $inputTransportFactory,
         TTransportFactoryInterface $outputTransportFactory,
@@ -90,7 +77,7 @@ abstract class TServer
      * @abstract
      * @return void
      */
-    abstract public function serve();
+    abstract public function serve(): void;
 
     /**
      * Stops the server serving
@@ -98,5 +85,5 @@ abstract class TServer
      * @abstract
      * @return void
      */
-    abstract public function stop();
+    abstract public function stop(): void;
 }

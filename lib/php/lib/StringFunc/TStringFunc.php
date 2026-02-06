@@ -25,16 +25,20 @@ namespace Thrift\StringFunc;
 interface TStringFunc
 {
     /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
+     * Get a substring of the given string.
+     *
+     * @param string $str The input string
+     * @param int $start The start position
+     * @param int|null $length The length of the substring
+     * @return string The substring
      */
-    public function substr($str, $start, $length = null);
+    public function substr(string $str, int $start, ?int $length = null): string;
 
     /**
-     * @param string $str
-     * @return int
+     * Get the length of the given string in bytes.
+     *
+     * @param string $str The input string
+     * @return int The length in bytes
      */
-    public function strlen($str);
+    public function strlen(string $str): int;
 }

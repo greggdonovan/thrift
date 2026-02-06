@@ -15,17 +15,15 @@ class TForkingServer extends TServer
 {
     /**
      * Flag for the main serving loop
-     *
-     * @var bool
      */
-    private $stop_ = false;
+    private bool $stop_ = false;
 
     /**
      * List of children.
      *
-     * @var array
+     * @var array<int, TTransport>
      */
-    protected $children_ = array();
+    protected array $children_ = [];
 
     /**
      * Listens for new client using the supplied
@@ -34,7 +32,7 @@ class TForkingServer extends TServer
      *
      * @return void
      */
-    public function serve()
+    public function serve(): void
     {
         $this->transport_->listen();
 
@@ -67,7 +65,7 @@ class TForkingServer extends TServer
      * @param int $pid
      * @return void
      */
-    private function handleParent(TTransport $transport, $pid)
+    private function handleParent(TTransport $transport, int $pid): void
     {
         $this->children_[$pid] = $transport;
     }
@@ -76,9 +74,9 @@ class TForkingServer extends TServer
      * Code run by the child.
      *
      * @param TTransport $transport
-     * @return void
+     * @return never
      */
-    private function handleChild(TTransport $transport)
+    private function handleChild(TTransport $transport): never
     {
         try {
             $inputTransport = $this->inputTransportFactory_->getTransport($transport);
@@ -99,7 +97,7 @@ class TForkingServer extends TServer
      *
      * @return void
      */
-    private function collectChildren()
+    private function collectChildren(): void
     {
         foreach ($this->children_ as $pid => $transport) {
             if (pcntl_waitpid($pid, $status, WNOHANG) > 0) {
@@ -117,7 +115,7 @@ class TForkingServer extends TServer
      *
      * @return void
      */
-    public function stop()
+    public function stop(): void
     {
         $this->transport_->close();
         $this->stop_ = true;

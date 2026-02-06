@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Transport\TSocketPool;
@@ -30,15 +31,28 @@ class TSocketPoolTest extends TestCase
 {
     use PHPMock;
 
+    /**
+     * Helper method to properly evaluate PHPUnit constraints when comparing expected vs actual args.
+     */
+    private function assertArgsMatch(array $expected, array $actual): void
+    {
+        $this->assertCount(count($expected), $actual);
+        foreach ($expected as $i => $exp) {
+            if ($exp instanceof \PHPUnit\Framework\Constraint\Constraint) {
+                $this->assertThat($actual[$i], $exp);
+            } else {
+                $this->assertEquals($exp, $actual[$i]);
+            }
+        }
+    }
+
     protected function setUp(): void
     {
         #need to be defined before the TSocketPool class definition
         self::defineFunctionMock('Thrift\Transport', 'function_exists');
     }
 
-    /**
-     * @dataProvider constructDataProvider
-     */
+    #[DataProvider('constructDataProvider')]
     public function testConstruct(
         $hosts,
         $ports,
@@ -50,13 +64,12 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $serversProp = $ref->getProperty('servers_');
-        $serversProp->setAccessible(true);
 
         $this->assertEquals($expectedServers, $serversProp->getValue($socketPool));
     }
 
 
-    public function constructDataProvider()
+    public static function constructDataProvider()
     {
         yield 'one server' => [
             ['localhost'],
@@ -105,7 +118,6 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $servers = $ref->getProperty('servers_');
-        $servers->setAccessible(true);
 
         $this->assertEquals([['host' => 'localhost', 'port' => 9090]], $servers->getValue($socketPool));
     }
@@ -117,7 +129,6 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $numRetries = $ref->getProperty('numRetries_');
-        $numRetries->setAccessible(true);
 
         $this->assertEquals(5, $numRetries->getValue($socketPool));
     }
@@ -129,7 +140,6 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $retryInterval = $ref->getProperty('retryInterval_');
-        $retryInterval->setAccessible(true);
 
         $this->assertEquals(5, $retryInterval->getValue($socketPool));
     }
@@ -141,7 +151,6 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $maxConsecutiveFailures = $ref->getProperty('maxConsecutiveFailures_');
-        $maxConsecutiveFailures->setAccessible(true);
 
         $this->assertEquals(5, $maxConsecutiveFailures->getValue($socketPool));
     }
@@ -153,7 +162,6 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $randomize = $ref->getProperty('randomize_');
-        $randomize->setAccessible(true);
 
         $this->assertEquals(false, $randomize->getValue($socketPool));
     }
@@ -165,14 +173,11 @@ class TSocketPoolTest extends TestCase
 
         $ref = new \ReflectionObject($socketPool);
         $alwaysTryLast = $ref->getProperty('alwaysTryLast_');
-        $alwaysTryLast->setAccessible(true);
 
         $this->assertEquals(false, $alwaysTryLast->getValue($socketPool));
     }
 
-    /**
-     * @dataProvider openDataProvider
-     */
+    #[DataProvider('openDataProvider')]
     public function testOpen(
         $hosts,
         $ports,
@@ -196,10 +201,13 @@ class TSocketPoolTest extends TestCase
         $expectedException,
         $expectedExceptionMessage
     ) {
+        $functionExistsCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'function_exists')
              ->expects($this->exactly(count($functionExistCallParams)))
-             ->withConsecutive(...$functionExistCallParams)
-             ->willReturnOnConsecutiveCalls(...$functionExistResult);
+             ->willReturnCallback(function (...$args) use (&$functionExistsCallIndex, $functionExistCallParams, $functionExistResult) {
+                 $this->assertArgsMatch($functionExistCallParams[$functionExistsCallIndex], $args);
+                 return $functionExistResult[$functionExistsCallIndex++];
+             });
 
         $this->getFunctionMock('Thrift\Transport', 'shuffle')
              ->expects($randomize ? $this->once() : $this->never())
@@ -210,20 +218,31 @@ class TSocketPoolTest extends TestCase
                  return true;
              });
 
+        $apcuFetchCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'apcu_fetch')
              ->expects($this->exactly(count($apcuFetchCallParams)))
-             ->withConsecutive(...$apcuFetchCallParams)
-             ->willReturnOnConsecutiveCalls(...$apcuFetchResult);
+             ->willReturnCallback(function (...$args) use (&$apcuFetchCallIndex, $apcuFetchCallParams, $apcuFetchResult) {
+                 $this->assertArgsMatch($apcuFetchCallParams[$apcuFetchCallIndex], $args);
+                 return $apcuFetchResult[$apcuFetchCallIndex++];
+             });
 
+        $callUserFuncCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'call_user_func')
              ->expects($this->exactly(count($debugHandlerCall)))
-             ->withConsecutive(...$debugHandlerCall)
-             ->willReturn(true);
+             ->willReturnCallback(function (...$args) use (&$callUserFuncCallIndex, $debugHandlerCall) {
+                 $this->assertArgsMatch($debugHandlerCall[$callUserFuncCallIndex], $args);
+                 $callUserFuncCallIndex++;
+                 return true;
+             });
 
+        $apcuStoreCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', 'apcu_store')
              ->expects($this->exactly(count($apcuStoreCallParams)))
-             ->withConsecutive(...$apcuStoreCallParams)
-             ->willReturn(true);
+             ->willReturnCallback(function (...$args) use (&$apcuStoreCallIndex, $apcuStoreCallParams) {
+                 $this->assertArgsMatch($apcuStoreCallParams[$apcuStoreCallIndex], $args);
+                 $apcuStoreCallIndex++;
+                 return true;
+             });
 
         $this->getFunctionMock('Thrift\Transport', 'time')
              ->expects($this->exactly(count($timeResult)))
@@ -234,10 +253,13 @@ class TSocketPoolTest extends TestCase
             $fsockopenResult[$num] = $result ? fopen(...$result) : $result;
         }
 
+        $fsockopenCallIndex = 0;
         $this->getFunctionMock('Thrift\Transport', $persist ? 'pfsockopen' : 'fsockopen')
              ->expects($this->exactly(count($fsockopenCallParams)))
-             ->withConsecutive(...$fsockopenCallParams)
-             ->willReturnOnConsecutiveCalls(...$fsockopenResult);
+             ->willReturnCallback(function (...$args) use (&$fsockopenCallIndex, $fsockopenCallParams, $fsockopenResult) {
+                 $this->assertArgsMatch($fsockopenCallParams[$fsockopenCallIndex], $args);
+                 return $fsockopenResult[$fsockopenCallIndex++];
+             });
 
         $this->getFunctionMock('Thrift\Transport', 'socket_import_stream')
              ->expects(is_null($expectedException) ? $this->once() : $this->never())
@@ -251,7 +273,7 @@ class TSocketPoolTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
              ->expects(is_null($expectedException) ? $this->once() : $this->never())
              ->with(
-                 $this->anything(), #$socket,
+                 self::anything(), #$socket,
                  SOL_TCP, #$level
                  TCP_NODELAY, #$option
                  1 #$value
@@ -273,7 +295,7 @@ class TSocketPoolTest extends TestCase
         $this->assertNull($socketPool->open());
     }
 
-    public function openDataProvider()
+    public static function openDataProvider()
     {
         $default = [
             'hosts' => ['localhost'],
@@ -299,7 +321,7 @@ class TSocketPoolTest extends TestCase
                 true,
             ],
             'apcuFetchCallParams' => [
-                ['thrift_failtime:localhost:9090~', $this->anything()],
+                ['thrift_failtime:localhost:9090~', self::anything()],
             ],
             'apcuFetchResult' => [
                 false,
@@ -311,9 +333,9 @@ class TSocketPoolTest extends TestCase
                 [
                     'localhost',
                     9090,
-                    $this->anything(), #$errno,
-                    $this->anything(), #$errstr,
-                    $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                    self::anything(), #$errno,
+                    self::anything(), #$errstr,
+                    self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                 ],
             ],
             'fsockopenResult' => [
@@ -334,12 +356,16 @@ class TSocketPoolTest extends TestCase
                     false,
                 ],
                 'apcuFetchCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
-                    ['thrift_consecfails:localhost:9090~', $this->anything()],
+                    ['thrift_failtime:localhost:9090~', self::anything()],
+                    ['thrift_consecfails:localhost:9090~', self::anything()],
+                ],
+                'apcuFetchResult' => [
+                    false,
+                    0,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
-                    ['thrift_consecfails:localhost:9090~', $this->anything(), 0],
+                    ['thrift_failtime:localhost:9090~', self::anything(), 0],
+                    ['thrift_consecfails:localhost:9090~', 0, 0],
                 ],
                 'timeResult' => [
                     1,
@@ -356,16 +382,16 @@ class TSocketPoolTest extends TestCase
                     [
                         'localhost',
                         9090,
-                        $this->anything(), #$errno,
-                        $this->anything(), #$errstr,
-                        $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                        self::anything(), #$errno,
+                        self::anything(), #$errstr,
+                        self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                     ],
                     [
                         'localhost',
                         9090,
-                        $this->anything(), #$errno,
-                        $this->anything(), #$errstr,
-                        $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                        self::anything(), #$errno,
+                        self::anything(), #$errstr,
+                        self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                     ],
                 ],
                 'fsockopenResult' => [
@@ -383,7 +409,7 @@ class TSocketPoolTest extends TestCase
                     99,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
+                    ['thrift_failtime:localhost:9090~', 0, 0],
                 ],
                 'timeResult' => [
                     100,
@@ -398,7 +424,7 @@ class TSocketPoolTest extends TestCase
                     90,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
+                    ['thrift_failtime:localhost:9090~', 0, 0],
                 ],
                 'timeResult' => [
                     100,
@@ -420,15 +446,16 @@ class TSocketPoolTest extends TestCase
                     true,
                 ],
                 'apcuFetchCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
-                    ['thrift_consecfails:localhost:9090~', $this->anything()],
+                    ['thrift_failtime:localhost:9090~', self::anything()],
+                    ['thrift_consecfails:localhost:9090~', self::anything()],
                 ],
                 'apcuFetchResult' => [
                     90,
+                    0,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
-                    ['thrift_consecfails:localhost:9090~', 0],
+                    ['thrift_failtime:localhost:9090~', self::anything(), 0],
+                    ['thrift_consecfails:localhost:9090~', 0, 0],
                 ],
                 'timeResult' => [
                     100,
@@ -459,11 +486,15 @@ class TSocketPoolTest extends TestCase
                     true,
                 ],
                 'apcuFetchCallParams' => [
-                    ['thrift_failtime:localhost:9090~', $this->anything()],
-                    ['thrift_consecfails:localhost:9090~', $this->anything()],
+                    ['thrift_failtime:localhost:9090~', self::anything()],
+                    ['thrift_consecfails:localhost:9090~', self::anything()],
+                ],
+                'apcuFetchResult' => [
+                    false,
+                    0,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_consecfails:localhost:9090~', 1],
+                    ['thrift_consecfails:localhost:9090~', 1, 0],
                 ],
                 'timeResult' => [],
                 'fsockopenResult' => [
@@ -507,16 +538,16 @@ class TSocketPoolTest extends TestCase
                     [
                         'host2',
                         9091,
-                        $this->anything(), #$errno,
-                        $this->anything(), #$errstr,
-                        $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                        self::anything(), #$errno,
+                        self::anything(), #$errstr,
+                        self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                     ],
                     [
                         'host1',
                         9090,
-                        $this->anything(), #$errno,
-                        $this->anything(), #$errstr,
-                        $this->anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                        self::anything(), #$errno,
+                        self::anything(), #$errstr,
+                        self::anything(), #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
                     ],
                 ],
                 'fsockopenResult' => [
@@ -524,13 +555,18 @@ class TSocketPoolTest extends TestCase
                     ['php://temp', 'r'],
                 ],
                 'apcuFetchCallParams' => [
-                    ['thrift_failtime:host2:9091~', $this->anything()],
-                    ['thrift_consecfails:host2:9091~', $this->anything()],
-                    ['thrift_failtime:host1:9090~', $this->anything()],
+                    ['thrift_failtime:host2:9091~', self::anything()],
+                    ['thrift_consecfails:host2:9091~', self::anything()],
+                    ['thrift_failtime:host1:9090~', self::anything()],
+                ],
+                'apcuFetchResult' => [
+                    false,
+                    0,
+                    false,
                 ],
                 'apcuStoreCallParams' => [
-                    ['thrift_failtime:host2:9091~', $this->anything()],
-                    ['thrift_consecfails:host2:9091~', $this->anything(), 0],
+                    ['thrift_failtime:host2:9091~', self::anything(), 0],
+                    ['thrift_consecfails:host2:9091~', 0, 0],
                 ],
                 'timeResult' => [
                     1,

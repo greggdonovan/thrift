@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TException;
 use Thrift\Exception\TTransportException;
@@ -31,9 +32,7 @@ class TSocketTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider openExceptionDataProvider
-     */
+    #[DataProvider('openExceptionDataProvider')]
     public function testOpenException(
         $host,
         $port,
@@ -53,9 +52,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturn(false);
 
@@ -68,13 +67,13 @@ class TSocketTest extends TestCase
         $socket->open();
     }
 
-    public function openExceptionDataProvider()
+    public static function openExceptionDataProvider()
     {
         yield 'host is empty' => [
             'host' => '',
             'port' => 9090,
-            'persist' => null,
-            'debugHandler' => false,
+            'persist' => false,
+            'debugHandler' => null,
             'fsockopenCallCount' => 0,
             'expectedException' => TTransportException::class,
             'expectedMessage' => 'Cannot open null host',
@@ -114,9 +113,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturn($handle);
 
@@ -128,7 +127,7 @@ class TSocketTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
              ->expects($this->once())
              ->with(
-                 $this->anything(), #$socket,
+                 self::anything(), #$socket,
                  SOL_TCP, #$level
                  TCP_NODELAY, #$option
                  1 #$value
@@ -167,9 +166,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturnCallback(
                  function (
@@ -214,9 +213,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturn($handle);
 
@@ -228,7 +227,7 @@ class TSocketTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
              ->expects($this->once())
              ->with(
-                 $this->anything(), #$socket,
+                 self::anything(), #$socket,
                  SOL_TCP, #$level
                  TCP_NODELAY, #$option
                  1 #$value
@@ -259,9 +258,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturn($handle);
 
@@ -273,7 +272,7 @@ class TSocketTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
             ->expects($this->once())
             ->with(
-                $this->anything(), #$socket,
+                self::anything(), #$socket,
                 SOL_TCP, #$level
                 TCP_NODELAY, #$option
                 1 #$value
@@ -290,9 +289,7 @@ class TSocketTest extends TestCase
         $transport->open();
     }
 
-    /**
-     * @dataProvider open_THRIFT_5132_DataProvider
-     */
+    #[DataProvider('open_THRIFT_5132_DataProvider')]
     public function testOpen_THRIFT_5132(
         $socketImportResult
     ) {
@@ -306,9 +303,9 @@ class TSocketTest extends TestCase
              ->with(
                  $host,
                  $port,
-                 $this->anything(), #$errno,
-                 $this->anything(), #$errstr,
-                 $this->anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
+                 self::anything(), #$errno,
+                 self::anything(), #$errstr,
+                 self::anything() #$this->sendTimeoutSec_ + ($this->sendTimeoutUsec_ / 1000000),
              )
              ->willReturn(fopen('php://input', 'r+'));
 
@@ -319,7 +316,7 @@ class TSocketTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'socket_set_option')
              ->expects($socketImportResult ? $this->once() : $this->never())
              ->with(
-                 $this->anything(), #$socket,
+                 self::anything(), #$socket,
                  SOL_TCP, #$level
                  TCP_NODELAY, #$option
                  1 #$value
@@ -337,7 +334,7 @@ class TSocketTest extends TestCase
         $this->assertTrue($transport->isOpen());
     }
 
-    public function open_THRIFT_5132_DataProvider()
+    public static function open_THRIFT_5132_DataProvider()
     {
         yield 'socket_import_stream success' => [
             'socketImportResult' => true,
@@ -381,10 +378,8 @@ class TSocketTest extends TestCase
         $transport->setSendTimeout(9999);
         $reflector = new \ReflectionClass($transport);
         $property = $reflector->getProperty('sendTimeoutSec_');
-        $property->setAccessible(true);
         $this->assertEquals(9.0, $property->getValue($transport));
         $property = $reflector->getProperty('sendTimeoutUsec_');
-        $property->setAccessible(true);
         $this->assertEquals(999000, $property->getValue($transport));
     }
 
@@ -404,16 +399,12 @@ class TSocketTest extends TestCase
         $transport->setRecvTimeout(9999);
         $reflector = new \ReflectionClass($transport);
         $property = $reflector->getProperty('recvTimeoutSec_');
-        $property->setAccessible(true);
         $this->assertEquals(9.0, $property->getValue($transport));
         $property = $reflector->getProperty('recvTimeoutUsec_');
-        $property->setAccessible(true);
         $this->assertEquals(999000, $property->getValue($transport));
     }
 
-    /**
-     * @dataProvider hostDataProvider
-     */
+    #[DataProvider('hostDataProvider')]
     public function testGetHost($host, $expected)
     {
         $port = 9090;
@@ -428,7 +419,7 @@ class TSocketTest extends TestCase
         $this->assertEquals($expected, $transport->getHost());
     }
 
-    public function hostDataProvider()
+    public static function hostDataProvider()
     {
         yield 'localhost' => ['localhost', 'localhost'];
         yield 'ssl_localhost' => ['ssl://localhost', 'ssl://localhost'];
@@ -465,19 +456,15 @@ class TSocketTest extends TestCase
         $transport->setHandle(fopen('php://memory', 'r+'));
         $reflector = new \ReflectionClass($transport);
         $property = $reflector->getProperty('handle_');
-        $property->setAccessible(true);
         $this->assertNotNull($property->getValue($transport));
 
         $transport->close();
         $reflector = new \ReflectionClass($transport);
         $property = $reflector->getProperty('handle_');
-        $property->setAccessible(true);
         $this->assertNull($property->getValue($transport));
     }
 
-    /**
-     * @dataProvider writeFailDataProvider
-     */
+    #[DataProvider('writeFailDataProvider')]
     public function testWriteFail(
         $streamSelectResult,
         $fwriteCallCount,
@@ -494,11 +481,11 @@ class TSocketTest extends TestCase
         $this->getFunctionMock('Thrift\Transport', 'stream_select')
              ->expects($this->once())
              ->with(
-                 $this->anything(), #$null,
+                 self::anything(), #$null,
                  [$handle],
-                 $this->anything(), #$null,
-                 $this->anything(), #$this->sendTimeoutSec_,
-                 $this->anything() #$this->sendTimeoutUsec_
+                 self::anything(), #$null,
+                 self::anything(), #$this->sendTimeoutSec_,
+                 self::anything() #$this->sendTimeoutUsec_
              )
              ->willReturn($streamSelectResult);
 
@@ -549,7 +536,7 @@ class TSocketTest extends TestCase
         });
     }
 
-    public function writeFailDataProvider()
+    public static function writeFailDataProvider()
     {
         yield 'stream_select timeout' => [
             'streamSelectResult' => 0,
@@ -597,9 +584,7 @@ class TSocketTest extends TestCase
         });
     }
 
-    /**
-     * @dataProvider readFailDataProvider
-     */
+    #[DataProvider('readFailDataProvider')]
     public function testReadFail(
         $streamSelectResult,
         $freadResult,
@@ -618,10 +603,10 @@ class TSocketTest extends TestCase
              ->expects($this->once())
              ->with(
                  [$handle],
-                 $this->anything(), #$null,
-                 $this->anything(), #$null,
-                 $this->anything(), #$this->recvTimeoutSec_,
-                 $this->anything() #$this->recvTimeoutUsec_
+                 self::anything(), #$null,
+                 self::anything(), #$null,
+                 self::anything(), #$this->recvTimeoutSec_,
+                 self::anything() #$this->recvTimeoutUsec_
              )
              ->willReturn($streamSelectResult);
 
@@ -652,7 +637,7 @@ class TSocketTest extends TestCase
         $transport->read(5);
     }
 
-    public function readFailDataProvider()
+    public static function readFailDataProvider()
     {
         yield 'stream_select timeout' => [
             'streamSelectResult' => 0,

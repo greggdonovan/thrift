@@ -23,6 +23,7 @@
 namespace Thrift\Server;
 
 use Thrift\Transport\TSocket;
+use Thrift\Transport\TTransport;
 
 /**
  * Socket implementation of a server agent.
@@ -34,39 +35,32 @@ class TServerSocket extends TServerTransport
     /**
      * Handle for the listener socket
      *
-     * @var resource
+     * @var resource|null
      */
-    protected $listener_;
+    protected mixed $listener_ = null;
 
     /**
      * Port for the listener to listen on
-     *
-     * @var int
      */
-    protected $port_;
+    protected int $port_;
 
     /**
      * Timeout when listening for a new client
-     *
-     * @var int
      */
-    protected $acceptTimeout_ = 30000;
+    protected int $acceptTimeout_ = 30000;
 
     /**
      * Host to listen on
-     *
-     * @var string
      */
-    protected $host_;
+    protected string $host_;
 
     /**
      * ServerSocket constructor
      *
      * @param string $host Host to listen on
      * @param int $port Port to listen on
-     * @return void
      */
-    public function __construct($host = 'localhost', $port = 9090)
+    public function __construct(string $host = 'localhost', int $port = 9090)
     {
         $this->host_ = $host;
         $this->port_ = $port;
@@ -78,7 +72,7 @@ class TServerSocket extends TServerTransport
      * @param int $acceptTimeout
      * @return void
      */
-    public function setAcceptTimeout($acceptTimeout)
+    public function setAcceptTimeout(int $acceptTimeout): void
     {
         $this->acceptTimeout_ = $acceptTimeout;
     }
@@ -88,7 +82,7 @@ class TServerSocket extends TServerTransport
      *
      * @return void
      */
-    public function listen()
+    public function listen(): void
     {
         $this->listener_ = stream_socket_server('tcp://' . $this->host_ . ':' . $this->port_);
     }
@@ -98,7 +92,7 @@ class TServerSocket extends TServerTransport
      *
      * @return void
      */
-    public function close()
+    public function close(): void
     {
         @fclose($this->listener_);
         $this->listener_ = null;
@@ -107,9 +101,9 @@ class TServerSocket extends TServerTransport
     /**
      * Implementation of accept. If not client is accepted in the given time
      *
-     * @return TSocket
+     * @return TTransport|null
      */
-    protected function acceptImpl()
+    protected function acceptImpl(): ?TTransport
     {
         $handle = @stream_socket_accept($this->listener_, $this->acceptTimeout_ / 1000.0);
         if (!$handle) {

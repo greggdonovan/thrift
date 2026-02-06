@@ -22,23 +22,24 @@
 
 namespace Thrift\Protocol\SimpleJSON;
 
+use Thrift\Protocol\TSimpleJSONProtocol;
+
 class MapContext extends StructContext
 {
-    protected $isKey = true;
-    private $p_;
+    protected bool $isKey = true;
 
-    public function __construct($p)
+    public function __construct(TSimpleJSONProtocol $p)
     {
         parent::__construct($p);
     }
 
-    public function write()
+    public function write(): void
     {
         parent::write();
         $this->isKey = !$this->isKey;
     }
 
-    public function isMapKey()
+    public function isMapKey(): bool
     {
         // we want to coerce map keys to json strings regardless
         // of their type

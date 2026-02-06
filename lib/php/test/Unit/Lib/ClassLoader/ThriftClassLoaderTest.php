@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\ClassLoader;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -29,9 +30,7 @@ class ThriftClassLoaderTest extends TestCase
 {
     use PHPMock;
 
-    /**
-     * @dataProvider registerNamespaceDataProvider
-     */
+    #[DataProvider('registerNamespaceDataProvider')]
     public function testRegisterNamespace(
         $namespaces,
         $class,
@@ -46,7 +45,7 @@ class ThriftClassLoaderTest extends TestCase
 
         $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
              ->expects($useApcu ? $this->once() : $this->never())
-             ->with($apcuPrefix . $class, $this->anything())
+             ->with($apcuPrefix . $class, self::anything())
              ->willReturn(true);
 
         $loader = new ThriftClassLoader($useApcu, $apcuPrefix);
@@ -62,7 +61,7 @@ class ThriftClassLoaderTest extends TestCase
         }
     }
 
-    public function registerNamespaceDataProvider()
+    public static function registerNamespaceDataProvider()
     {
         yield 'default' => [
             'namespaces' => [

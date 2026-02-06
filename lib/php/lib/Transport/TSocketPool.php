@@ -35,80 +35,71 @@ class TSocketPool extends TSocket
 {
     /**
      * Remote servers. Array of associative arrays with 'host' and 'port' keys
+     *
+     * @var array<int, array{host: string, port: int}>
      */
-    private $servers_ = array();
+    private array $servers_ = [];
 
     /**
      * How many times to retry each host in connect
-     *
-     * @var int
      */
-    private $numRetries_ = 1;
+    private int $numRetries_ = 1;
 
     /**
      * Retry interval in seconds, how long to not try a host if it has been
      * marked as down.
-     *
-     * @var int
      */
-    private $retryInterval_ = 60;
+    private int $retryInterval_ = 60;
 
     /**
      * Max consecutive failures before marking a host down.
-     *
-     * @var int
      */
-    private $maxConsecutiveFailures_ = 1;
+    private int $maxConsecutiveFailures_ = 1;
 
     /**
      * Try hosts in order? or Randomized?
-     *
-     * @var bool
      */
-    private $randomize_ = true;
+    private bool $randomize_ = true;
 
     /**
      * Always try last host, even if marked down?
-     *
-     * @var bool
      */
-    private $alwaysTryLast_ = true;
+    private bool $alwaysTryLast_ = true;
 
     /**
      * Use apcu cache
-     * @var bool
      */
-    private $useApcuCache;
+    private bool $useApcuCache;
 
     /**
      * Socket pool constructor
      *
-     * @param array $hosts List of remote hostnames
-     * @param mixed $ports Array of remote ports, or a single common port
+     * @param array<int, string> $hosts List of remote hostnames
+     * @param array<int, int>|int $ports Array of remote ports, or a single common port
      * @param bool $persist Whether to use a persistent socket
-     * @param mixed $debugHandler Function for error logging
+     * @param callable|null $debugHandler Function for error logging
      */
     public function __construct(
-        $hosts = array('localhost'),
-        $ports = array(9090),
-        $persist = false,
-        $debugHandler = null
+        array $hosts = ['localhost'],
+        array|int $ports = [9090],
+        bool $persist = false,
+        ?callable $debugHandler = null
     ) {
-        parent::__construct(null, 0, $persist, $debugHandler);
+        parent::__construct('', 0, $persist, $debugHandler);
 
         if (!is_array($ports)) {
             $port = $ports;
-            $ports = array();
+            $ports = [];
             foreach ($hosts as $key => $val) {
                 $ports[$key] = $port;
             }
         }
 
         foreach ($hosts as $key => $host) {
-            $this->servers_ [] = array(
+            $this->servers_[] = [
                 'host' => $host,
                 'port' => $ports[$key]
-            );
+            ];
         }
 
         $this->useApcuCache = function_exists('apcu_fetch');
@@ -122,57 +113,47 @@ class TSocketPool extends TSocket
      * @param string $host hostname or IP
      * @param int $port port
      */
-    public function addServer($host, $port)
+    public function addServer(string $host, int $port): void
     {
-        $this->servers_[] = array('host' => $host, 'port' => $port);
+        $this->servers_[] = ['host' => $host, 'port' => $port];
     }
 
     /**
      * Sets how many time to keep retrying a host in the connect function.
-     *
-     * @param int $numRetries
      */
-    public function setNumRetries($numRetries)
+    public function setNumRetries(int $numRetries): void
     {
         $this->numRetries_ = $numRetries;
     }
 
     /**
      * Sets how long to wait until retrying a host if it was marked down
-     *
-     * @param int $numRetries
      */
-    public function setRetryInterval($retryInterval)
+    public function setRetryInterval(int $retryInterval): void
     {
         $this->retryInterval_ = $retryInterval;
     }
 
     /**
      * Sets how many time to keep retrying a host before marking it as down.
-     *
-     * @param int $numRetries
      */
-    public function setMaxConsecutiveFailures($maxConsecutiveFailures)
+    public function setMaxConsecutiveFailures(int $maxConsecutiveFailures): void
     {
         $this->maxConsecutiveFailures_ = $maxConsecutiveFailures;
     }
 
     /**
      * Turns randomization in connect order on or off.
-     *
-     * @param bool $randomize
      */
-    public function setRandomize($randomize)
+    public function setRandomize(bool $randomize): void
     {
         $this->randomize_ = $randomize;
     }
 
     /**
      * Whether to always try the last server.
-     *
-     * @param bool $alwaysTryLast
      */
-    public function setAlwaysTryLast($alwaysTryLast)
+    public function setAlwaysTryLast(bool $alwaysTryLast): void
     {
         $this->alwaysTryLast_ = $alwaysTryLast;
     }
@@ -181,7 +162,7 @@ class TSocketPool extends TSocket
      * Connects the socket by iterating through all the servers in the pool
      * and trying to find one that works.
      */
-    public function open()
+    public function open(): void
     {
         // Check if we want order randomization
         if ($this->randomize_) {
@@ -193,7 +174,8 @@ class TSocketPool extends TSocket
 
         for ($i = 0; $i < $numServers; ++$i) {
             // This extracts the $host and $port variables
-            extract($this->servers_[$i]);
+            $host = $this->servers_[$i]['host'];
+            $port = $this->servers_[$i]['port'];
 
             // Check APCu cache for a record of this server being down
             $failtimeKey = 'thrift_failtime:' . $host . ':' . $port . '~';
@@ -289,9 +271,9 @@ class TSocketPool extends TSocket
 
         // Oh no; we failed them all. The system is totally ill!
         $error = 'TSocketPool: All hosts in pool are down. ';
-        $hosts = array();
+        $hosts = [];
         foreach ($this->servers_ as $server) {
-            $hosts [] = $server['host'] . ':' . $server['port'];
+            $hosts[] = $server['host'] . ':' . $server['port'];
         }
         $hostlist = implode(',', $hosts);
         $error .= '(' . $hostlist . ')';
@@ -307,12 +289,12 @@ class TSocketPool extends TSocket
      * installed, then these null functions will step in and act like cache
      * misses.
      */
-    private function apcuFetch($key, &$success = null)
+    private function apcuFetch(string $key, ?bool &$success = null): mixed
     {
         return $this->useApcuCache ? apcu_fetch($key, $success) : false;
     }
 
-    private function apcuStore($key, $var, $ttl = 0)
+    private function apcuStore(string $key, mixed $var, int $ttl = 0): bool
     {
         return $this->useApcuCache ? apcu_store($key, $var, $ttl) : false;
     }

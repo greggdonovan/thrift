@@ -25,10 +25,14 @@ namespace Thrift\Type;
 /**
  * Message types for RPC
  */
-class TMessageType
+final class TMessageType
 {
-    const CALL  = 1;
-    const REPLY = 2;
-    const EXCEPTION = 3;
-    const ONEWAY = 4;
+    public const CALL  = 1;
+    public const REPLY = 2;
+    public const EXCEPTION = 3;
+    public const ONEWAY = 4;
+
+    private function __construct()
+    {
+    }
 }

@@ -84,27 +84,64 @@ class Handler implements \ThriftTest\ThriftTestIf
 
     public function testMapMap($hello)
     {
-        return $hello;
+        return [
+            -4 => [-4 => -4, -3 => -3, -2 => -2, -1 => -1],
+            4 => [4 => 4, 3 => 3, 2 => 2, 1 => 1],
+        ];
     }
 
     public function testInsanity(\ThriftTest\Insanity $argument)
     {
-        return $argument;
+        $result = [];
+        $result[1] = [];
+        $result[1][\ThriftTest\Numberz::TWO] = $argument;
+        $result[1][\ThriftTest\Numberz::THREE] = $argument;
+        $result[2] = [];
+        $result[2][\ThriftTest\Numberz::SIX] = new \ThriftTest\Insanity();
+        return $result;
     }
 
     public function testMulti($arg0, $arg1, $arg2, array $arg3, $arg4, $arg5)
     {
-        // TODO: Implement testMulti() method.
+        $result = new \ThriftTest\Xtruct();
+        $result->string_thing = 'Hello2';
+        $result->byte_thing = $arg0;
+        $result->i32_thing = $arg1;
+        $result->i64_thing = $arg2;
+        return $result;
     }
 
     public function testException($arg)
     {
-        throw new \Exception($arg);
+        if ($arg === 'Xception') {
+            $e = new \ThriftTest\Xception();
+            $e->errorCode = 1001;
+            $e->message = 'Xception';
+            throw $e;
+        }
+        if ($arg === 'TException') {
+            throw new \Thrift\Exception\TException('TException');
+        }
     }
 
     public function testMultiException($arg0, $arg1)
     {
-        throw new \Exception($arg0, $arg1);
+        if ($arg0 === 'Xception') {
+            $e = new \ThriftTest\Xception();
+            $e->errorCode = 1001;
+            $e->message = 'This is an Xception';
+            throw $e;
+        }
+        if ($arg0 === 'Xception2') {
+            $e = new \ThriftTest\Xception2();
+            $e->errorCode = 2002;
+            $e->struct_thing = new \ThriftTest\Xtruct();
+            $e->struct_thing->string_thing = 'This is an Xception2';
+            throw $e;
+        }
+        $result = new \ThriftTest\Xtruct();
+        $result->string_thing = $arg1;
+        return $result;
     }
 
     public function testOneway($secondsToSleep)

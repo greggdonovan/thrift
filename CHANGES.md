@@ -2,6 +2,19 @@
 
 ## 0.22.0
 
+### PHP
+
+- Modernized PHP library for PHP 8.2+ with full type declarations
+- Added typed properties and method signatures throughout the library
+- Updated code generator to emit typed PHP 8.2+ code
+- Enum constants now use `public const NAME = value;` syntax with explicit visibility
+- Generated struct properties use nullable types (e.g., `?string $name = null`)
+- Constructor parameters are now typed (`?array $vals = null`)
+- `read()` and `write()` methods now have `: int` return types
+- Updated PHPUnit to 10.5+, using PHP 8 attributes for data providers
+- Added Phan static analysis configuration
+- Added PHP to cross-test integration matrix
+
 ### Build Process
 
 - [THRIFT-5836](https://issues.apache.org/jira/browse/THRIFT-5836) - 0.21.0 fails to build from sources at Arch Linux: No rule to make target 'Thrift5272.thrift', needed by 'gen-cpp/Thrift5272_types.h'

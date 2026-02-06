@@ -231,6 +231,7 @@ public:
   std::string type_to_cast(t_type* ttype);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_phpdoc(t_type* ttype);
+  std::string php_type_declaration(t_type* ttype);
 
   bool php_is_scalar(t_type *ttype) {
     ttype = ttype->get_true_type();
@@ -563,7 +564,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
     generate_php_doc(f_enum, *c_iter);
-    indent(f_enum) << "const " << (*c_iter)->get_name() << " = " << value << ";" << '\n'
+    indent(f_enum) << "public const " << (*c_iter)->get_name() << " = " << value << ";" << '\n'
                    << '\n';
   }
 
@@ -957,13 +958,23 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
     }
     generate_php_doc(out, *m_iter);
     string access = (getters_setters_) ? "private" : "public";
-    indent(out) << access << " $" << (*m_iter)->get_name() << " = " << dval << ";" << '\n';
+    string field_name = (*m_iter)->get_name();
+    // Skip type declarations for inherited exception properties (message, code, file, line)
+    // as PHP doesn't allow redeclaring them with types
+    bool skip_type = is_exception && (field_name == "message" || field_name == "code" ||
+                                       field_name == "file" || field_name == "line");
+    if (skip_type) {
+      indent(out) << access << " $" << field_name << " = " << dval << ";" << '\n';
+    } else {
+      string php_type = php_type_declaration(t);
+      indent(out) << access << " ?" << php_type << " $" << field_name << " = " << dval << ";" << '\n';
+    }
   }
 
   out << '\n';
 
   // Generate constructor from array
-  string param = (members.size() > 0) ? "$vals = null" : "";
+  string param = (members.size() > 0) ? "?array $vals = null" : "";
   out << indent() << "public function __construct(" << param << ")"<< '\n'
       << indent() << "{" << '\n';
   indent_up();
@@ -1038,7 +1049,7 @@ void t_php_generator::generate_php_struct_reader(ostream& out, t_struct* tstruct
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
-  indent(out) << "public function read($input)" << '\n';
+  indent(out) << "public function read($input): int" << '\n';
   scope_up(out);
 
   if (oop_) {
@@ -1160,9 +1171,9 @@ void t_php_generator::generate_php_struct_writer(ostream& out, t_struct* tstruct
   vector<t_field*>::const_iterator f_iter;
 
   if (binary_inline_) {
-    indent(out) << "public function write(&$output)" << '\n';
+    indent(out) << "public function write(&$output): int" << '\n';
   } else {
-    indent(out) << "public function write($output)" << '\n';
+    indent(out) << "public function write($output): int" << '\n';
   }
   indent(out) << "{" << '\n';
   indent_up();
@@ -2779,7 +2790,7 @@ string t_php_generator::type_to_cast(t_type* type) {
     case t_base_type::TYPE_I64:
       return "(int)";
     case t_base_type::TYPE_DOUBLE:
-      return "(double)";
+      return "(float)";
     case t_base_type::TYPE_STRING:
       return "(string)";
     default:
@@ -2789,6 +2800,47 @@ string t_php_generator::type_to_cast(t_type* type) {
     return "(int)";
   }
   return "";
+}
+
+/**
+ * Converts the parse type to a PHP 8.2+ type declaration string.
+ */
+string t_php_generator::php_type_declaration(t_type* type) {
+  type = get_true_type(type);
+
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      return "mixed";
+    case t_base_type::TYPE_STRING:
+      return "string";
+    case t_base_type::TYPE_BOOL:
+      return "bool";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "int";
+    case t_base_type::TYPE_DOUBLE:
+      return "float";
+    default:
+      return "mixed";
+    }
+  } else if (type->is_enum()) {
+    return "int";
+  } else if (type->is_struct() || type->is_xception()) {
+    string ns = php_namespace(type->get_program());
+    // If namespace already starts with \, don't add another one
+    if (ns.empty() || ns[0] != '\\') {
+      ns = "\\" + ns;
+    }
+    return ns + type->get_name();
+  } else if (type->is_map() || type->is_set() || type->is_list()) {
+    return "array";
+  }
+
+  return "mixed";
 }
 
 /**

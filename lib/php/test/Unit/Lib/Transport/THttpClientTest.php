@@ -22,6 +22,7 @@
 namespace Test\Thrift\Unit\Lib\Transport;
 
 use phpmock\phpunit\PHPMock;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TTransportException;
 use Thrift\Transport\THttpClient;
@@ -38,7 +39,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $prop = $ref->getProperty('timeout_');
-        $prop->setAccessible(true);
         $this->assertEquals(1000, $prop->getValue($transport));
     }
 
@@ -69,16 +69,13 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('handle_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, $handle);
 
         $this->assertNull($transport->close());
         $this->assertNull($propRequest->getValue($transport));
     }
 
-    /**
-     * @dataProvider readDataProvider
-     */
+    #[DataProvider('readDataProvider')]
     public function testRead(
         $readLen,
         $freadResult,
@@ -110,13 +107,12 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('handle_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, $handle);
 
         $this->assertEquals($expectedResult, $transport->read($readLen));
     }
 
-    public function readDataProvider()
+    public static function readDataProvider()
     {
         yield 'read success' => [
             'readLen' => 10,
@@ -158,16 +154,13 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $prop = $ref->getProperty('buf_');
-        $prop->setAccessible(true);
 
         $transport->write('1234567890');
 
         $this->assertEquals('1234567890', $prop->getValue($transport));
     }
 
-    /**
-     * @dataProvider flushDataProvider
-     */
+    #[DataProvider('flushDataProvider')]
     public function testFlush(
         $host,
         $port,
@@ -216,7 +209,7 @@ class THttpClientTest extends TestCase
         $this->assertNull($transport->flush());
     }
 
-    public function flushDataProvider()
+    public static function flushDataProvider()
     {
         $default = [
             'host' => 'localhost',
@@ -323,7 +316,6 @@ class THttpClientTest extends TestCase
 
         $ref = new \ReflectionClass($transport);
         $propRequest = $ref->getProperty('headers_');
-        $propRequest->setAccessible(true);
         $propRequest->setValue($transport, ['test' => '1234567890']);
 
         $transport->addHeaders(['test2' => '12345']);

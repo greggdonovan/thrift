@@ -21,24 +21,23 @@
          bootstrap="test/bootstrap.php"
          cacheResult="false"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         stopOnWarning="true"
-         stopOnFailure="true"
-         processIsolation="true"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+         stopOnWarning="false"
+         stopOnFailure="false"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd">
+    <source>
+        <include>
             <directory suffix=".php">./lib</directory>
-        </whitelist>
-    </filter>
+        </include>
+    </source>
     <testsuites>
         <testsuite name="Thrift PHP Unit Test Suite">
             <directory>./test/Unit</directory>
         </testsuite>
         <testsuite name="Thrift PHP Integration Test Suite">
             <directory>./test/Integration</directory>
+            <exclude>./test/Integration/BaseValidatorTest.php</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

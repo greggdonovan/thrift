@@ -22,18 +22,20 @@
 
 namespace Thrift\Protocol\JSON;
 
+use Thrift\Protocol\TJSONProtocol;
+
 class LookaheadReader
 {
-    private $hasData_ = false;
-    private $data_ = array();
-    private $p_;
+    private bool $hasData_ = false;
+    private string $data_ = '';
+    private TJSONProtocol $p_;
 
-    public function __construct($p)
+    public function __construct(TJSONProtocol $p)
     {
         $this->p_ = $p;
     }
 
-    public function read()
+    public function read(): string
     {
         if ($this->hasData_) {
             $this->hasData_ = false;
@@ -44,7 +46,7 @@ class LookaheadReader
         return substr($this->data_, 0, 1);
     }
 
-    public function peek()
+    public function peek(): string
     {
         if (!$this->hasData_) {
             $this->data_ = $this->p_->getTransport()->readAll(1);

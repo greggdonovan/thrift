@@ -25,23 +25,27 @@ namespace Thrift\Type;
 /**
  * Data types that can be sent via Thrift
  */
-class TType
+final class TType
 {
-    const STOP   = 0;
-    const VOID   = 1;
-    const BOOL   = 2;
-    const BYTE   = 3;
-    const I08    = 3;
-    const DOUBLE = 4;
-    const I16    = 6;
-    const I32    = 8;
-    const I64    = 10;
-    const STRING = 11;
-    const UTF7   = 11;
-    const STRUCT = 12;
-    const MAP    = 13;
-    const SET    = 14;
-    const LST    = 15;    // N.B. cannot use LIST keyword in PHP!
-    const UTF8   = 16;
-    const UTF16  = 17;
+    public const STOP   = 0;
+    public const VOID   = 1;
+    public const BOOL   = 2;
+    public const BYTE   = 3;
+    public const I08    = 3;
+    public const DOUBLE = 4;
+    public const I16    = 6;
+    public const I32    = 8;
+    public const I64    = 10;
+    public const STRING = 11;
+    public const UTF7   = 11;
+    public const STRUCT = 12;
+    public const MAP    = 13;
+    public const SET    = 14;
+    public const LST    = 15;    // N.B. cannot use LIST keyword in PHP!
+    public const UTF8   = 16;
+    public const UTF16  = 17;
+
+    private function __construct()
+    {
+    }
 }

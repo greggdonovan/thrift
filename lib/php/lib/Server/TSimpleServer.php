@@ -13,10 +13,8 @@ class TSimpleServer extends TServer
 {
     /**
      * Flag for the main serving loop
-     *
-     * @var bool
      */
-    private $stop_ = false;
+    private bool $stop_ = false;
 
     /**
      * Listens for new client using the supplied
@@ -25,7 +23,7 @@ class TSimpleServer extends TServer
      *
      * @return void
      */
-    public function serve()
+    public function serve(): void
     {
         $this->transport_->listen();
 
@@ -52,7 +50,7 @@ class TSimpleServer extends TServer
      *
      * @return void
      */
-    public function stop()
+    public function stop(): void
     {
         $this->transport_->close();
         $this->stop_ = true;

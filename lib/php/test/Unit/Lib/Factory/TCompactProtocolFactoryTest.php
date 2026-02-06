@@ -41,7 +41,6 @@ class TCompactProtocolFactoryTest extends TestCase
 
         $ref = new \ReflectionClass($protocol);
         $refTrans = $ref->getProperty('trans_');
-        $refTrans->setAccessible(true);
 
         $this->assertSame($transport, $refTrans->getValue($protocol));
     }

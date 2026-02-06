@@ -36,80 +36,63 @@ class TSocket extends TTransport
     /**
      * Handle to PHP socket
      *
-     * @var resource
+     * @var resource|null
      */
-    protected $handle_ = null;
+    protected mixed $handle_ = null;
 
     /**
      * Remote hostname
-     *
-     * @var string
      */
-    protected $host_ = 'localhost';
+    protected string $host_ = 'localhost';
 
     /**
      * Remote port
-     *
-     * @var int
      */
-    protected $port_ = '9090';
+    protected int $port_ = 9090;
 
     /**
      * Send timeout in seconds.
      *
      * Combined with sendTimeoutUsec this is used for send timeouts.
-     *
-     * @var int
      */
-    protected $sendTimeoutSec_ = 0;
+    protected int $sendTimeoutSec_ = 0;
 
     /**
      * Send timeout in microseconds.
      *
      * Combined with sendTimeoutSec this is used for send timeouts.
-     *
-     * @var int
      */
-    protected $sendTimeoutUsec_ = 100000;
+    protected int $sendTimeoutUsec_ = 100000;
 
     /**
      * Recv timeout in seconds
      *
      * Combined with recvTimeoutUsec this is used for recv timeouts.
-     *
-     * @var int
      */
-    protected $recvTimeoutSec_ = 0;
+    protected int $recvTimeoutSec_ = 0;
 
     /**
      * Recv timeout in microseconds
      *
      * Combined with recvTimeoutSec this is used for recv timeouts.
-     *
-     * @var int
      */
-    protected $recvTimeoutUsec_ = 750000;
+    protected int $recvTimeoutUsec_ = 750000;
 
     /**
      * Persistent socket or plain?
-     *
-     * @var bool
      */
-    protected $persist_ = false;
+    protected bool $persist_ = false;
 
     /**
      * Debugging on?
-     *
-     * @var bool
      */
-    protected $debug_ = false;
+    protected bool $debug_ = false;
 
     /**
      * Debug handler
-     *
-     * @var mixed
+     * @var callable|null
      */
-    protected $debugHandler_ = null;
+    protected mixed $debugHandler_ = null;
 
     /**
      * Socket constructor
@@ -117,25 +100,24 @@ class TSocket extends TTransport
      * @param string $host Remote hostname
      * @param int $port Remote port
      * @param bool $persist Whether to use a persistent socket
-     * @param string $debugHandler Function to call for error logging
+     * @param callable|null $debugHandler Function to call for error logging
      */
     public function __construct(
-        $host = 'localhost',
-        $port = 9090,
-        $persist = false,
-        $debugHandler = null
+        string $host = 'localhost',
+        int $port = 9090,
+        bool $persist = false,
+        ?callable $debugHandler = null
     ) {
         $this->host_ = $host;
         $this->port_ = $port;
         $this->persist_ = $persist;
-        $this->debugHandler_ = $debugHandler ? $debugHandler : 'error_log';
+        $this->debugHandler_ = $debugHandler ?? 'error_log';
     }
 
     /**
      * @param resource $handle
-     * @return void
      */
-    public function setHandle($handle)
+    public function setHandle(mixed $handle): void
     {
         $this->handle_ = $handle;
         stream_set_blocking($this->handle_, false);
@@ -146,9 +128,9 @@ class TSocket extends TTransport
      *
      * @param int $timeout Timeout in milliseconds.
      */
-    public function setSendTimeout($timeout)
+    public function setSendTimeout(int $timeout): void
     {
-        $this->sendTimeoutSec_ = floor($timeout / 1000);
+        $this->sendTimeoutSec_ = (int) floor($timeout / 1000);
         $this->sendTimeoutUsec_ =
             ($timeout - ($this->sendTimeoutSec_ * 1000)) * 1000;
     }
@@ -158,39 +140,33 @@ class TSocket extends TTransport
      *
      * @param int $timeout Timeout in milliseconds.
      */
-    public function setRecvTimeout($timeout)
+    public function setRecvTimeout(int $timeout): void
     {
-        $this->recvTimeoutSec_ = floor($timeout / 1000);
+        $this->recvTimeoutSec_ = (int) floor($timeout / 1000);
         $this->recvTimeoutUsec_ =
             ($timeout - ($this->recvTimeoutSec_ * 1000)) * 1000;
     }
 
     /**
      * Sets debugging output on or off
-     *
-     * @param bool $debug
      */
-    public function setDebug($debug)
+    public function setDebug(bool $debug): void
     {
         $this->debug_ = $debug;
     }
 
     /**
      * Get the host that this socket is connected to
-     *
-     * @return string host
      */
-    public function getHost()
+    public function getHost(): string
     {
         return $this->host_;
     }
 
     /**
      * Get the remote port that this socket is connected to
-     *
-     * @return int port
      */
-    public function getPort()
+    public function getPort(): int
     {
         return $this->port_;
     }
@@ -200,7 +176,7 @@ class TSocket extends TTransport
      *
      * @return bool true if the socket is open
      */
-    public function isOpen()
+    public function isOpen(): bool
     {
         return is_resource($this->handle_);
     }
@@ -208,7 +184,7 @@ class TSocket extends TTransport
     /**
      * Connects the socket.
      */
-    public function open()
+    public function open(): void
     {
         if ($this->isOpen()) {
             throw new TTransportException('Socket already connected', TTransportException::ALREADY_OPEN);
@@ -262,7 +238,7 @@ class TSocket extends TTransport
     /**
      * Closes the socket.
      */
-    public function close()
+    public function close(): void
     {
         @fclose($this->handle_);
         $this->handle_ = null;
@@ -277,7 +253,7 @@ class TSocket extends TTransport
      * @param int $len Maximum number of bytes to read.
      * @return string Binary data
      */
-    public function read($len)
+    public function read(int $len): string
     {
         $null = null;
         $read = array($this->handle_);
@@ -313,7 +289,7 @@ class TSocket extends TTransport
      *
      * @param string $buf The data to write
      */
-    public function write($buf)
+    public function write(string $buf): void
     {
         $null = null;
         $write = array($this->handle_);
@@ -363,7 +339,7 @@ class TSocket extends TTransport
      * If you wish to have flushable buffering behaviour, wrap this TSocket
      * in a TBufferedTransport.
      */
-    public function flush()
+    public function flush(): void
     {
         // no-op
     }

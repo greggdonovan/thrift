@@ -51,7 +51,10 @@ use Thrift\Type\TMessageType;
 
 class TMultiplexedProcessor
 {
-    private $serviceProcessorMap_;
+    /**
+     * @var array<string, object>
+     */
+    private array $serviceProcessorMap_ = [];
 
     /**
      * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -63,7 +66,7 @@ class TMultiplexedProcessor
      * @param processor Implementation of a service, usually referred to
      * as "handlers", e.g. WeatherReportHandler implementing WeatherReport.Iface.
      */
-    public function registerProcessor($serviceName, $processor)
+    public function registerProcessor(string $serviceName, object $processor): void
     {
         $this->serviceProcessorMap_[$serviceName] = $processor;
     }
@@ -83,7 +86,7 @@ class TMultiplexedProcessor
      *                    the service name was not found in the message, or if the service
      *                    name was not found in the service map.
      */
-    public function process(TProtocol $input, TProtocol $output)
+    public function process(TProtocol $input, TProtocol $output): bool
     {
         /*
             Use the actual underlying protocol (e.g. TBinaryProtocol) to read the
