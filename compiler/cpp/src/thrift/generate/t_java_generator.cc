@@ -483,7 +483,7 @@ string t_java_generator::java_package() {
 }
 
 string t_java_generator::java_suppressions() {
-  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\", \"NullAway\", \"StatementSwitchToExpressionSwitch\", \"PatternMatchingInstanceof\", \"NonOverridingEquals\", \"MissingOverride\", \"ReferenceEquality\", \"TypeParameterUnusedInFormals\", \"UnnecessaryParentheses\", \"SameNameButDifferent\", \"EmptyBlockTag\", \"InvalidParam\", \"ReturnAtTheEndOfVoidFunction\", \"OverrideThrowableToString\", \"ByteBufferBackingArray\", \"JavaLangClash\", \"DefaultCharset\", \"FloatingPointLiteralPrecision\"})\n";
+  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})\n";
 }
 
 string t_java_generator::java_nullable_annotation() {
@@ -2611,9 +2611,6 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << '\n';
         }
-        // Note: @Nullable is not emitted here because JSpecify TYPE_USE annotations cannot
-        // annotate "scoping constructs" - qualified type names like java.lang.String or
-        // parameterized types like java.util.List<T>. Nullability is conveyed by the field.
         indent(out) << "public " << type_name(type);
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -4671,10 +4668,6 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
   // TODO(mcslee): do we ever need to initialize the field?
   string result = "";
   t_type* ttype = get_true_type(tfield->get_type());
-  // Note: @Nullable is not emitted inline because JSpecify TYPE_USE annotations cannot
-  // annotate "scoping constructs" - qualified type names like java.lang.String or
-  // parameterized types like java.util.List<T>. All nullable Thrift types have qualified names.
-  (void)ttype; // suppress unused variable warning
   result += type_name(tfield->get_type()) + " " + make_valid_java_identifier(tfield->get_name());
   if (init) {
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {

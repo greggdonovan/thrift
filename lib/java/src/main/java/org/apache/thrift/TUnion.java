@@ -33,8 +33,6 @@ import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
-import org.jspecify.annotations.Nullable;
-
 public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     implements TBase<T, F> {
 
@@ -66,7 +64,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     value_ = deepCopyObject(other.value_);
   }
 
-  private static @Nullable Object deepCopyObject(@Nullable Object o) {
+  private static Object deepCopyObject(Object o) {
     if (o instanceof TBase tb) {
       return tb.deepCopy();
     } else if (o instanceof ByteBuffer bb) {

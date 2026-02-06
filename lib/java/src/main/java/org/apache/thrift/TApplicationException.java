@@ -24,7 +24,6 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TType;
-import org.jspecify.annotations.Nullable;
 
 /** Application level exception */
 public class TApplicationException extends TException implements TSerializable {
