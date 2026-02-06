@@ -833,7 +833,6 @@ jobs:
           distribution: temurin
           # Java 17 is the minimum supported version
           java-version: 17
-          cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)
         run: |
