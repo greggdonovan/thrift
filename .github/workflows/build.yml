@@ -136,7 +136,9 @@ jobs:
 
       - name: Run Phan static analysis
         if: matrix.php-version == '8.2'
-        run: vendor/bin/phan --allow-polyfill-parser --config-file lib/php/.phan/config.php
+        run: |
+          cd lib/php
+          ../../vendor/bin/phan --allow-polyfill-parser --config-file .phan/config.php
 
       - name: Run bootstrap
         run: ./bootstrap.sh
