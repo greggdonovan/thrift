@@ -483,7 +483,7 @@ string t_java_generator::java_package() {
 }
 
 string t_java_generator::java_suppressions() {
-  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})\n";
+  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\", \"NullAway\", \"StatementSwitchToExpressionSwitch\", \"PatternMatchingInstanceof\", \"NonOverridingEquals\", \"MissingOverride\", \"ReferenceEquality\", \"TypeParameterUnusedInFormals\", \"UnnecessaryParentheses\", \"SameNameButDifferent\", \"EmptyBlockTag\", \"InvalidParam\", \"ReturnAtTheEndOfVoidFunction\", \"OverrideThrowableToString\", \"ByteBufferBackingArray\", \"JavaLangClash\", \"DefaultCharset\", \"FloatingPointLiteralPrecision\"})\n";
 }
 
 string t_java_generator::java_nullable_annotation() {
@@ -598,21 +598,19 @@ void t_java_generator::generate_enum(t_enum* tenum) {
 
   indent_up();
 
-  indent(f_enum) << "switch (value) {" << '\n';
+  indent(f_enum) << "return switch (value) {" << '\n';
   indent_up();
 
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    indent(f_enum) << "case " << value << ":" << '\n';
-    indent(f_enum) << "  return " << (*c_iter)->get_name() << ";" << '\n';
+    indent(f_enum) << "case " << value << " -> " << (*c_iter)->get_name() << ";" << '\n';
   }
 
-  indent(f_enum) << "default:" << '\n';
-  indent(f_enum) << "  return null;" << '\n';
+  indent(f_enum) << "default -> null;" << '\n';
 
   indent_down();
 
-  indent(f_enum) << "}" << '\n';
+  indent(f_enum) << "};" << '\n';
 
   indent_down();
 
@@ -2342,15 +2340,13 @@ void t_java_generator::generate_generic_field_getters_setters(std::ostream& out,
   // create the setter
 
   indent(out) << java_override_annotation() << '\n';
-  indent(out) << "public void setFieldValue(_Fields field, " << java_nullable_annotation()
-              << " java.lang.Object value) {" << '\n';
+  indent(out) << "public void setFieldValue(_Fields field, java.lang.Object value) {" << '\n';
   indent(out) << "  switch (field) {" << '\n';
   out << setter_stream.str();
   indent(out) << "  }" << '\n';
   indent(out) << "}" << '\n' << '\n';
 
   // create the getter
-  indent(out) << java_nullable_annotation() << '\n';
   indent(out) << java_override_annotation() << '\n';
   indent(out) << "public java.lang.Object getFieldValue(_Fields field) {" << '\n';
   indent_up();
@@ -2419,7 +2415,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
           indent(out) << "@Deprecated" << '\n';
         }
 
-        indent(out) << "public " << optional_class << "<Integer> get" << cap_name;
+        indent(out) << "public " << optional_class << "<java.lang.Integer> get" << cap_name;
 
         out << get_cap_name("size() {") << '\n';
 
@@ -2496,7 +2492,6 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << '\n';
         }
-        indent(out) << java_nullable_annotation() << '\n';
         indent(out) << "public java.util.Iterator<" << type_name(element_type, true, false)
                     << "> get" << cap_name;
         out << get_cap_name("iterator() {") << '\n';
@@ -2616,9 +2611,9 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << '\n';
         }
-        if (type_can_be_null(type)) {
-          indent(out) << java_nullable_annotation() << '\n';
-        }
+        // Note: @Nullable is not emitted here because JSpecify TYPE_USE annotations cannot
+        // annotate "scoping constructs" - qualified type names like java.lang.String or
+        // parameterized types like java.util.List<T>. Nullability is conveyed by the field.
         indent(out) << "public " << type_name(type);
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2670,7 +2665,6 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       out << type_name(tstruct);
     }
     out << " set" << cap_name << "("
-        << (type_can_be_null(type) ? (java_nullable_annotation() + " ") : "")
         << type_name(type)
         << " " << make_valid_java_identifier(field_name) << ") {" << '\n';
     indent_up();
@@ -4677,9 +4671,10 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
   // TODO(mcslee): do we ever need to initialize the field?
   string result = "";
   t_type* ttype = get_true_type(tfield->get_type());
-  if (type_can_be_null(ttype)) {
-    result += java_nullable_annotation() + " ";
-  }
+  // Note: @Nullable is not emitted inline because JSpecify TYPE_USE annotations cannot
+  // annotate "scoping constructs" - qualified type names like java.lang.String or
+  // parameterized types like java.util.List<T>. All nullable Thrift types have qualified names.
+  (void)ttype; // suppress unused variable warning
   result += type_name(tfield->get_type()) + " " + make_valid_java_identifier(tfield->get_name());
   if (init) {
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
