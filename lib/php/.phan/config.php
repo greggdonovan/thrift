@@ -23,7 +23,6 @@ return [
 
     'directory_list' => [
         'lib/',
-        'test/',
     ],
 
     'exclude_analysis_directory_list' => [
