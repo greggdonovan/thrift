@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /** Frequently used test data items. */
+@SuppressWarnings("NullAway")
 public final class TestData {
   private TestData() {}
 

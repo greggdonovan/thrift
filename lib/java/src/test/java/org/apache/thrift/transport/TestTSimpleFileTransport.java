@@ -35,9 +35,9 @@ public class TestTSimpleFileTransport {
     byte[] input_buf = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     TSimpleFileTransport trans_write =
         new TSimpleFileTransport(tempFilePathName.toString(), false, true, false);
-    assert (!trans_write.isOpen());
+    assert !trans_write.isOpen();
     trans_write.open();
-    assert (trans_write.isOpen());
+    assert trans_write.isOpen();
     trans_write.write(input_buf);
     trans_write.write(input_buf, 2, 2);
     trans_write.flush();
@@ -45,7 +45,7 @@ public class TestTSimpleFileTransport {
 
     // Test read side
     TSimpleFileTransport trans = new TSimpleFileTransport(tempFilePathName.toString(), true, false);
-    assert (trans.isOpen());
+    assert trans.isOpen();
 
     // Simple file trans provides no buffer access
     assertEquals(0, trans.getBufferPosition());
@@ -63,7 +63,7 @@ public class TestTSimpleFileTransport {
     assertArrayEquals(new byte[] {1, 2, 3, 4}, buf1);
 
     int bytesRead = trans.read(buf1, 0, BUFSIZ);
-    assert (bytesRead > 0);
+    assert bytesRead > 0;
     for (int i = 0; i < bytesRead; ++i) {
       assertEquals(buf1[i], i + 5);
     }

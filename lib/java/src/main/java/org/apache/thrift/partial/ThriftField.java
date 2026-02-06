@@ -23,12 +23,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Holds name of a thrift field and of its sub-fields recursively.
  *
  * <p>This class is meant to be used in conjunction with {@code TDeserializer}.
  */
+@SuppressWarnings({
+  "PatternMatchingInstanceof", // Traditional instanceof clearer for simple null/type checks
+  "StringSplitter", // Regex split correctly parses dot-separated field paths
+  "NullAway" // findField intentionally returns null when field not found
+})
 public class ThriftField {
 
   /** Name of this field as it appears in a thrift file. Case sensitive. */
@@ -78,7 +84,7 @@ public class ThriftField {
   @Override
   public int hashCode() {
     if (this.hashcode == 0) {
-      int hc = this.name.toLowerCase().hashCode();
+      int hc = this.name.toLowerCase(Locale.ROOT).hashCode();
       for (ThriftField subField : this.fields) {
         hc ^= subField.hashCode();
       }

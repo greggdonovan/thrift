@@ -57,6 +57,12 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Like TNonblockingServer, it relies on the use of TFramedTransport.
  */
+@SuppressWarnings({
+  "NullAway", // Thread fields initialized lazily in startThreads()
+  "MissingOverride", // Inner class run() methods override parent
+  "FutureReturnValueIgnored", // Executor tasks run asynchronously with error handling
+  "PatternMatchingInstanceof" // Traditional instanceof clearer for transport type checks
+})
 public class TThreadedSelectorServer extends AbstractNonblockingServer {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(TThreadedSelectorServer.class.getName());

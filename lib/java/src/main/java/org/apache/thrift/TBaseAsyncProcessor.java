@@ -44,6 +44,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
     return Collections.unmodifiableMap(processMap);
   }
 
+  @Override
   public void process(final AsyncFrameBuffer fb) throws TException {
 
     final TProtocol in = fb.getInputProtocol();
@@ -80,8 +81,9 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
     } catch (TProtocolException e) {
       in.readMessageEnd();
 
+      String message = e.getMessage() != null ? e.getMessage() : e.toString();
       TApplicationException x =
-          new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          new TApplicationException(TApplicationException.PROTOCOL_ERROR, message);
       LOGGER.debug("Could not retrieve function arguments", x);
 
       if (!fn.isOneway()) {
@@ -107,7 +109,6 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
       LOGGER.debug("Exception handling function", e);
       resultHandler.onError(e);
     }
-    return;
   }
 
   @Override

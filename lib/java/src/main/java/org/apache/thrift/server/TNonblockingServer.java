@@ -37,6 +37,7 @@ import org.apache.thrift.transport.TTransportException;
  * server will be unable to determine when a whole method call has been read off the wire. Clients
  * must also use TFramedTransport.
  */
+@SuppressWarnings("NullAway") // Thread initialized lazily in startThreads()
 public class TNonblockingServer extends AbstractNonblockingServer {
 
   public static class Args extends AbstractNonblockingServerArgs<Args> {

@@ -21,6 +21,7 @@ package org.apache.thrift.async;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TNonblockingTransport;
 
+@SuppressWarnings("NullAway") // Current method and error set lazily during async operations
 public abstract class TAsyncClient {
   protected final TProtocolFactory ___protocolFactory;
   protected final TNonblockingTransport ___transport;

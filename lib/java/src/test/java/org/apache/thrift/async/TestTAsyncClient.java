@@ -9,6 +9,7 @@ import thrift.test.Srv.AsyncClient;
 
 public class TestTAsyncClient {
   @Test
+  @SuppressWarnings("NullAway")
   public void testRaisesExceptionWhenUsedConcurrently() throws Exception {
     TAsyncClientManager mockClientManager =
         new TAsyncClientManager() {

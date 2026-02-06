@@ -20,6 +20,7 @@ package org.apache.thrift;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,6 +53,7 @@ import thrift.test.TestUnionMinusStringField;
 public class TestTUnion {
 
   @Test
+  @SuppressWarnings("NullAway")
   public void testBasic() throws Exception {
     {
       TestUnion union = new TestUnion();
@@ -71,10 +73,10 @@ public class TestTUnion {
     {
       TestUnion union = new TestUnion();
       // should not throw an exception here
-      union.hashCode();
+      int unusedHash = union.hashCode();
       union.setI32_field(1);
       assertEquals(1, union.getI32_field());
-      union.hashCode();
+      unusedHash = union.hashCode();
       assertFalse(union.isSetString_field());
 
       assertThrows(Exception.class, union::getString_field);
@@ -85,12 +87,12 @@ public class TestTUnion {
     }
     {
       TestUnion union = TestUnion.enum_field(SomeEnum.ONE);
-      union.hashCode();
+      int unusedHash = union.hashCode();
     }
     {
       TestUnion union = new TestUnion();
       // should not throw an exception
-      union.toString();
+      assertNotNull(union.toString());
     }
   }
 
@@ -99,8 +101,10 @@ public class TestTUnion {
     ComparableUnion cu = ComparableUnion.string_field("a");
     ComparableUnion cu2 = ComparableUnion.string_field("b");
 
-    assertEquals(0, cu.compareTo(cu));
-    assertEquals(0, cu2.compareTo(cu2));
+    ComparableUnion cuSame = ComparableUnion.string_field("a");
+    ComparableUnion cu2Same = ComparableUnion.string_field("b");
+    assertEquals(0, cu.compareTo(cuSame));
+    assertEquals(0, cu2.compareTo(cu2Same));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);

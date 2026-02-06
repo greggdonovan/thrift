@@ -25,8 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,8 +97,8 @@ public class TestTBaseHelper {
 
   @Test
   public void testByteArraysInMaps() {
-    Map<byte[], Long> a = new HashMap<>();
-    Map<byte[], Long> b = new HashMap<>();
+    IdentityHashMap<byte[], Long> a = new IdentityHashMap<>();
+    IdentityHashMap<byte[], Long> b = new IdentityHashMap<>();
 
     assertEquals(0, TBaseHelper.compareTo(a, b));
 
@@ -141,8 +143,8 @@ public class TestTBaseHelper {
 
   @Test
   public void testByteArraysInSets() {
-    Set<byte[]> a = new HashSet<>();
-    Set<byte[]> b = new HashSet<>();
+    Set<byte[]> a = Collections.newSetFromMap(new IdentityHashMap<>());
+    Set<byte[]> b = Collections.newSetFromMap(new IdentityHashMap<>());
 
     if (TBaseHelper.compareTo(a, b) != 0)
       throw new RuntimeException("Set compare failed:" + a + " vs. " + b);

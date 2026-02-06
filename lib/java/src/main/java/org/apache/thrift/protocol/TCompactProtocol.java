@@ -35,6 +35,11 @@ import org.apache.thrift.transport.TTransportException;
  * structures, short strings and collections, and low-value i32 and i64 fields you have, the more
  * benefit you'll see.
  */
+@SuppressWarnings({
+  "NullAway", // Buffer null checks done at runtime with appropriate fallbacks
+  "EffectivelyPrivate", // Compact type constants used in type conversion tables
+  "UnnecessaryParentheses" // Parentheses aid readability in bit manipulation
+})
 public class TCompactProtocol extends TProtocol {
   private static final byte[] EMPTY_BYTES = new byte[0];
   private static final ByteBuffer EMPTY_BUFFER = ByteBuffer.wrap(EMPTY_BYTES);
@@ -847,37 +852,22 @@ public class TCompactProtocol extends TProtocol {
 
   /** Given a TCompactProtocol.Types constant, convert it to its corresponding TType value. */
   private byte getTType(byte type) throws TProtocolException {
-    switch ((byte) (type & 0x0f)) {
-      case TType.STOP:
-        return TType.STOP;
-      case Types.BOOLEAN_FALSE:
-      case Types.BOOLEAN_TRUE:
-        return TType.BOOL;
-      case Types.BYTE:
-        return TType.BYTE;
-      case Types.I16:
-        return TType.I16;
-      case Types.I32:
-        return TType.I32;
-      case Types.I64:
-        return TType.I64;
-      case Types.UUID:
-        return TType.UUID;
-      case Types.DOUBLE:
-        return TType.DOUBLE;
-      case Types.BINARY:
-        return TType.STRING;
-      case Types.LIST:
-        return TType.LIST;
-      case Types.SET:
-        return TType.SET;
-      case Types.MAP:
-        return TType.MAP;
-      case Types.STRUCT:
-        return TType.STRUCT;
-      default:
-        throw new TProtocolException("don't know what type: " + (byte) (type & 0x0f));
-    }
+    return switch ((byte) (type & 0x0f)) {
+      case TType.STOP -> TType.STOP;
+      case Types.BOOLEAN_FALSE, Types.BOOLEAN_TRUE -> TType.BOOL;
+      case Types.BYTE -> TType.BYTE;
+      case Types.I16 -> TType.I16;
+      case Types.I32 -> TType.I32;
+      case Types.I64 -> TType.I64;
+      case Types.UUID -> TType.UUID;
+      case Types.DOUBLE -> TType.DOUBLE;
+      case Types.BINARY -> TType.STRING;
+      case Types.LIST -> TType.LIST;
+      case Types.SET -> TType.SET;
+      case Types.MAP -> TType.MAP;
+      case Types.STRUCT -> TType.STRUCT;
+      default -> throw new TProtocolException("don't know what type: " + (byte) (type & 0x0f));
+    };
   }
 
   /** Given a TType value, find the appropriate TCompactProtocol.Types constant. */
@@ -888,36 +878,23 @@ public class TCompactProtocol extends TProtocol {
   /** Return the minimum number of bytes a type will consume on the wire */
   @Override
   public int getMinSerializedSize(byte type) throws TTransportException {
-    switch (type) {
-      case 0:
-        return 1; // Stop - T_STOP needs to count itself
-      case 1:
-        return 1; // Void - T_VOID needs to count itself
-      case 2:
-        return 1; // Bool sizeof(byte)
-      case 3:
-        return 1; // Byte sizeof(byte)
-      case 4:
-        return 8; // Double sizeof(double)
-      case 6:
-        return 1; // I16 sizeof(byte)
-      case 8:
-        return 1; // I32 sizeof(byte)
-      case 10:
-        return 1; // I64 sizeof(byte)
-      case 11:
-        return 1; // string length sizeof(byte)
-      case 12:
-        return 1; // empty struct needs at least 1 byte for the T_STOP
-      case 13:
-        return 1; // element count Map sizeof(byte)
-      case 14:
-        return 1; // element count Set sizeof(byte)
-      case 15:
-        return 1; // element count List sizeof(byte)
-      default:
-        throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
-    }
+    return switch (type) {
+      case 0 -> 1; // Stop - T_STOP needs to count itself
+      case 1 -> 1; // Void - T_VOID needs to count itself
+      case 2 -> 1; // Bool sizeof(byte)
+      case 3 -> 1; // Byte sizeof(byte)
+      case 4 -> 8; // Double sizeof(double)
+      case 6 -> 1; // I16 sizeof(byte)
+      case 8 -> 1; // I32 sizeof(byte)
+      case 10 -> 1; // I64 sizeof(byte)
+      case 11 -> 1; // string length sizeof(byte)
+      case 12 -> 1; // empty struct needs at least 1 byte for the T_STOP
+      case 13 -> 1; // element count Map sizeof(byte)
+      case 14 -> 1; // element count Set sizeof(byte)
+      case 15 -> 1; // element count List sizeof(byte)
+      default ->
+          throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+    };
   }
 
   // -----------------------------------------------------------------

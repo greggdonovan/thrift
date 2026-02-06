@@ -40,7 +40,8 @@ public class TByteArrayOutputStream extends ByteArrayOutputStream {
     return buf;
   }
 
-  public void reset() {
+  @Override
+  public synchronized void reset() {
     super.reset();
     if (buf.length > initialSize) {
       buf = new byte[initialSize];
@@ -51,7 +52,8 @@ public class TByteArrayOutputStream extends ByteArrayOutputStream {
     return count;
   }
 
-  public String toString(Charset charset) {
+  @Override
+  public synchronized String toString(Charset charset) {
     return new String(buf, 0, count, charset);
   }
 }

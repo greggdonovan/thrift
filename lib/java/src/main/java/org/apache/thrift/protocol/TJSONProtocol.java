@@ -37,6 +37,13 @@ import org.apache.thrift.transport.TTransportException;
  *
  * <p>Please see the C++ class header for a detailed description of the protocol's wire format.
  */
+@SuppressWarnings({
+  "MissingOverride", // Factory inner class implements interface method
+  "StatementSwitchToExpressionSwitch", // Statement switches clearer for type dispatch
+  "JdkObsolete", // Stack used for context stack matching C++ implementation
+  "IntLiteralCast", // Intentional byte literal casts for protocol bytes
+  "UnnecessaryParentheses" // Parentheses aid readability in bit manipulation
+})
 public class TJSONProtocol extends TProtocol {
 
   /** Factory for JSON protocol objects */
@@ -98,34 +105,22 @@ public class TJSONProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
 
   private static byte[] getTypeNameForTypeID(byte typeID) throws TException {
-    switch (typeID) {
-      case TType.BOOL:
-        return NAME_BOOL;
-      case TType.BYTE:
-        return NAME_BYTE;
-      case TType.I16:
-        return NAME_I16;
-      case TType.I32:
-        return NAME_I32;
-      case TType.I64:
-        return NAME_I64;
-      case TType.UUID:
-        return NAME_UUID;
-      case TType.DOUBLE:
-        return NAME_DOUBLE;
-      case TType.STRING:
-        return NAME_STRING;
-      case TType.STRUCT:
-        return NAME_STRUCT;
-      case TType.MAP:
-        return NAME_MAP;
-      case TType.SET:
-        return NAME_SET;
-      case TType.LIST:
-        return NAME_LIST;
-      default:
-        throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
-    }
+    return switch (typeID) {
+      case TType.BOOL -> NAME_BOOL;
+      case TType.BYTE -> NAME_BYTE;
+      case TType.I16 -> NAME_I16;
+      case TType.I32 -> NAME_I32;
+      case TType.I64 -> NAME_I64;
+      case TType.UUID -> NAME_UUID;
+      case TType.DOUBLE -> NAME_DOUBLE;
+      case TType.STRING -> NAME_STRING;
+      case TType.STRUCT -> NAME_STRUCT;
+      case TType.MAP -> NAME_MAP;
+      case TType.SET -> NAME_SET;
+      case TType.LIST -> NAME_LIST;
+      default ->
+          throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "Unrecognized type");
+    };
   }
 
   private static byte getTypeIDForTypeName(byte[] name) throws TException {

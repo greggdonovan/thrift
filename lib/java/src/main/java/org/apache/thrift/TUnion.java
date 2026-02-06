@@ -33,12 +33,17 @@ import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
+import org.jspecify.annotations.Nullable;
 
+@SuppressWarnings({
+  "NullAway", // Scheme lookup uses static map guaranteed to contain entries
+  "MissingOverride" // Inner scheme factory classes implement interface methods
+})
 public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     implements TBase<T, F> {
 
-  protected Object value_;
-  protected F setField_;
+  protected @Nullable Object value_;
+  protected @Nullable F setField_;
 
   protected TUnion() {
     setField_ = null;
@@ -65,17 +70,17 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     value_ = deepCopyObject(other.value_);
   }
 
-  private static Object deepCopyObject(Object o) {
-    if (o instanceof TBase) {
-      return ((TBase) o).deepCopy();
-    } else if (o instanceof ByteBuffer) {
-      return TBaseHelper.copyBinary((ByteBuffer) o);
-    } else if (o instanceof List) {
-      return deepCopyList((List) o);
-    } else if (o instanceof Set) {
-      return deepCopySet((Set) o);
-    } else if (o instanceof Map) {
-      return deepCopyMap((Map) o);
+  private static @Nullable Object deepCopyObject(@Nullable Object o) {
+    if (o instanceof TBase tb) {
+      return tb.deepCopy();
+    } else if (o instanceof ByteBuffer bb) {
+      return TBaseHelper.copyBinary(bb);
+    } else if (o instanceof List l) {
+      return deepCopyList(l);
+    } else if (o instanceof Set s) {
+      return deepCopySet(s);
+    } else if (o instanceof Map m) {
+      return deepCopyMap(m);
     } else {
       return o;
     }
@@ -105,14 +110,15 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return copy;
   }
 
-  public F getSetField() {
+  public @Nullable F getSetField() {
     return setField_;
   }
 
-  public Object getFieldValue() {
+  public @Nullable Object getFieldValue() {
     return value_;
   }
 
+  @Override
   public Object getFieldValue(F fieldId) {
     if (fieldId != setField_) {
       throw new IllegalArgumentException(
@@ -122,7 +128,11 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
               + setField_);
     }
 
-    return getFieldValue();
+    Object v = getFieldValue();
+    if (v == null) {
+      throw new IllegalStateException("Field value is null for set field " + fieldId);
+    }
+    return v;
   }
 
   public Object getFieldValue(int fieldId) {
@@ -133,6 +143,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return setField_ != null;
   }
 
+  @Override
   public boolean isSet(F fieldId) {
     return setField_ == fieldId;
   }
@@ -141,10 +152,12 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     return isSet(enumForId((short) fieldId));
   }
 
+  @Override
   public void read(TProtocol iprot) throws TException {
     schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
   }
 
+  @Override
   public void setFieldValue(F fieldId, Object value) {
     checkType(fieldId, value);
     setField_ = fieldId;
@@ -155,6 +168,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     setFieldValue(enumForId((short) fieldId), value);
   }
 
+  @Override
   public void write(TProtocol oprot) throws TException {
     schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
   }
@@ -199,20 +213,22 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     sb.append(this.getClass().getSimpleName());
     sb.append(" ");
 
-    if (getSetField() != null) {
+    F field = getSetField();
+    if (field != null) {
       Object v = getFieldValue();
-      sb.append(getFieldDesc(getSetField()).name);
+      sb.append(getFieldDesc(field).name);
       sb.append(":");
-      if (v instanceof ByteBuffer) {
-        TBaseHelper.toString((ByteBuffer) v, sb);
+      if (v instanceof ByteBuffer bb) {
+        TBaseHelper.toString(bb, sb);
       } else {
-        sb.append(v.toString());
+        sb.append(String.valueOf(v));
       }
     }
     sb.append(">");
     return sb.toString();
   }
 
+  @Override
   public final void clear() {
     this.setField_ = null;
     this.value_ = null;
@@ -250,11 +266,12 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      if (struct.getSetField() == null || struct.getFieldValue() == null) {
+      var setField = struct.getSetField();
+      if (setField == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
       oprot.writeStructBegin(struct.getStructDesc());
-      oprot.writeFieldBegin(struct.getFieldDesc(struct.setField_));
+      oprot.writeFieldBegin(struct.getFieldDesc(setField));
       struct.standardSchemeWriteValue(oprot);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
@@ -283,10 +300,11 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      if (struct.getSetField() == null || struct.getFieldValue() == null) {
+      var setField = struct.getSetField();
+      if (setField == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
-      oprot.writeI16(struct.setField_.getThriftFieldId());
+      oprot.writeI16(setField.getThriftFieldId());
       struct.tupleSchemeWriteValue(oprot);
     }
   }

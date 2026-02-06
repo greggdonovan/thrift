@@ -43,6 +43,10 @@ import org.apache.thrift.transport.layered.TFramedTransport;
  *
  * @param <T> The return type of the encapsulated method call.
  */
+@SuppressWarnings({
+  "NullAway", // Buffers initialized lazily as state machine progresses
+  "StatementSwitchToExpressionSwitch" // Statement switch clearer for state machine
+})
 public abstract class TAsyncMethodCall<T> {
 
   private static final int INITIAL_MEMORY_BUFFER_SIZE = 128;

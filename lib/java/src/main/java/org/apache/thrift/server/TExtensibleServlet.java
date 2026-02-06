@@ -45,6 +45,7 @@ import org.apache.thrift.transport.TTransport;
  * TProtocolFactory. Those methods are guaranteed to be called exactly once, and that {@link
  * ServletContext} is available.
  */
+@SuppressWarnings("NullAway") // Fields initialized in init() via abstract methods
 public abstract class TExtensibleServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
 

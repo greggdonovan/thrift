@@ -84,6 +84,7 @@ public class FieldMetaData implements java.io.Serializable {
    *     to {@link FieldMetaData#addStructMetaDataMap(Class, Map)} from a different thread during
    *     static initialization of the Thrift class is possible.
    */
+  @SuppressWarnings("NullAway") // Class loaded above guarantees structMap entry exists
   public static <T extends TBase<T, F>, F extends TFieldIdEnum>
       Map<F, FieldMetaData> getStructMetaDataMap(Class<T> sClass) {
     // Note: Do not use synchronized on this method declaration - it leads to a deadlock.
@@ -98,7 +99,8 @@ public class FieldMetaData implements java.io.Serializable {
             e.getClass().getSimpleName() + " for TBase class: " + sClass.getName(), e);
       }
     }
-    //noinspection unchecked
-    return (Map<F, FieldMetaData>) structMap.get(sClass);
+    @SuppressWarnings({"unchecked", "NullAway"}) // Class loaded above guarantees entry exists
+    Map<F, FieldMetaData> result = (Map<F, FieldMetaData>) structMap.get(sClass);
+    return result;
   }
 }

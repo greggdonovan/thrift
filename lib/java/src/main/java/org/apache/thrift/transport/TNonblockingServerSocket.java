@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Wrapper around ServerSocketChannel */
+@SuppressWarnings("NullAway") // Uses null to indicate unset/closed socket state
 public class TNonblockingServerSocket extends TNonblockingServerTransport {
   private static final Logger LOGGER =
       LoggerFactory.getLogger(TNonblockingServerSocket.class.getName());
@@ -114,6 +115,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     }
   }
 
+  @Override
   public void listen() throws TTransportException {
     // Make sure not to block on accept
     if (serverSocket_ != null) {
@@ -146,6 +148,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     }
   }
 
+  @Override
   public void registerSelector(Selector selector) {
     try {
       // Register the server socket channel, indicating an interest in
@@ -157,6 +160,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     }
   }
 
+  @Override
   public void close() {
     if (serverSocket_ != null) {
       try {
@@ -168,6 +172,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     }
   }
 
+  @Override
   public void interrupt() {
     // The thread-safeness of this is dubious, but Java documentation suggests
     // that it is safe to do this from a different thread context

@@ -40,7 +40,10 @@ public class WriteStruct {
         new TIOStreamTransport(new BufferedOutputStream(new FileOutputStream(args[0])));
 
     TProtocolFactory factory =
-        (TProtocolFactory) Class.forName(args[1]).getDeclaredConstructor().newInstance();
+        Class.forName(args[1])
+            .asSubclass(TProtocolFactory.class)
+            .getDeclaredConstructor()
+            .newInstance();
 
     TProtocol proto = factory.getProtocol(trans);
 

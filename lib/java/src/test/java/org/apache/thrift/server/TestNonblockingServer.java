@@ -30,20 +30,21 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.layered.TFramedTransport;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
 public class TestNonblockingServer extends ServerTestBase {
 
-  private Thread serverThread;
-  private TServer server;
+  private @Nullable Thread serverThread;
+  private @Nullable TServer server;
   private static final int NUM_QUERIES = 1000;
 
   protected TServer getServer(
       TProcessor processor,
       TNonblockingServerSocket socket,
       TProtocolFactory protoFactory,
-      TTransportFactory factory) {
+      @Nullable TTransportFactory factory) {
     final Args args = new Args(socket).processor(processor).protocolFactory(protoFactory);
     if (factory != null) {
       args.transportFactory(factory);
@@ -55,10 +56,11 @@ public class TestNonblockingServer extends ServerTestBase {
   public void startServer(
       final TProcessor processor,
       final TProtocolFactory protoFactory,
-      final TTransportFactory factory)
+      final @Nullable TTransportFactory factory)
       throws Exception {
     serverThread =
         new Thread() {
+          @Override
           public void run() {
             try {
               // Transport
@@ -84,10 +86,22 @@ public class TestNonblockingServer extends ServerTestBase {
 
   @Override
   public void stopServer() throws Exception {
-    server.stop();
-    try {
-      serverThread.join();
-    } catch (InterruptedException e) {
+    if (server != null) {
+      server.stop();
+    }
+    if (serverThread != null) {
+      boolean interrupted = false;
+      while (true) {
+        try {
+          serverThread.join();
+          break;
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
@@ -115,6 +129,9 @@ public class TestNonblockingServer extends ServerTestBase {
 
       for (int i = 0; i < NUM_QUERIES; ++i) {
         testClient.testI32(1);
+      }
+      if (server == null) {
+        throw new AssertionError("Server not started");
       }
       server.stop();
       for (int i = 0; i < NUM_QUERIES; ++i) {

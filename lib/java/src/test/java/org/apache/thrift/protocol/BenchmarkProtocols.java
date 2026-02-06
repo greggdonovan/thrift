@@ -14,13 +14,11 @@ import org.apache.thrift.transport.TMemoryBuffer;
 public class BenchmarkProtocols {
 
   private static final Set<TProtocolFactory> FACTORIES =
-      new LinkedHashSet<TProtocolFactory>() {
-        {
-          add(new TTupleProtocol.Factory());
-          add(new TCompactProtocol.Factory());
-          add(new TBinaryProtocol.Factory());
-        }
-      };
+      new LinkedHashSet<>(
+          List.of(
+              new TTupleProtocol.Factory(),
+              new TCompactProtocol.Factory(),
+              new TBinaryProtocol.Factory()));
 
   private static final int NUM_REPS = 100000;
   private static final int NUM_TRIALS = 10;
@@ -57,9 +55,7 @@ public class BenchmarkProtocols {
       //      });
 
       for (TProtocolFactory factory : FACTORIES) {
-        if (timesByFactory.get(factory) == null) {
-          timesByFactory.put(factory, new ArrayList<Long>());
-        }
+        timesByFactory.computeIfAbsent(factory, key -> new ArrayList<>());
 
         long start = System.currentTimeMillis();
         for (int rep = 0; rep < NUM_REPS; rep++) {
@@ -74,6 +70,9 @@ public class BenchmarkProtocols {
 
     for (TProtocolFactory factory : FACTORIES) {
       List<Long> times = timesByFactory.get(factory);
+      if (times == null) {
+        throw new AssertionError("Missing times for factory " + factory.getClass().getName());
+      }
       //      System.out.println("raw times pre-drop: " + times );
       times.remove(Collections.max(times));
       long total = 0;

@@ -1136,11 +1136,11 @@ public class Fixtures {
       oneOfEach.setA_bite((byte) 0xd6);
       oneOfEach.setInteger16((short) 27000);
       oneOfEach.setInteger32(1 << 24);
-      oneOfEach.setInteger64((long) 6000 * 1000 * 1000);
+      oneOfEach.setInteger64(6000L * 1000 * 1000);
       oneOfEach.setDouble_precision(Math.PI);
       oneOfEach.setSome_characters("JSON THIS! \"\1");
       oneOfEach.setZomg_unicode(new String(kUnicodeBytes, StandardCharsets.UTF_8));
-      oneOfEach.setBase64(ByteBuffer.wrap("base64".getBytes()));
+      oneOfEach.setBase64(ByteBuffer.wrap("base64".getBytes(StandardCharsets.UTF_8)));
       // byte, i16, and i64 lists are populated by default constructor
 
       Bonk bonk = new Bonk();

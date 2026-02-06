@@ -231,7 +231,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-24.04
     env:
-      GRADLE_VERSION: "8.4"
+      GRADLE_VERSION: "9.3.1"
     steps:
       - uses: actions/checkout@v6
 
@@ -250,7 +250,7 @@ jobs:
       - name: Setup gradle
         run: |
           wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
-          (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          (echo "b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
           unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
           sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
@@ -818,8 +818,8 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          # here we intentionally use an older version so that we also verify Java 17 compiles to it
-          java-version: 8
+          # Java 17 is the minimum supported version
+          java-version: 17
           cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)

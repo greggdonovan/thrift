@@ -19,6 +19,8 @@
 
 package org.apache.thrift.utils;
 
+import org.jspecify.annotations.Nullable;
+
 public final class StringUtils {
 
   private StringUtils() {
@@ -35,7 +37,7 @@ public final class StringUtils {
    * @param bytes the byte array to convert to hex string.
    * @return hex string.
    */
-  public static String bytesToHexString(byte[] bytes) {
+  public static @Nullable String bytesToHexString(byte @Nullable [] bytes) {
     if (bytes == null) {
       return null;
     }

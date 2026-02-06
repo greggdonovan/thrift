@@ -20,6 +20,7 @@
 package org.apache.thrift;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -71,13 +72,14 @@ public class TSerializer {
   }
 
   /**
-   * Serialize the Thrift object into a Java string, using the default JVM charset encoding.
+   * Serialize the Thrift object into a Java string, using ISO-8859-1 encoding. This encoding
+   * provides a 1:1 mapping between bytes and characters, preserving all byte values.
    *
    * @param base The object to serialize
    * @return Serialized object as a String
    * @throws TException if an error is encountered during serialization.
    */
   public String toString(TBase<?, ?> base) throws TException {
-    return new String(serialize(base));
+    return new String(serialize(base), StandardCharsets.ISO_8859_1);
   }
 }

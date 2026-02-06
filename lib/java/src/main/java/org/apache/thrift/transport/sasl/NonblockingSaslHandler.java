@@ -41,6 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** State machine managing one sasl connection in a nonblocking way. */
+@SuppressWarnings({
+  "NullAway", // Fields initialized lazily during state machine progression
+  "StatementSwitchToExpressionSwitch" // Validation switch intentionally uses statement form
+})
 public class NonblockingSaslHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(NonblockingSaslHandler.class);
 

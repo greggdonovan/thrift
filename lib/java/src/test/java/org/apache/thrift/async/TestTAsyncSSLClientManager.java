@@ -39,6 +39,7 @@ public class TestTAsyncSSLClientManager extends TestTAsyncClientManager {
   protected final List<TNonblockingTransport> clientTransportList =
       Collections.synchronizedList(new ArrayList<>());
 
+  @Override
   @BeforeEach
   public void setUp() throws Exception {
     server_ =
@@ -52,6 +53,7 @@ public class TestTAsyncSSLClientManager extends TestTAsyncClientManager {
     Thread.sleep(500);
   }
 
+  @Override
   @AfterEach
   public void tearDown() throws Exception {
     for (TNonblockingTransport clientTransport : clientTransportList) {

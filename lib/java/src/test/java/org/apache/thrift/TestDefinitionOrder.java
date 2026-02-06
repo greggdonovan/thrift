@@ -53,7 +53,7 @@ public class TestDefinitionOrder {
     }
   }
 
-  // TODO Use InputStream.readAllBytes post-Java8
+  // TODO Use InputStream.readAllBytes post-Java17
   private byte[] readAllBytes(InputStream is) throws IOException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     byte[] buff = new byte[1024];

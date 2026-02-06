@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Socket implementation of the TTransport interface. To be commented soon! */
+@SuppressWarnings("NullAway") // Uses null to indicate unset state for socket/host
 public class TSocket extends TIOStreamTransport implements SocketAddressProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSocket.class.getName());
@@ -199,6 +200,7 @@ public class TSocket extends TIOStreamTransport implements SocketAddressProvider
   }
 
   /** Checks whether the socket is connected. */
+  @Override
   public boolean isOpen() {
     if (socket_ == null) {
       return false;
@@ -207,6 +209,7 @@ public class TSocket extends TIOStreamTransport implements SocketAddressProvider
   }
 
   /** Connects the socket, creating a new socket object if necessary. */
+  @Override
   public void open() throws TTransportException {
     if (isOpen()) {
       throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
@@ -234,6 +237,7 @@ public class TSocket extends TIOStreamTransport implements SocketAddressProvider
   }
 
   /** Closes the socket. */
+  @Override
   public void close() {
     // Close the underlying streams
     super.close();

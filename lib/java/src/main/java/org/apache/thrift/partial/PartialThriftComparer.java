@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
@@ -37,6 +38,11 @@ import org.apache.thrift.protocol.TType;
  *
  * <p>The typical use case is to establish correctness of partial deserialization.
  */
+@SuppressWarnings({
+  "StatementSwitchToExpressionSwitch", // Statement switches clearer for type comparison dispatch
+  "PatternMatchingInstanceof", // Traditional instanceof clearer for comparison null checks
+  "AnnotateFormatMethod" // Format strings validated at runtime for comparison messages
+})
 public class PartialThriftComparer<T extends TBase> {
 
   private enum ComparisonResult {
@@ -78,22 +84,25 @@ public class PartialThriftComparer<T extends TBase> {
   private boolean areEqual(
       ThriftMetadata.ThriftObject data, Object o1, Object o2, StringBuilder sb) {
 
+    Object v1 = unwrapOptional(o1);
+    Object v2 = unwrapOptional(o2);
+
     byte fieldType = data.data.valueMetaData.type;
     switch (fieldType) {
       case TType.STRUCT:
-        return this.areEqual((ThriftMetadata.ThriftStruct) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftStruct) data, v1, v2, sb);
 
       case TType.LIST:
-        return this.areEqual((ThriftMetadata.ThriftList) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftList) data, v1, v2, sb);
 
       case TType.MAP:
-        return this.areEqual((ThriftMetadata.ThriftMap) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftMap) data, v1, v2, sb);
 
       case TType.SET:
-        return this.areEqual((ThriftMetadata.ThriftSet) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftSet) data, v1, v2, sb);
 
       case TType.ENUM:
-        return this.areEqual((ThriftMetadata.ThriftEnum) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftEnum) data, v1, v2, sb);
 
       case TType.BOOL:
       case TType.BYTE:
@@ -102,7 +111,7 @@ public class PartialThriftComparer<T extends TBase> {
       case TType.I64:
       case TType.DOUBLE:
       case TType.STRING:
-        return this.areEqual((ThriftMetadata.ThriftPrimitive) data, o1, o2, sb);
+        return this.areEqual((ThriftMetadata.ThriftPrimitive) data, v1, v2, sb);
 
       default:
         throw unsupportedFieldTypeException(fieldType);
@@ -309,15 +318,24 @@ public class PartialThriftComparer<T extends TBase> {
       return ComparisonResult.EQUAL;
     }
 
-    if (o1 == null) {
-      appendResult(data, sb, "o1 (null) != o2");
-    }
-
-    if (o2 == null) {
-      appendResult(data, sb, "o1 != o2 (null)");
+    if (o1 == null || o2 == null) {
+      if (o1 == null) {
+        appendResult(data, sb, "o1 (null) != o2");
+      } else {
+        appendResult(data, sb, "o1 != o2 (null)");
+      }
+      return ComparisonResult.NOT_EQUAL;
     }
 
     return ComparisonResult.UNKNOWN;
+  }
+
+  @SuppressWarnings("NullAway")
+  private Object unwrapOptional(Object value) {
+    if (value instanceof Optional) {
+      return ((Optional<?>) value).orElse(null);
+    }
+    return value;
   }
 
   private boolean checkSizeEquality(

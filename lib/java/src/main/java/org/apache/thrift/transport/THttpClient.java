@@ -58,6 +58,7 @@ import org.apache.thrift.THttpClientResponseHandler;
  *
  * @see <a href="https://issues.apache.org/jira/browse/THRIFT-970">THRIFT-970</a>
  */
+@SuppressWarnings("NullAway") // Uses null to indicate unset/default state throughout
 public class THttpClient extends TEndpointTransport {
 
   private final URL url_;
@@ -196,6 +197,7 @@ public class THttpClient extends TEndpointTransport {
       try {
         inputStream_.close();
       } catch (IOException ioe) {
+        // Ignore close errors
       }
       inputStream_ = null;
     }
@@ -243,6 +245,7 @@ public class THttpClient extends TEndpointTransport {
     return requestConfig;
   }
 
+  @SuppressWarnings("UnusedMethod") // Reserved for future use with timeout configuration
   private ConnectionConfig getConnectionConfig() {
     ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
     if (readTimeout_ > 0) {
@@ -290,6 +293,7 @@ public class THttpClient extends TEndpointTransport {
     }
   }
 
+  @Override
   public void flush() throws TTransportException {
 
     if (null != this.client) {

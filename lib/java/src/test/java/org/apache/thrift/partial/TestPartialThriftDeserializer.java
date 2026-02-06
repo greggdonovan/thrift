@@ -43,6 +43,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings({"NullAway", "UnusedVariable"})
 public class TestPartialThriftDeserializer {
 
   private ThriftSerDe serde = new ThriftSerDe();
@@ -226,7 +227,7 @@ public class TestPartialThriftDeserializer {
     assertEquals(ts1.getI64Field(), ts2.getI64Field());
 
     assertTrue(ts2.isSetDoubleField());
-    assertEquals(ts1.getDoubleField(), ts2.getDoubleField(), 0.0001);
+    assertEquals(ts1.getDoubleField().orElseThrow(), ts2.getDoubleField().orElseThrow(), 0.0001);
 
     assertTrue(ts2.isSetStringField());
     assertEquals(ts1.getStringField(), ts2.getStringField());
@@ -238,52 +239,52 @@ public class TestPartialThriftDeserializer {
     assertArrayEquals(ts1.getBinaryField(), ts2.getBinaryField());
 
     // Validate list fields.
-    validateList(ts2.getByteList(), id, numItems);
-    validateList(ts2.getI16List(), id, numItems);
-    validateList(ts2.getI32List(), id, numItems);
-    validateList(ts2.getI64List(), id, numItems);
-    validateList(ts2.getDoubleList(), id, numItems);
-    validateStringList(ts2.getStringList(), id, numItems);
-    validateEnumList(ts2.getEnumList(), id, numItems);
+    validateList(ts2.getByteList().orElseThrow(), id, numItems);
+    validateList(ts2.getI16List().orElseThrow(), id, numItems);
+    validateList(ts2.getI32List().orElseThrow(), id, numItems);
+    validateList(ts2.getI64List().orElseThrow(), id, numItems);
+    validateList(ts2.getDoubleList().orElseThrow(), id, numItems);
+    validateStringList(ts2.getStringList().orElseThrow(), id, numItems);
+    validateEnumList(ts2.getEnumList().orElseThrow(), id, numItems);
 
-    validateListOfList(ts2.getListList(), id, numItems);
-    validateListOfSet(ts2.getSetList(), id, numItems);
-    validateListOfMap(ts2.getMapList(), id, numItems);
-    validateListOfStruct(ts2.getStructList(), id, numItems);
-    validateListOfBinary(ts2.getBinaryList(), id, numItems);
+    validateListOfList(ts2.getListList().orElseThrow(), id, numItems);
+    validateListOfSet(ts2.getSetList().orElseThrow(), id, numItems);
+    validateListOfMap(ts2.getMapList().orElseThrow(), id, numItems);
+    validateListOfStruct(ts2.getStructList().orElseThrow(), id, numItems);
+    validateListOfBinary(ts2.getBinaryList().orElseThrow(), id, numItems);
 
     // Validate set fields.
-    validateSet(ts2.getByteSet(), Byte.class, numItems);
-    validateSet(ts2.getI16Set(), Short.class, numItems);
-    validateSet(ts2.getI32Set(), Integer.class, numItems);
-    validateSet(ts2.getI64Set(), Long.class, numItems);
-    validateSet(ts2.getDoubleSet(), Double.class, numItems);
-    validateStringSet(ts2.getStringSet(), id, numItems);
-    validateEnumSet(ts2.getEnumSet(), id, numItems);
+    validateSet(ts2.getByteSet().orElseThrow(), Byte.class, numItems);
+    validateSet(ts2.getI16Set().orElseThrow(), Short.class, numItems);
+    validateSet(ts2.getI32Set().orElseThrow(), Integer.class, numItems);
+    validateSet(ts2.getI64Set().orElseThrow(), Long.class, numItems);
+    validateSet(ts2.getDoubleSet().orElseThrow(), Double.class, numItems);
+    validateStringSet(ts2.getStringSet().orElseThrow(), id, numItems);
+    validateEnumSet(ts2.getEnumSet().orElseThrow(), id, numItems);
 
-    validateSetOfList(ts2.getListSet(), id, numItems);
-    validateSetOfSet(ts2.getSetSet(), id, numItems);
-    validateSetOfMap(ts2.getMapSet(), id, numItems);
-    validateSetOfStruct(ts2.getStructSet(), id, numItems);
-    validateSetOfBinary(ts2.getBinarySet(), id, numItems);
+    validateSetOfList(ts2.getListSet().orElseThrow(), id, numItems);
+    validateSetOfSet(ts2.getSetSet().orElseThrow(), id, numItems);
+    validateSetOfMap(ts2.getMapSet().orElseThrow(), id, numItems);
+    validateSetOfStruct(ts2.getStructSet().orElseThrow(), id, numItems);
+    validateSetOfBinary(ts2.getBinarySet().orElseThrow(), id, numItems);
 
     // Validate map fields.
-    validateMap(ts2.getByteMap(), Byte.class, numItems);
-    validateMap(ts2.getI16Map(), Short.class, numItems);
-    validateMap(ts2.getI32Map(), Integer.class, numItems);
-    validateMap(ts2.getI64Map(), Long.class, numItems);
-    validateMap(ts2.getDoubleMap(), Double.class, numItems);
-    validateStringMap(ts2.getStringMap(), id, numItems);
-    validateEnumMap(ts2.getEnumMap(), id, numItems);
+    validateMap(ts2.getByteMap().orElseThrow(), Byte.class, numItems);
+    validateMap(ts2.getI16Map().orElseThrow(), Short.class, numItems);
+    validateMap(ts2.getI32Map().orElseThrow(), Integer.class, numItems);
+    validateMap(ts2.getI64Map().orElseThrow(), Long.class, numItems);
+    validateMap(ts2.getDoubleMap().orElseThrow(), Double.class, numItems);
+    validateStringMap(ts2.getStringMap().orElseThrow(), id, numItems);
+    validateEnumMap(ts2.getEnumMap().orElseThrow(), id, numItems);
 
-    validateMapOfList(ts2.getListMap(), id, numItems);
-    validateMapOfSet(ts2.getSetMap(), id, numItems);
-    validateMapOfMap(ts2.getMapMap(), id, numItems);
-    validateMapOfStruct(ts2.getStructMap(), id, numItems);
-    validateMapOfBinary(ts2.getBinaryMap(), id, numItems);
+    validateMapOfList(ts2.getListMap().orElseThrow(), id, numItems);
+    validateMapOfSet(ts2.getSetMap().orElseThrow(), id, numItems);
+    validateMapOfMap(ts2.getMapMap().orElseThrow(), id, numItems);
+    validateMapOfStruct(ts2.getStructMap().orElseThrow(), id, numItems);
+    validateMapOfBinary(ts2.getBinaryMap().orElseThrow(), id, numItems);
 
     // Validate struct field.
-    assertEquals(testData.createSmallStruct(id), ts2.getStructField());
+    assertEquals(testData.createSmallStruct(id), ts2.getStructField().orElseThrow());
   }
 
   private void validateNotNullAndNotEmpty(Collection<?> collection, int numItems) {

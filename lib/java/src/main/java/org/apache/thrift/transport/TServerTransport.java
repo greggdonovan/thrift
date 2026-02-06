@@ -22,6 +22,7 @@ package org.apache.thrift.transport;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 import org.apache.thrift.TConfiguration;
+import org.jspecify.annotations.Nullable;
 
 /** Server transport. Object which provides client transports. */
 public abstract class TServerTransport implements Closeable {
@@ -30,7 +31,7 @@ public abstract class TServerTransport implements Closeable {
       T extends AbstractServerTransportArgs<T>> {
     int backlog = 0; // A value of 0 means the default value will be used (currently set at 50)
     int clientTimeout = 0;
-    InetSocketAddress bindAddr;
+    @Nullable InetSocketAddress bindAddr;
     int maxFrameSize = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
     int maxMessageSize = TConfiguration.DEFAULT_MAX_MESSAGE_SIZE;
 
@@ -77,6 +78,7 @@ public abstract class TServerTransport implements Closeable {
    */
   public abstract TTransport accept() throws TTransportException;
 
+  @Override
   public abstract void close();
 
   /**

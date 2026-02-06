@@ -43,11 +43,6 @@ java {
     withSourcesJar()
 }
 
-// skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
-components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
-    skip()
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -76,6 +71,11 @@ publishing {
                     connection = 'scm:git:https://github.com/apache/thrift.git'
                     developerConnection = 'scm:git:git@github.com:apache/thrift.git'
                 }
+                withXml {
+                    def root = asNode()
+                    def props = root.appendNode('properties')
+                    props.appendNode('maven.compiler.release', '17')
+                }
             }
         }
     }
@@ -94,12 +94,10 @@ publishing {
 
 // Signing configuration, optional, only when release and publish is activated
 signing {
-    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
+    required = { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
     sign publishing.publications.mavenJava
 }
 
 javadoc {
-    if(JavaVersion.current().isJava9Compatible()) {
-        options.addBooleanOption('html5', true)
-    }
+    options.addBooleanOption('html5', true)
 }

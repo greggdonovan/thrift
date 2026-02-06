@@ -21,6 +21,7 @@ package org.apache.thrift.transport.sasl;
 
 import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
 
+import java.util.Locale;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -62,8 +63,11 @@ public class ServerSaslPeer implements SaslPeer {
     if (qop == null) {
       return false;
     }
-    for (String word : qop.toString().split("\\s*,\\s*")) {
-      String lowerCaseWord = word.toLowerCase();
+    @SuppressWarnings(
+        "StringSplitter") // Regex split is correct for parsing comma-separated QOP values
+    String[] words = qop.toString().split("\\s*,\\s*");
+    for (String word : words) {
+      String lowerCaseWord = word.toLowerCase(Locale.ROOT);
       if (QOP_AUTH_INT.equals(lowerCaseWord) || QOP_AUTH_CONF.equals(lowerCaseWord)) {
         return true;
       }

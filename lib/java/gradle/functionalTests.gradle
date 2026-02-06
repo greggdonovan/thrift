@@ -42,11 +42,11 @@ sourceSets {
 // 4. shadow jar will package both main and test source set, along with cross test runtime dependencies
 configurations {
     crossTestImplementation {
-        description "implementation for cross test"
+        description = "implementation for cross test"
         extendsFrom testImplementation
     }
     crossTestRuntime {
-        description "runtime dependencies for cross test"
+        description = "runtime dependencies for cross test"
         extendsFrom crossTestImplementation, testRuntimeOnly
     }
 }
@@ -55,6 +55,11 @@ dependencies {
     crossTestImplementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}"
     crossTestImplementation sourceSets.main.output
     crossTestImplementation sourceSets.test.output
+}
+
+tasks.named('compileCrossTestJava', JavaCompile).configure {
+    // Cross-test harness sources are intentionally permissive and are not held to -Werror.
+    options.compilerArgs.removeAll(['-Werror'])
 }
 
 // I am using shadow plugin to make a self contained functional test Uber JAR that
@@ -75,6 +80,7 @@ shadowJar {
     from sourceSets.test.output
     from sourceSets.crossTest.output
     configurations = [project.configurations.crossTestRuntime]
+    includeEmptyDirs = false
 }
 
 // Common script runner configuration elements

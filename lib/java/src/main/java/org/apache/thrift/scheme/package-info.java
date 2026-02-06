@@ -15,30 +15,10 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
  */
 
-namespace java thrift.test.optiontypejdk8
+/** Thrift serialization scheme support. */
+@NullMarked
+package org.apache.thrift.scheme;
 
-struct Person {
-  1: required i64 id;
-  2: required string name;
-  3: optional i64 age;
-  4: optional string phone;
-  5: optional list<string> addresses;
-  6: optional map<string, Pet> pets;
-}
-
-enum PetType {
-  Cat = 1
-  Dog = 2
-  Bunny = 3
-}
-
-struct Pet {
-  1: required string name;
-  2: optional PetType type;
-}
+import org.jspecify.annotations.NullMarked;

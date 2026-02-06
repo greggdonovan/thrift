@@ -36,6 +36,7 @@ public class TEnumHelper {
    * @param value Value for which to return the constant.
    * @return The constant in 'enumClass' whose value is 'value' or null if something went wrong.
    */
+  @SuppressWarnings("NullAway") // Null return documented in javadoc for error case
   public static TEnum getByValue(Class<? extends TEnum> enumClass, int value) {
     try {
       Method method = enumClass.getMethod("findByValue", int.class);

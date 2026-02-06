@@ -44,6 +44,7 @@ public abstract class TEndpointTransport extends TTransport {
 
   private TConfiguration _configuration;
 
+  @Override
   public TConfiguration getConfiguration() {
     return _configuration;
   }
@@ -55,9 +56,9 @@ public abstract class TEndpointTransport extends TTransport {
   }
 
   /**
-   * Resets RemainingMessageSize to the configured maximum
+   * Resets RemainingMessageSize to the configured maximum.
    *
-   * @param newSize
+   * @param newSize the new message size, or -1 for full reset
    */
   protected void resetConsumedMessageSize(long newSize) throws TTransportException {
     // full reset
@@ -81,8 +82,9 @@ public abstract class TEndpointTransport extends TTransport {
    * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
    * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
    *
-   * @param size
+   * @param size the known message size
    */
+  @Override
   public void updateKnownMessageSize(long size) throws TTransportException {
     long consumed = knownMessageSize - remainingMessageSize;
     resetConsumedMessageSize(size == 0 ? -1 : size);
@@ -91,10 +93,11 @@ public abstract class TEndpointTransport extends TTransport {
 
   /**
    * Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of
-   * data
+   * data.
    *
-   * @param numBytes
+   * @param numBytes the number of bytes to check
    */
+  @Override
   public void checkReadBytesAvailable(long numBytes) throws TTransportException {
     if (remainingMessageSize < numBytes || numBytes < 0)
       throw new TTransportException(
@@ -105,7 +108,7 @@ public abstract class TEndpointTransport extends TTransport {
   /**
    * Consumes numBytes from the RemainingMessageSize.
    *
-   * @param numBytes
+   * @param numBytes the number of bytes consumed
    */
   protected void countConsumedMessageBytes(long numBytes) throws TTransportException {
     if (remainingMessageSize >= numBytes) {

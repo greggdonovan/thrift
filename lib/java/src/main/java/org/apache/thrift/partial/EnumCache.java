@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * <p>This class is used internally by {@code TDeserializer}. It is not intended to be used
  * separately on its own.
  */
+@SuppressWarnings("NullAway") // Returns null for unknown enum values or reflection errors
 public class EnumCache {
   private static final Logger LOG = LoggerFactory.getLogger(EnumCache.class);
 

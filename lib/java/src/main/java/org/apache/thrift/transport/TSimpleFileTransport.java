@@ -23,6 +23,7 @@ import java.io.RandomAccessFile;
 import org.apache.thrift.TConfiguration;
 
 /** Basic file support for the TTransport interface */
+@SuppressWarnings("NullAway") // Uses null to indicate closed file state
 public final class TSimpleFileTransport extends TEndpointTransport {
 
   private RandomAccessFile file = null;
@@ -47,7 +48,7 @@ public final class TSimpleFileTransport extends TEndpointTransport {
   /**
    * Create a transport backed by a simple file
    *
-   * @param config
+   * @param config the TConfiguration
    * @param path the path to the file to open/create
    * @param read true to support read operations
    * @param write true to support write operations

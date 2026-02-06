@@ -51,6 +51,11 @@
 ### Java
 
 - [THRIFT-5858](https://issues.apache.org/jira/browse/THRIFT-5858) - Introduce new type MESSAGE_SIZE_LIMIT in TTransportException
+- Java 17 is now the minimum supported JDK for the Java library and build
+- Java generator migration notes:
+- Removed `org.apache.thrift.Option`; optional fields are now generated as `java.util.Optional`
+- Removed `java:option_type=...`; use the default optional-field generation
+- `jakarta.annotation.Generated` is now the default; use `java:javax_annotations` to generate legacy `javax.annotation.Generated`
 
 ### netstd
 
@@ -4378,4 +4383,3 @@ New Features and Bug Fixes:
 
   Ruby:
 - Support for TCompactProtocol [THRIFT-332]
-

@@ -67,7 +67,7 @@ public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
   /**
    * Actions (e.g. validation) to carry out when the header is complete.
    *
-   * @throws TTransportException
+   * @throws TTransportException if validation fails or header is invalid
    */
   protected abstract void onComplete() throws TTransportException;
 }

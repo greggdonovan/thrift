@@ -18,6 +18,7 @@ import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TTransport;
 
 /** Servlet implementation class ThriftServer */
+@SuppressWarnings("NullAway") // Immutable Map.Entry.setValue() intentionally returns null
 public class TServlet extends HttpServlet {
 
   private final TProcessor processor;

@@ -40,11 +40,10 @@ import java.util.Set;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 public class ThriftStructProcessorTest {
-
-  private PartialThriftTestData testData = new PartialThriftTestData();
 
   @Test
   public void testStruct() throws TException {
@@ -262,7 +261,7 @@ public class ThriftStructProcessorTest {
     Integer[] ints = new Integer[] {1, 2, 3};
     List<Integer> intList = Arrays.asList(ints);
     processor.setListField(struct, fieldId, intList);
-    assertArrayEquals(ints, struct.getI32List().toArray());
+    assertArrayEquals(ints, struct.getI32List().orElseThrow().toArray());
 
     // set
     fieldId = findFieldId(metadata, "stringSet");
@@ -270,7 +269,7 @@ public class ThriftStructProcessorTest {
     String[] strings = new String[] {"Hello", "World!"};
     Set<String> stringSet = new HashSet<>(Arrays.asList(strings));
     processor.setSetField(struct, fieldId, stringSet);
-    assertEquals(stringSet, struct.getStringSet());
+    assertEquals(stringSet, struct.getStringSet().orElseThrow());
 
     // map
     fieldId = findFieldId(metadata, "stringMap");
@@ -302,7 +301,7 @@ public class ThriftStructProcessorTest {
     throw new IllegalStateException("Field not found: " + fieldName);
   }
 
-  private Object getFieldValue(TBase struct, TFieldIdEnum fieldId) {
+  private @Nullable Object getFieldValue(TBase struct, TFieldIdEnum fieldId) {
     TFieldIdEnum fieldRef = struct.fieldForId(fieldId.getThriftFieldId());
     if (struct.isSet(fieldRef)) {
       return struct.getFieldValue(fieldRef);

@@ -34,6 +34,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Contains selector thread which transitions method call objects */
+@SuppressWarnings({
+  "EffectivelyPrivate", // Public methods on private inner class needed for encapsulation
+  "BadComparable" // Long comparison overflow not possible for realistic timeout values
+})
 public class TAsyncClientManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(TAsyncClientManager.class.getName());
 
@@ -87,6 +91,7 @@ public class TAsyncClientManager {
       selector.wakeup();
     }
 
+    @Override
     public void run() {
       while (running) {
         try {

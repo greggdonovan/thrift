@@ -72,6 +72,7 @@ public class TestTAsyncClientManager {
     serverThread_ =
         new Thread(
             new Runnable() {
+              @Override
               public void run() {
                 server_.serve();
               }
@@ -312,7 +313,7 @@ public class TestTAsyncClientManager {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
       }
       return 0;
     }
@@ -322,7 +323,7 @@ public class TestTAsyncClientManager {
 
     @Override
     public CompactProtoTestStruct structMethod() throws TException {
-      return null;
+      return new CompactProtoTestStruct();
     }
 
     @Override
@@ -359,16 +360,17 @@ public class TestTAsyncClientManager {
     private int numSuccesses_ = 0;
     private final Srv.AsyncClient client_;
 
-    public JankyRunnable(int numCalls) throws Exception {
+    JankyRunnable(int numCalls) throws Exception {
       numCalls_ = numCalls;
       client_ = getClient();
       client_.setTimeout(20000);
     }
 
-    public int getNumSuccesses() {
+    int getNumSuccesses() {
       return numSuccesses_;
     }
 
+    @Override
     public void run() {
       for (int i = 0; i < numCalls_ && !client_.hasError(); i++) {
         final int iteration = i;

@@ -24,6 +24,7 @@ import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
 
 /** Write frame (header and payload) to transport in a nonblocking way. */
+@SuppressWarnings("NullAway") // frameBytes lazily initialized when content is provided
 public abstract class FrameWriter {
 
   protected ByteBuffer frameBytes;
@@ -107,7 +108,7 @@ public abstract class FrameWriter {
   /**
    * Nonblocking write to the underlying transport.
    *
-   * @throws TTransportException
+   * @throws TTransportException if there is an error writing to the transport
    */
   public void write(TNonblockingTransport transport) throws TTransportException {
     transport.write(frameBytes);

@@ -173,6 +173,7 @@ public class ThriftStructProcessor implements ThriftFieldValueProcessor<TBase> {
     valueCollection.setFieldValue(fieldId, value);
   }
 
+  @SuppressWarnings("ByteBufferBackingArray") // Buffer position and limit are used correctly
   private static String byteBufferToString(ByteBuffer buffer) {
     byte[] bytes = buffer.array();
     int pos = buffer.position();

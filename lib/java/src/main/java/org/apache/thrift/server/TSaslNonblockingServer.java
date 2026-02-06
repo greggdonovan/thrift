@@ -47,6 +47,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** TServer with sasl support, using asynchronous execution and nonblocking io. */
+@SuppressWarnings({
+  "NullAway", // Optional event handler and lazy processor initialization
+  "StatementSwitchToExpressionSwitch", // Statement switch clearer for phase handling
+  "FutureReturnValueIgnored", // Executor tasks run asynchronously with error handling via callbacks
+  "EffectivelyPrivate", // Public constructors on private inner classes needed for instantiation
+  "UnnecessaryParentheses", // Parentheses aid readability in complex boolean expressions
+  "MissingOverride" // Args builder methods override parent but don't require annotation
+})
 public class TSaslNonblockingServer extends TServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(TSaslNonblockingServer.class);
 

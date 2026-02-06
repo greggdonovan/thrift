@@ -17,14 +17,8 @@
  * under the License.
  */
 
-package org.apache.thrift.annotation;
+/** Thrift metadata support for introspection. */
+@NullMarked
+package org.apache.thrift.meta_data;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- * Annotation indicating a field, method return, or method parameter may be {@code null}. We package
- * our own annotation to avoid a mandatory third-party dependency.
- */
-@Retention(RetentionPolicy.CLASS)
-public @interface Nullable {}
+import org.jspecify.annotations.NullMarked;

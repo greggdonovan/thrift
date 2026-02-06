@@ -26,6 +26,7 @@ import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
+import org.jspecify.annotations.Nullable;
 
 /**
  * TFramedTransport is a buffered TTransport that ensures a fully read message every time by
@@ -78,18 +79,22 @@ public class TFramedTransport extends TLayeredTransport {
     this(transport, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
   }
 
+  @Override
   public void open() throws TTransportException {
     getInnerTransport().open();
   }
 
+  @Override
   public boolean isOpen() {
     return getInnerTransport().isOpen();
   }
 
+  @Override
   public void close() {
     getInnerTransport().close();
   }
 
+  @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     int got = readBuffer_.read(buf, off, len);
     if (got > 0) {
@@ -103,7 +108,7 @@ public class TFramedTransport extends TLayeredTransport {
   }
 
   @Override
-  public byte[] getBuffer() {
+  public byte @Nullable [] getBuffer() {
     return readBuffer_.getBuffer();
   }
 
@@ -154,6 +159,7 @@ public class TFramedTransport extends TLayeredTransport {
     readBuffer_.reset(buff);
   }
 
+  @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
     writeBuffer_.write(buf, off, len);
   }
@@ -174,13 +180,13 @@ public class TFramedTransport extends TLayeredTransport {
     buf[0] = (byte) (0xff & (frameSize >> 24));
     buf[1] = (byte) (0xff & (frameSize >> 16));
     buf[2] = (byte) (0xff & (frameSize >> 8));
-    buf[3] = (byte) (0xff & (frameSize));
+    buf[3] = (byte) (0xff & frameSize);
   }
 
   public static int decodeFrameSize(final byte[] buf) {
     return ((buf[0] & 0xff) << 24)
         | ((buf[1] & 0xff) << 16)
         | ((buf[2] & 0xff) << 8)
-        | ((buf[3] & 0xff));
+        | (buf[3] & 0xff);
   }
 }

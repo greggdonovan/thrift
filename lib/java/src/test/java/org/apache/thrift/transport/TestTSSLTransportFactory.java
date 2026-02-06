@@ -28,10 +28,11 @@ import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
+import org.jspecify.annotations.Nullable;
 
 public class TestTSSLTransportFactory extends ServerTestBase {
-  private Thread serverThread;
-  private TServer server;
+  private @Nullable Thread serverThread;
+  private @Nullable TServer server;
 
   // TODO: Only supported on TBinaryProtocol. Doesn't work for TCompactProtocol
   private static final List<TProtocolFactory> protocols =
@@ -73,7 +74,7 @@ public class TestTSSLTransportFactory extends ServerTestBase {
   public void startServer(
       final TProcessor processor,
       final TProtocolFactory protoFactory,
-      final TTransportFactory factory)
+      final @Nullable TTransportFactory factory)
       throws Exception {
     serverThread =
         new Thread(
@@ -95,8 +96,12 @@ public class TestTSSLTransportFactory extends ServerTestBase {
 
   @Override
   public void stopServer() throws Exception {
-    server.stop();
-    serverThread.join();
+    if (server != null) {
+      server.stop();
+    }
+    if (serverThread != null) {
+      serverThread.join();
+    }
   }
 
   @Override

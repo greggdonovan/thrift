@@ -36,8 +36,10 @@ import org.apache.thrift.transport.TTransport;
 public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
 
   /** Prevent direct instantiation */
-  @SuppressWarnings("unused")
-  private TProtocol() {}
+  @SuppressWarnings({"unused", "NullAway.Init"})
+  private TProtocol() {
+    throw new AssertionError("TProtocol cannot be directly instantiated");
+  }
 
   /** Transport */
   protected TTransport trans_;
@@ -76,7 +78,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   }
 
   protected void checkReadBytesAvailable(TMap map) throws TException {
-    long elemSize = getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
+    long elemSize = (long) getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
     trans_.checkReadBytesAvailable(map.size * elemSize);
   }
 
@@ -101,7 +103,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
   public abstract int getMinSerializedSize(byte type) throws TException;
 
   public interface WriteCallback<T> {
-    void call(T e) throws TException;
+    void call(@org.jspecify.annotations.Nullable T e) throws TException;
   }
 
   public interface ReadCallback<T, R> {
@@ -444,6 +446,7 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
     this.skip(fieldType, Integer.MAX_VALUE);
   }
 
+  @SuppressWarnings("StatementSwitchToExpressionSwitch")
   public void skip(byte fieldType, int maxDepth) throws TException {
     if (maxDepth <= 0) {
       throw new TException("Maximum skip depth exceeded");

@@ -44,24 +44,32 @@ public class SerializationBenchmark {
   public static void testSerialization(TProtocolFactory factory, TBase object) throws Exception {
     TTransport trans =
         new TTransport() {
+          @Override
           public void write(byte[] bin, int x, int y) throws TTransportException {}
 
+          @Override
           public TConfiguration getConfiguration() {
             return new TConfiguration();
           }
 
+          @Override
           public void updateKnownMessageSize(long size) throws TTransportException {}
 
+          @Override
           public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
 
+          @Override
           public int read(byte[] bin, int x, int y) throws TTransportException {
             return 0;
           }
 
+          @Override
           public void close() {}
 
+          @Override
           public void open() {}
 
+          @Override
           public boolean isOpen() {
             return true;
           }

@@ -21,6 +21,7 @@ package org.apache.thrift.protocol;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import org.apache.thrift.TSerializer;
 import org.junit.jupiter.api.Test;
 import thrift.test.GuessProtocolStruct;
@@ -30,7 +31,7 @@ public class TestTProtocolUtil {
   @Test
   public void testGuessProtocolFactory_JSON() throws Exception {
 
-    byte[] data = "{foo}".getBytes();
+    byte[] data = "{foo}".getBytes(StandardCharsets.UTF_8);
     TProtocolFactory factory =
         TProtocolUtil.guessProtocolFactory(data, new TCompactProtocol.Factory());
     assertTrue(factory instanceof TJSONProtocol.Factory);

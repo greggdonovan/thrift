@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * and uses it/them to perform transport operations. This allows for compatibility with all the nice
  * constructs Java already has to provide a variety of types of streams.
  */
+@SuppressWarnings("NullAway") // Streams set to null to indicate unset/closed state
 public class TIOStreamTransport extends TEndpointTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TIOStreamTransport.class.getName());
@@ -61,7 +62,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   /**
    * Input stream constructor, constructs an input only transport.
    *
-   * @param config
+   * @param config the configuration
    * @param is Input stream to read from
    */
   public TIOStreamTransport(TConfiguration config, InputStream is) throws TTransportException {
@@ -82,7 +83,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   /**
    * Output stream constructor, constructs an output only transport.
    *
-   * @param config
+   * @param config the configuration
    * @param os Output stream to write to
    */
   public TIOStreamTransport(TConfiguration config, OutputStream os) throws TTransportException {
@@ -103,7 +104,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   /**
    * Two-way stream constructor.
    *
-   * @param config
+   * @param config the configuration
    * @param is Input stream to read from
    * @param os Output stream to read from
    */
@@ -129,14 +130,17 @@ public class TIOStreamTransport extends TEndpointTransport {
   /**
    * @return false after close is called.
    */
+  @Override
   public boolean isOpen() {
     return inputStream_ != null || outputStream_ != null;
   }
 
   /** The streams must already be open. This method does nothing. */
+  @Override
   public void open() throws TTransportException {}
 
   /** Closes both the input and output streams. */
+  @Override
   public void close() {
     try {
       if (inputStream_ != null) {
@@ -160,6 +164,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   }
 
   /** Reads from the underlying input stream if not null. */
+  @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if (inputStream_ == null) {
       throw new TTransportException(
@@ -180,6 +185,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   }
 
   /** Writes to the underlying output stream if not null. */
+  @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
     if (outputStream_ == null) {
       throw new TTransportException(
@@ -193,6 +199,7 @@ public class TIOStreamTransport extends TEndpointTransport {
   }
 
   /** Flushes the underlying output stream if not null. */
+  @Override
   public void flush() throws TTransportException {
     if (outputStream_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot flush null outputStream");

@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import thrift.test.DoubleConstantsTestConstants;
 
+@SuppressWarnings({"InlineFormatString", "FloatingPointLiteralPrecision"})
 public class TestRenderedDoubleConstants {
   private static final double EPSILON = 0.0000001;
   private static final String ASSERTION_MESSAGE_FOR_RENDERED_DOUBLE_CONSTANTS_TEST =

@@ -20,8 +20,8 @@
 // Using the legacy plugin classpath for Clover so it can be loaded optionally
 buildscript {
     // strictly enforce the minimum version of Java required to build and fail fast
-    if (JavaVersion.current() < JavaVersion.VERSION_1_8) {
-        throw new GradleException("The java version used is ${JavaVersion.current()}, but must be at least ${JavaVersion.VERSION_1_8}")
+    if (JavaVersion.current() < JavaVersion.VERSION_17) {
+        throw new GradleException("The java version used is ${JavaVersion.current()}, but must be at least ${JavaVersion.VERSION_17}")
     }
 
     repositories {
@@ -40,9 +40,10 @@ plugins {
     id 'maven-publish'
     id 'signing'
     id 'pmd'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id "com.github.spotbugs" version "5.2.5"
-    id "com.diffplug.spotless" version "8.1.0"
+    id 'com.gradleup.shadow' version '9.3.1'
+    id "com.github.spotbugs" version "6.4.8"
+    id "com.diffplug.spotless" version "8.2.1"
+    id "net.ltgt.errorprone" version "5.0.0"
 }
 
 description = 'Apache Thrift Java Library'

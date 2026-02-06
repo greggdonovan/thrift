@@ -33,6 +33,11 @@ import org.apache.thrift.transport.TTransportException;
  * <p>This protocol is write-only and produces a simple output format suitable for parsing by
  * scripting languages. It should not be confused with the full-featured TJSONProtocol.
  */
+@SuppressWarnings({
+  "MissingOverride", // Inner context class method overrides
+  "JdkObsolete", // Stack used for context stack matching C++ implementation
+  "StatementSwitchToExpressionSwitch" // Statement switches clearer for type dispatch
+})
 public class TSimpleJSONProtocol extends TProtocol {
 
   /** Factory */

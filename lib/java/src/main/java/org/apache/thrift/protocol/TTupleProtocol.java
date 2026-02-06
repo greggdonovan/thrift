@@ -81,6 +81,7 @@ public final class TTupleProtocol extends TCompactProtocol {
    * @param vectorWidth width of the vector
    * @return a byte array of at least length 1
    */
+  @SuppressWarnings("NarrowingCompoundAssignment") // Intentional bit manipulation within byte range
   public static byte[] toByteArray(BitSet bits, int vectorWidth) {
     byte[] bytes = new byte[(int) Math.ceil(vectorWidth / 8.0)];
     for (int i = 0; i < bits.length(); i++) {

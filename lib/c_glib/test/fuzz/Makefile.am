@@ -34,11 +34,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -I../gen-c_glib -I./gen-c_glib -I$(
 AM_CFLAGS = -g $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) -I$(top_srcdir)/lib/c_glib/src -I../gen-c_glib -I./gen-c_glib -I$(top_builddir)
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS)
 
-if USING_CLANG
+if HAVE_CLANG_FUZZER
 AM_LDFLAGS += -fsanitize=fuzzer
 endif
 
+if HAVE_CLANG_FUZZER
 check_PROGRAMS = fuzz_parse_compact fuzz_parse_binary
+endif
 
 fuzz_parse_compact_SOURCES = fuzz_parse_compact.c
 fuzz_parse_compact_LDADD = \
@@ -63,4 +65,4 @@ gen-c_glib/fuzz_test_no_uuid_types.c gen-c_glib/fuzz_test_no_uuid_types.h: $(top
 clean-local:
 	$(RM) -r gen-c_glib/
 	$(RM) *.o
-	$(RM) libtestgencfuzz.la 
+	$(RM) libtestgencfuzz.la

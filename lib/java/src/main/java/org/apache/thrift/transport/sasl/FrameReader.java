@@ -31,6 +31,7 @@ import org.apache.thrift.transport.TTransportException;
  *
  * @param <T> Header type.
  */
+@SuppressWarnings("NullAway") // payload is lazily initialized when header is read
 public abstract class FrameReader<T extends FrameHeaderReader> {
   private final T header;
   private ByteBuffer payload;

@@ -40,6 +40,7 @@ import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.layered.TFramedTransport;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +75,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   }
 
   /** Begin accepting connections and processing invocations. */
+  @Override
   public void serve() {
     // start any IO threads
     if (!startThreads()) {
@@ -243,6 +245,7 @@ public abstract class AbstractNonblockingServer extends TServer {
    * transports, and then the writing of response data back to the client. In the process it manages
    * flipping the read and write bits on the selection key for its client.
    */
+  @SuppressWarnings("NullAway") // State machine guarantees fields are non-null when accessed
   public class FrameBuffer {
     private final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
@@ -278,7 +281,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     protected final TProtocol outProt_;
 
     // context associated with this connection
-    protected final ServerContext context_;
+    protected final @Nullable ServerContext context_;
 
     public FrameBuffer(
         final TNonblockingTransport trans,
@@ -301,11 +304,12 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       if (eventHandler_ != null) {
         context_ = eventHandler_.createContext(inProt_, outProt_);
-        SocketAddress remoteAddress =
-            trans_ instanceof SocketAddressProvider
-                ? ((SocketAddressProvider) trans_).getRemoteSocketAddress()
-                : null;
-        context_.setRemoteAddress(remoteAddress);
+        if (trans_ instanceof SocketAddressProvider socketAddressProvider) {
+          SocketAddress remoteAddress = socketAddressProvider.getRemoteSocketAddress();
+          if (remoteAddress != null) {
+            context_.setRemoteAddress(remoteAddress);
+          }
+        }
       } else {
         context_ = null;
       }
@@ -447,6 +451,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     }
 
     /** Give this FrameBuffer a chance to set its interest to write, once data has come in. */
+    @SuppressWarnings("StatementSwitchToExpressionSwitch")
     public void changeSelectInterests() {
       switch (state_) {
         case AWAITING_REGISTER_WRITE:
@@ -588,6 +593,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     }
   } // FrameBuffer
 
+  @SuppressWarnings("NullAway") // Inherits state machine guarantees from FrameBuffer
   public class AsyncFrameBuffer extends FrameBuffer {
     public AsyncFrameBuffer(
         TNonblockingTransport trans, SelectionKey selectionKey, AbstractSelectThread selectThread)
@@ -603,6 +609,7 @@ public abstract class AbstractNonblockingServer extends TServer {
       return outProt_;
     }
 
+    @Override
     public void invoke() {
       frameTrans_.reset(buffer_.array());
       response_.reset();

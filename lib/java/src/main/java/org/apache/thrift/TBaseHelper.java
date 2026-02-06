@@ -27,10 +27,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import org.jspecify.annotations.Nullable;
 
 public final class TBaseHelper {
 
@@ -39,16 +41,16 @@ public final class TBaseHelper {
   private static final Comparator comparator = new NestedStructureComparator();
 
   public static int compareTo(Object o1, Object o2) {
-    if (o1 instanceof Comparable) {
-      return compareTo((Comparable) o1, (Comparable) o2);
-    } else if (o1 instanceof List) {
-      return compareTo((List) o1, (List) o2);
-    } else if (o1 instanceof Set) {
-      return compareTo((Set) o1, (Set) o2);
-    } else if (o1 instanceof Map) {
-      return compareTo((Map) o1, (Map) o2);
-    } else if (o1 instanceof byte[]) {
-      return compareTo((byte[]) o1, (byte[]) o2);
+    if (o1 instanceof Comparable c1) {
+      return compareTo(c1, (Comparable) o2);
+    } else if (o1 instanceof List l1) {
+      return compareTo(l1, (List) o2);
+    } else if (o1 instanceof Set s1) {
+      return compareTo(s1, (Set) o2);
+    } else if (o1 instanceof Map m1) {
+      return compareTo(m1, (Map) o2);
+    } else if (o1 instanceof byte[] b1) {
+      return compareTo(b1, (byte[]) o2);
     } else {
       throw new IllegalArgumentException("Cannot compare objects of type " + o1.getClass());
     }
@@ -168,6 +170,7 @@ public final class TBaseHelper {
 
   /** Comparator to compare items inside a structure (e.g. a list, set, or map). */
   private static class NestedStructureComparator implements Comparator, Serializable {
+    @Override
     public int compare(Object oA, Object oB) {
       if (oA == null && oB == null) {
         return 0;
@@ -175,14 +178,14 @@ public final class TBaseHelper {
         return -1;
       } else if (oB == null) {
         return 1;
-      } else if (oA instanceof List) {
-        return compareTo((List) oA, (List) oB);
-      } else if (oA instanceof Set) {
-        return compareTo((Set) oA, (Set) oB);
-      } else if (oA instanceof Map) {
-        return compareTo((Map) oA, (Map) oB);
-      } else if (oA instanceof byte[]) {
-        return compareTo((byte[]) oA, (byte[]) oB);
+      } else if (oA instanceof List lA) {
+        return compareTo(lA, (List) oB);
+      } else if (oA instanceof Set sA) {
+        return compareTo(sA, (Set) oB);
+      } else if (oA instanceof Map mA) {
+        return compareTo(mA, (Map) oB);
+      } else if (oA instanceof byte[] bA) {
+        return compareTo(bA, (byte[]) oB);
       } else {
         return compareTo((Comparable) oA, (Comparable) oB);
       }
@@ -229,9 +232,10 @@ public final class TBaseHelper {
 
   public static String paddedByteString(byte b) {
     int extended = (b | 0x100) & 0x1ff;
-    return Integer.toHexString(extended).toUpperCase().substring(1);
+    return Integer.toHexString(extended).toUpperCase(Locale.ROOT).substring(1);
   }
 
+  @SuppressWarnings("ByteBufferBackingArray") // wrapsFullArray checks hasArray() and arrayOffset()
   public static byte[] byteBufferToByteArray(ByteBuffer byteBuffer) {
     if (wrapsFullArray(byteBuffer)) {
       return byteBuffer.array();
@@ -259,7 +263,7 @@ public final class TBaseHelper {
     return remaining;
   }
 
-  public static ByteBuffer rightSize(ByteBuffer in) {
+  public static @Nullable ByteBuffer rightSize(@Nullable ByteBuffer in) {
     if (in == null) {
       return null;
     }
@@ -269,7 +273,7 @@ public final class TBaseHelper {
     return ByteBuffer.wrap(byteBufferToByteArray(in));
   }
 
-  public static ByteBuffer copyBinary(final ByteBuffer orig) {
+  public static @Nullable ByteBuffer copyBinary(final @Nullable ByteBuffer orig) {
     if (orig == null) {
       return null;
     }
@@ -284,7 +288,7 @@ public final class TBaseHelper {
     return copy;
   }
 
-  public static byte[] copyBinary(final byte[] orig) {
+  public static byte @Nullable [] copyBinary(final byte @Nullable [] orig) {
     return (orig == null) ? null : Arrays.copyOf(orig, orig.length);
   }
 
