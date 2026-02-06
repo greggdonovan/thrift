@@ -122,11 +122,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
               + setField_);
     }
 
-    Object v = getFieldValue();
-    if (v == null) {
-      throw new IllegalStateException("Field value is null for set field " + fieldId);
-    }
-    return v;
+    return getFieldValue();
   }
 
   public Object getFieldValue(int fieldId) {
@@ -255,7 +251,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      var setField = struct.getSetField();
+      TFieldIdEnum setField = struct.getSetField();
       if (setField == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
@@ -289,7 +285,7 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      var setField = struct.getSetField();
+      TFieldIdEnum setField = struct.getSetField();
       if (setField == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }

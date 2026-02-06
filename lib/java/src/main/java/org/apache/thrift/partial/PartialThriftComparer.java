@@ -79,25 +79,22 @@ public class PartialThriftComparer<T extends TBase> {
   private boolean areEqual(
       ThriftMetadata.ThriftObject data, Object o1, Object o2, StringBuilder sb) {
 
-    Object v1 = unwrapOptional(o1);
-    Object v2 = unwrapOptional(o2);
-
     byte fieldType = data.data.valueMetaData.type;
     switch (fieldType) {
       case TType.STRUCT:
-        return this.areEqual((ThriftMetadata.ThriftStruct) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftStruct) data, o1, o2, sb);
 
       case TType.LIST:
-        return this.areEqual((ThriftMetadata.ThriftList) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftList) data, o1, o2, sb);
 
       case TType.MAP:
-        return this.areEqual((ThriftMetadata.ThriftMap) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftMap) data, o1, o2, sb);
 
       case TType.SET:
-        return this.areEqual((ThriftMetadata.ThriftSet) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftSet) data, o1, o2, sb);
 
       case TType.ENUM:
-        return this.areEqual((ThriftMetadata.ThriftEnum) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftEnum) data, o1, o2, sb);
 
       case TType.BOOL:
       case TType.BYTE:
@@ -106,7 +103,7 @@ public class PartialThriftComparer<T extends TBase> {
       case TType.I64:
       case TType.DOUBLE:
       case TType.STRING:
-        return this.areEqual((ThriftMetadata.ThriftPrimitive) data, v1, v2, sb);
+        return this.areEqual((ThriftMetadata.ThriftPrimitive) data, o1, o2, sb);
 
       default:
         throw unsupportedFieldTypeException(fieldType);
@@ -136,8 +133,8 @@ public class PartialThriftComparer<T extends TBase> {
 
       for (Object o : data.fields.values()) {
         ThriftMetadata.ThriftObject field = (ThriftMetadata.ThriftObject) o;
-        Object f1 = t1.getFieldValue(field.fieldId);
-        Object f2 = t2.getFieldValue(field.fieldId);
+        Object f1 = unwrapOptional(t1.getFieldValue(field.fieldId));
+        Object f2 = unwrapOptional(t2.getFieldValue(field.fieldId));
         overallResult = overallResult && this.areEqual(field, f1, f2, sb);
       }
 

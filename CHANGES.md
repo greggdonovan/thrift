@@ -51,6 +51,27 @@
 ### Java
 
 - [THRIFT-5858](https://issues.apache.org/jira/browse/THRIFT-5858) - Introduce new type MESSAGE_SIZE_LIMIT in TTransportException
+- Set JDK 17 as the minimum Java version (see Breaking Changes below)
+- Fix PartialThriftComparer null comparison bug: when one object was null and the other was not, the comparer returned UNKNOWN instead of NOT_EQUAL, potentially allowing incorrect comparisons to proceed
+- Delete `org.apache.thrift.Option` class in favor of `java.util.Optional`
+- Remove Android library (`lib/java/android/`)
+- Remove `ant` build dependency; Gradle is the sole Java build system
+- Modernize Java codegen: switch expressions, pattern matching instanceof
+- Upgrade to Jakarta annotations by default (opt out with `javax_annotations` generator flag)
+- Upgrade SLF4J to 2.x, require SLF4J 2.0+ at runtime (OSGi Import-Package range `[2.0,3)`)
+- Upgrade Kotlin cross-test dependencies (SLF4J 2.0.17, Logback 1.5.28, HttpCore 4.4.16, HttpClient 4.5.14)
+- Switch from `kotlinx-coroutines-jdk8` to `kotlinx-coroutines-core` (jdk8 APIs merged into core since 1.7.0)
+- Set JVM 17 target for all Kotlin modules
+
+### Java - Breaking Changes
+
+- **Minimum Java version is now JDK 17** (was JDK 8). Generated code requires JDK 17 or later.
+- **`org.apache.thrift.Option` class deleted.** Optional fields now use `java.util.Optional`. Code using `Option.some()`, `Option.none()`, or `Option.fromNullable()` must migrate to `Optional.of()`, `Optional.empty()`, and `Optional.ofNullable()`.
+- **`option_type` generator flag removed.** The `java:option_type=jdk8` and `java:option_type=thrift` flags no longer exist. All optional fields unconditionally use `java.util.Optional`. Remove `option_type` from any `--gen java:` arguments.
+- **Jakarta annotations are now the default.** Generated code uses `jakarta.annotation.Generated` instead of `javax.annotation.Generated`. To opt out, use `--gen java:javax_annotations`. The old `jakarta_annotations` flag is removed.
+- **`android_legacy` and `java5` generator flags removed.** These flags are no longer accepted.
+- **SLF4J 2.0+ required at runtime.** The OSGi Import-Package range for SLF4J changed from `[1.4,2)` to `[2.0,3)`.
+- **`slf4j-log4j12` replaced by `slf4j-simple`** for test runtime (log4j 1.x is EOL).
 
 ### netstd
 
