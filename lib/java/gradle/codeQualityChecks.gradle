@@ -8,7 +8,6 @@ dependencies {
 }
 
 // see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugsextension
-// Note: String values trigger deprecation warning in Gradle 9, will need enum values for Gradle 10
 spotbugs {
     ignoreFailures = true
     toolVersion = '4.9.8'
