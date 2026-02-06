@@ -266,6 +266,9 @@ class TNonblockingServer:
         if self.prepared:
             return
         self.socket.listen()
+        if self.poll:
+            self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)
+            self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)
         for _ in range(self.threads):
             thread = Worker(self.tasks)
             thread.daemon = True
@@ -323,17 +326,14 @@ class TNonblockingServer:
         """Does poll on open connections, if available."""
         remaining = []
 
-        self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)
-        self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)
-
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 self.poll.register(connection.fileno(), select.POLLIN | select.POLLRDNORM | select.POLLERR | select.POLLHUP | select.POLLNVAL)
                 if connection.remaining or connection.received:
                     remaining.append(connection.fileno())
-            if connection.is_writeable():
+            elif connection.is_writeable():
                 self.poll.register(connection.fileno(), select.POLLOUT | select.POLLWRNORM)
-            if connection.is_closed():
+            elif connection.is_closed():
                 try:
                     self.poll.unregister(i)
                 except KeyError:

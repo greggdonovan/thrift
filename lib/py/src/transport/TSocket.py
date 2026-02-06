@@ -169,7 +169,7 @@ class TSocket(TSocketBase):
                 # in lib/cpp/src/transport/TSocket.cpp.
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
-                buff = ''
+                buff = b''
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:

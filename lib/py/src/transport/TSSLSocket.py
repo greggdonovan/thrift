@@ -159,7 +159,7 @@ class TSSLBase:
                 # require a verified server certificate. OpenSSL handles
                 # hostname validation during the TLS handshake.
                 self.ssl_context.check_hostname = (
-                    self.cert_reqs == ssl.CERT_REQUIRED and
+                    self.cert_reqs in (ssl.CERT_REQUIRED, ssl.CERT_OPTIONAL) and
                     bool(self._server_hostname)
                 )
             self.ssl_context.verify_mode = self.cert_reqs

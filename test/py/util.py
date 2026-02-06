@@ -26,9 +26,8 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
 
 
 def local_libpath():
-    # Handle MM.mm and MMmm -> Code copied from _import_local_thrift and adapted
+    suffix = sys.implementation.cache_tag  # e.g., 'cpython-311'
     for libpath in glob.glob(os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')):
-        for pattern in ('-%d.%d', '-%d%d'):
-            postfix = pattern % (sys.version_info[0], sys.version_info[1])
-            if libpath.endswith(postfix):
-                return libpath
+        if suffix in libpath:
+            return libpath
+    raise ImportError(f"No Thrift build found for {suffix}")

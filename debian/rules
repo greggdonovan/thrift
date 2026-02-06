@@ -16,8 +16,6 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-PYVERS := $(shell pyversions -r)
-
 export CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
 export CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
 export CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
@@ -53,10 +51,8 @@ $(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
 
 	# Python library
 	cd $(CURDIR)/lib/py && \
-    for py in $(PYVERS); do  \
-        $$py setup.py build; \
-        $$py-dbg setup.py build; \
-    done
+		python3 setup.py build && \
+		python3-dbg setup.py build
 
 	# PHP
 	cd $(CURDIR)/lib/php/src/ext/thrift_protocol && \
@@ -91,7 +87,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 
-	cd $(CURDIR)/lib/py && python setup.py clean --all
+	cd $(CURDIR)/lib/py && python3 setup.py clean --all
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean

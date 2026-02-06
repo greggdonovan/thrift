@@ -178,11 +178,11 @@ class TJSONProtocolBase(TProtocolBase):
 
     # We don't have length limit implementation for JSON protocols
     @property
-    def string_length_limit(senf):
+    def string_length_limit(self):
         return None
 
     @property
-    def container_length_limit(senf):
+    def container_length_limit(self):
         return None
 
     def resetWriteContext(self):
@@ -572,11 +572,11 @@ class TJSONProtocolFactory(TProtocolFactory):
         return TJSONProtocol(trans)
 
     @property
-    def string_length_limit(senf):
+    def string_length_limit(self):
         return None
 
     @property
-    def container_length_limit(senf):
+    def container_length_limit(self):
         return None
 
 

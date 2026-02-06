@@ -335,9 +335,9 @@ private:
 
 protected:
   std::set<std::string> lang_keywords_for_validation() const override {
-    std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
-          "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
-          "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
+    std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for",
+          "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass",
           "raise", "return", "try", "while", "with", "yield" };
     return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
   }
@@ -907,6 +907,14 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
         out << indent() << "super().__setattr__(*args)" << '\n'
             << indent() << "return" << '\n';
         indent_down();
+    } else if (is_exception) {
+        // For exceptions without slots, allow Python internal exception attributes
+        // that are modified by contextlib.contextmanager and multiprocessing.Pool
+        out << indent() << "if args[0] in ('__traceback__', '__context__', '__cause__', '__suppress_context__'):" << '\n';
+        indent_up();
+        out << indent() << "super().__setattr__(*args)" << '\n'
+            << indent() << "return" << '\n';
+        indent_down();
     }
     out << indent() << "raise TypeError(\"can't modify immutable instance\")" << '\n';
     indent_down();
@@ -921,6 +929,14 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     // way to know which fields are user-provided.
     if (gen_slots_ && !gen_dynamic_) {
         out << indent() << "if args[0] not in self.__slots__:" << '\n';
+        indent_up();
+        out << indent() << "super().__delattr__(*args)" << '\n'
+            << indent() << "return" << '\n';
+        indent_down();
+    } else if (is_exception) {
+        // For exceptions without slots, allow Python internal exception attributes
+        // that are modified by contextlib.contextmanager and multiprocessing.Pool
+        out << indent() << "if args[0] in ('__traceback__', '__context__', '__cause__', '__suppress_context__'):" << '\n';
         indent_up();
         out << indent() << "super().__delattr__(*args)" << '\n'
             << indent() << "return" << '\n';
