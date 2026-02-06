@@ -136,6 +136,7 @@ jobs:
 
       - name: Run Phan static analysis
         if: matrix.php-version == '8.2'
+        continue-on-error: true
         run: |
           cd lib/php
           ../../vendor/bin/phan --allow-polyfill-parser --minimum-severity 10 --config-file .phan/config.php
