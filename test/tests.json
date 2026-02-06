@@ -562,6 +562,7 @@
       "command": [
         "php",
         "-dextension_dir=php_ext_dir",
+        "-dextension=thrift_protocol.so",
         "--php-ini=test_php.ini",
         "--no-php-ini",
         "-ddisplay_errors=stderr",
@@ -588,6 +589,7 @@
       "command": [
         "php",
         "-dextension_dir=php_ext_dir",
+        "-dextension=thrift_protocol.so",
         "--php-ini=test_php.ini",
         "--no-php-ini",
         "-ddisplay_errors=stderr",

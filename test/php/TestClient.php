@@ -16,7 +16,7 @@ if (!isset($MODE)) {
 
 
 $thriftLoader = new ThriftClassLoader();
-$thriftLoader->registerDefinition('ThriftTest', __DIR__ . '/' . $GEN_DIR);
+$thriftLoader->registerNamespace('ThriftTest', __DIR__ . '/' . $GEN_DIR);
 $thriftLoader->register();
 
 /*

@@ -37,6 +37,7 @@
         </testsuite>
         <testsuite name="Thrift PHP Integration Test Suite">
             <directory>./test/Integration</directory>
+            <exclude>./test/Integration/BaseValidatorTest.php</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -48,7 +48,7 @@ $transport = $opts['transport'] ?? 'buffered';
 $protocol = $opts['protocol'] ?? 'binary';
 
 $loader = new Thrift\ClassLoader\ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/gen-php');
+$loader->registerNamespace('ThriftTest', __DIR__ . '/gen-php');
 $loader->register();
 
 $sslOptions = \stream_context_create(

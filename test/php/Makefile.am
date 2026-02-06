@@ -18,7 +18,7 @@
 #
 
 stubs: ../v0.16/ThriftTest.thrift
-	$(THRIFT) --gen php ../v0.16/ThriftTest.thrift
+	$(THRIFT) --gen php:server ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen php:inlined ../v0.16/ThriftTest.thrift
 	$(MKDIR_P) gen-php-classmap
 	$(THRIFT) -out gen-php-classmap --gen php:classmap ../v0.16/ThriftTest.thrift

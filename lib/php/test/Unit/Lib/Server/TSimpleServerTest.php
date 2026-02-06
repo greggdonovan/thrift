@@ -125,24 +125,22 @@ class TSimpleServerTest extends TestCase
             ->method('getProtocol')
             ->willReturn($outputProtocol);
 
-        /**
-         * ATTENTION!
-         * it is a hack to stop the server loop in unit test
-         * last call of process can return any value, but should stop server for removing infinite loop
-         **/
-        $processLoopResult[] = $this->returnCallback(function () {
-            $this->server->stop();
-
-            return false;
-        });
-
-        $this->processor->expects($this->exactly(count($processLoopResult)))
+        $callCount = 0;
+        $this->processor->expects($this->exactly(count($processLoopResult) + 1))
             ->method('process')
             ->with(
                 $this->equalTo($inputProtocol),
                 $this->equalTo($outputProtocol)
             )
-            ->willReturnOnConsecutiveCalls(...$processLoopResult);
+            ->willReturnCallback(function () use (&$callCount, $processLoopResult) {
+                if ($callCount < count($processLoopResult)) {
+                    return $processLoopResult[$callCount++];
+                }
+
+                // Stop after exercising the expected process loop.
+                $this->server->stop();
+                return false;
+            });
 
         $this->server->serve();
     }
