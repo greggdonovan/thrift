@@ -70,7 +70,9 @@ switch ($transport) {
         $serverTransportFactory = new \Thrift\Factory\TTransportFactory();
 }
 
-$serverTransport = new \Thrift\Server\TServerSocket('localhost', $port);
+// Cross-test clients do not all resolve localhost the same way across runners.
+// Bind explicitly to IPv4 loopback to avoid v4/v6 mismatch connection failures.
+$serverTransport = new \Thrift\Server\TServerSocket('127.0.0.1', $port);
 $handler = new Handler();
 $processor = new ThriftTest\ThriftTestProcessor($handler);
 
