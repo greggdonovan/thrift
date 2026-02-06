@@ -44,8 +44,6 @@ import org.junit.jupiter.api.Test;
 
 public class ThriftStructProcessorTest {
 
-  private PartialThriftTestData testData = new PartialThriftTestData();
-
   @Test
   public void testStruct() throws TException {
     List<ThriftField> fields = ThriftField.fromNames(Collections.singletonList("i32Field"));
@@ -262,7 +260,7 @@ public class ThriftStructProcessorTest {
     Integer[] ints = new Integer[] {1, 2, 3};
     List<Integer> intList = Arrays.asList(ints);
     processor.setListField(struct, fieldId, intList);
-    assertArrayEquals(ints, struct.getI32List().toArray());
+    assertArrayEquals(ints, struct.getI32List().orElseThrow().toArray());
 
     // set
     fieldId = findFieldId(metadata, "stringSet");
@@ -270,7 +268,7 @@ public class ThriftStructProcessorTest {
     String[] strings = new String[] {"Hello", "World!"};
     Set<String> stringSet = new HashSet<>(Arrays.asList(strings));
     processor.setSetField(struct, fieldId, stringSet);
-    assertEquals(stringSet, struct.getStringSet());
+    assertEquals(stringSet, struct.getStringSet().orElseThrow());
 
     // map
     fieldId = findFieldId(metadata, "stringMap");
