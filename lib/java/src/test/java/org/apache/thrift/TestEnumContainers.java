@@ -39,9 +39,9 @@ public class TestEnumContainers {
   public void testEnumContainers() throws Exception {
     final GodBean b1 = new GodBean();
     b1.addToGoddess(GreekGodGoddess.HERA);
-    b1.getGoddess().orElseThrow().add(GreekGodGoddess.APHRODITE);
+    b1.getGoddess().add(GreekGodGoddess.APHRODITE);
     b1.putToPower(GreekGodGoddess.ZEUS, 1000);
-    b1.getPower().orElseThrow().put(GreekGodGoddess.HERA, 333);
+    b1.getPower().put(GreekGodGoddess.HERA, 333);
     b1.putToByAlias("Mr. Z", GreekGodGoddess.ZEUS);
     b1.addToImages("Baths of Aphrodite 01.jpeg");
 
@@ -56,23 +56,23 @@ public class TestEnumContainers {
       deserializer.deserialize(b3, bytes);
     }
 
-    assertNotSame(b1.getGoddess().orElseThrow(), b2.getGoddess().orElseThrow());
-    assertNotSame(b1.getPower().orElseThrow(), b2.getPower().orElseThrow());
+    assertNotSame(b1.getGoddess(), b2.getGoddess());
+    assertNotSame(b1.getPower(), b2.getPower());
 
-    assertNotSame(b1.getGoddess().orElseThrow(), b3.getGoddess().orElseThrow());
-    assertNotSame(b1.getPower().orElseThrow(), b3.getPower().orElseThrow());
+    assertNotSame(b1.getGoddess(), b3.getGoddess());
+    assertNotSame(b1.getPower(), b3.getPower());
 
     for (GodBean each : new GodBean[] {b1, b2, b3}) {
-      assertTrue(each.getGoddess().orElseThrow().contains(GreekGodGoddess.HERA));
-      assertFalse(each.getGoddess().orElseThrow().contains(GreekGodGoddess.POSEIDON));
-      assertTrue(each.getGoddess().orElseThrow() instanceof EnumSet);
+      assertTrue(each.getGoddess().contains(GreekGodGoddess.HERA));
+      assertFalse(each.getGoddess().contains(GreekGodGoddess.POSEIDON));
+      assertTrue(each.getGoddess() instanceof EnumSet);
 
-      assertEquals(Integer.valueOf(1000), each.getPower().orElseThrow().get(GreekGodGoddess.ZEUS));
-      assertEquals(Integer.valueOf(333), each.getPower().orElseThrow().get(GreekGodGoddess.HERA));
-      assertTrue(each.getPower().orElseThrow() instanceof EnumMap);
+      assertEquals(Integer.valueOf(1000), each.getPower().get(GreekGodGoddess.ZEUS));
+      assertEquals(Integer.valueOf(333), each.getPower().get(GreekGodGoddess.HERA));
+      assertTrue(each.getPower() instanceof EnumMap);
 
-      assertTrue(each.getByAlias().orElseThrow() instanceof HashMap);
-      assertTrue(each.getImages().orElseThrow() instanceof HashSet);
+      assertTrue(each.getByAlias() instanceof HashMap);
+      assertTrue(each.getImages() instanceof HashSet);
     }
   }
 

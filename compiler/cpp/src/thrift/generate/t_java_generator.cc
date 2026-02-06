@@ -67,6 +67,7 @@ public:
     fullcamel_style_ = false;
     sorted_containers_ = false;
     reuse_objects_ = false;
+    use_option_type_ = false;
     generate_future_iface_ = false;
     undated_generated_annotations_ = false;
     suppress_generated_annotations_ = false;
@@ -95,6 +96,14 @@ public:
                  || iter->first.compare("reuse-objects") == 0) {
         // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
         reuse_objects_ = true;
+      } else if (iter->first.compare("option_type") == 0) {
+        if (iter->second.compare("jdk8") == 0 || iter->second.compare("") == 0) {
+          use_option_type_ = true;
+        } else if (iter->second.compare("thrift") == 0) {
+          throw "option_type=thrift is no longer supported; use option_type=jdk8 or java.util.Optional directly";
+        } else {
+          throw "option_type must be 'jdk8'";
+        }
       } else if (iter->first.compare("rethrow_unhandled_exceptions") == 0) {
         rethrow_unhandled_exceptions_ = true;
       } else if (iter->first.compare("generated_annotations") == 0) {
@@ -434,6 +443,7 @@ private:
   bool fullcamel_style_;
   bool sorted_containers_;
   bool reuse_objects_;
+  bool use_option_type_;
   bool generate_future_iface_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
@@ -2405,7 +2415,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
-    bool optional = field->get_req() == t_field::T_OPTIONAL;
+    bool optional = use_option_type_ && field->get_req() == t_field::T_OPTIONAL;
     bool is_deprecated = this->is_deprecated(field->annotations_);
 
     if (type->is_container()) {
@@ -5810,6 +5820,10 @@ THRIFT_REGISTER_GENERATOR(
     "    nocamel:         Do not use CamelCase field accessors with beans.\n"
     "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
     "    android:         Generated structures are Parcelable.\n"
+    "    option_type=jdk8:\n"
+    "                     Wrap optional fields in java.util.Optional.\n"
+    "                     (Default is raw types with null for unset fields.)\n"
+    "                     Note: option_type=thrift is no longer supported.\n"
     "    rethrow_unhandled_exceptions:\n"
     "                     Enable rethrow of unhandled exceptions and let them propagate further.\n"
     "                     (Default behavior is to catch and log it.)\n"
@@ -5827,5 +5841,4 @@ THRIFT_REGISTER_GENERATOR(
     "    annotations_as_metadata:\n"
     "                     Include Thrift field annotations as metadata in the generated code.\n"
     "\n"
-    "    Optional fields are wrapped in java.util.Optional. Jakarta annotations are used by default.\n"
-    "    Generated code requires JDK 17 or later.\n")
+    "    Jakarta annotations are used by default. Generated code requires JDK 17 or later.\n")

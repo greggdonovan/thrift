@@ -28,6 +28,7 @@ ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
+ext.genOptionTypeSrc = file("$buildDir/gen-option-type")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
 ext.genDefinitionOrderTestASrc = file("$buildDir/resources/test/definition-order-test/a")
 ext.genDefinitionOrderTestBSrc = file("$buildDir/resources/test/definition-order-test/b")
@@ -35,7 +36,7 @@ ext.genDefinitionOrderTestBSrc = file("$buildDir/resources/test/definition-order
 // Add the generated code directories to the test source set
 // Exclude package-info.java from secondary gen directories to avoid duplicate package annotation errors
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genOptionTypeSrc, genUnsafeSrc
     test.java.filter.exclude { element ->
         // Exclude package-info.java from non-primary generated directories to avoid conflicts
         def file = element.file
@@ -45,6 +46,7 @@ sourceSets {
         def isSecondaryGenDir = normalizedPath.contains('/gen-javabean/') ||
                                 normalizedPath.contains('/gen-javareuse/') ||
                                 normalizedPath.contains('/gen-fullcamel/') ||
+                                normalizedPath.contains('/gen-option-type/') ||
                                 normalizedPath.contains('/gen-unsafe/')
         return isPackageInfo && isSecondaryGenDir
     }
@@ -121,7 +123,12 @@ def generateJavaTask = tasks.register('generateJava', ThriftGeneratorTask) {
     addCompilation(findThriftFile('JavaAnnotationTest.thrift'), 'java', genSrc)
     addCompilation(findThriftFile('partial/thrift_test_schema.thrift'), 'java', genSrc)
     addCompilation(findThriftFile('FuzzTest.thrift'), 'java', genSrc)
-    addCompilation(findThriftFile('JavaOptionTypeOptionalTest.thrift'), 'java', genSrc)
+}
+
+def generateOptionTypeJavaTask = tasks.register('generateOptionTypeJava', ThriftGeneratorTask) {
+    description = 'Generate the thrift gen-option-type source'
+
+    addCompilation(findThriftFile('JavaOptionTypeOptionalTest.thrift'), 'java:option_type=jdk8', genOptionTypeSrc)
 }
 
 def generateBeanJavaTask = tasks.register('generateBeanJava', ThriftGeneratorTask) {
@@ -167,6 +174,7 @@ tasks.named('compileTestJava') {
 
 tasks.named('generate') {
     dependsOn generateJavaTask
+    dependsOn generateOptionTypeJavaTask
     dependsOn generateBeanJavaTask
     dependsOn generateReuseJavaTask
     dependsOn generateFullCamelJavaTask

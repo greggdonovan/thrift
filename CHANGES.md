@@ -66,8 +66,8 @@
 ### Java - Breaking Changes
 
 - **Minimum Java version is now JDK 17** (was JDK 8). Generated code requires JDK 17 or later.
-- **`org.apache.thrift.Option` class deleted.** Optional fields now use `java.util.Optional`. Code using `Option.some()`, `Option.none()`, or `Option.fromNullable()` must migrate to `Optional.of()`, `Optional.empty()`, and `Optional.ofNullable()`.
-- **`option_type` generator flag removed.** The `java:option_type=jdk8` and `java:option_type=thrift` flags no longer exist. All optional fields unconditionally use `java.util.Optional`. Remove `option_type` from any `--gen java:` arguments.
+- **`org.apache.thrift.Option` class deleted.** Use `java.util.Optional` instead. Code using `Option.some()`, `Option.none()`, or `Option.fromNullable()` must migrate to `Optional.of()`, `Optional.empty()`, and `Optional.ofNullable()`.
+- **`option_type=thrift` removed.** The `java:option_type=thrift` flag is no longer supported. Use `option_type=jdk8` instead, which wraps optional fields in `java.util.Optional`. Default behavior for optional fields is unchanged (raw types, null for unset).
 - **Jakarta annotations are now the default.** Generated code uses `jakarta.annotation.Generated` instead of `javax.annotation.Generated`. To opt out, use `--gen java:javax_annotations`. The old `jakarta_annotations` flag is removed.
 - **`android_legacy` and `java5` generator flags removed.** These flags are no longer accepted.
 - **SLF4J 2.0+ required at runtime.** The OSGi Import-Package range for SLF4J changed from `[1.4,2)` to `[2.0,3)`.

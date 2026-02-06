@@ -24,20 +24,18 @@ public class TestDeepCopy {
 
     final DeepCopyFoo deepCopyFoo = foo.deepCopy();
 
-    assertNotSame(foo.getBar().orElseThrow(), deepCopyFoo.getBar().orElseThrow());
+    assertNotSame(foo.getBar(), deepCopyFoo.getBar());
 
-    assertNotSame(foo.getL().orElseThrow().get(0), deepCopyFoo.getL().orElseThrow().get(0));
+    assertNotSame(foo.getL().get(0), deepCopyFoo.getL().get(0));
     assertNotSame(
-        foo.getS().orElseThrow().toArray(new DeepCopyBar[0])[0],
-        deepCopyFoo.getS().orElseThrow().toArray(new DeepCopyBar[0])[0]);
-    assertNotSame(
-        foo.getM().orElseThrow().get("test 3"), deepCopyFoo.getM().orElseThrow().get("test 3"));
+        foo.getS().toArray(new DeepCopyBar[0])[0],
+        deepCopyFoo.getS().toArray(new DeepCopyBar[0])[0]);
+    assertNotSame(foo.getM().get("test 3"), deepCopyFoo.getM().get("test 3"));
 
-    assertNotSame(foo.getLi().orElseThrow().get(0), deepCopyFoo.getLi().orElseThrow().get(0));
+    assertNotSame(foo.getLi().get(0), deepCopyFoo.getLi().get(0));
     assertNotSame(
-        foo.getSi().orElseThrow().toArray(new thrift.test.Object[0])[0],
-        deepCopyFoo.getSi().orElseThrow().toArray(new thrift.test.Object[0])[0]);
-    assertNotSame(
-        foo.getMi().orElseThrow().get("test 3"), deepCopyFoo.getMi().orElseThrow().get("test 3"));
+        foo.getSi().toArray(new thrift.test.Object[0])[0],
+        deepCopyFoo.getSi().toArray(new thrift.test.Object[0])[0]);
+    assertNotSame(foo.getMi().get("test 3"), deepCopyFoo.getMi().get("test 3"));
   }
 }

@@ -260,7 +260,7 @@ public class ThriftStructProcessorTest {
     Integer[] ints = new Integer[] {1, 2, 3};
     List<Integer> intList = Arrays.asList(ints);
     processor.setListField(struct, fieldId, intList);
-    assertArrayEquals(ints, struct.getI32List().orElseThrow().toArray());
+    assertArrayEquals(ints, struct.getI32List().toArray());
 
     // set
     fieldId = findFieldId(metadata, "stringSet");
@@ -268,7 +268,7 @@ public class ThriftStructProcessorTest {
     String[] strings = new String[] {"Hello", "World!"};
     Set<String> stringSet = new HashSet<>(Arrays.asList(strings));
     processor.setSetField(struct, fieldId, stringSet);
-    assertEquals(stringSet, struct.getStringSet().orElseThrow());
+    assertEquals(stringSet, struct.getStringSet());
 
     // map
     fieldId = findFieldId(metadata, "stringMap");
