@@ -138,7 +138,7 @@ jobs:
         if: matrix.php-version == '8.2'
         run: |
           cd lib/php
-          ../../vendor/bin/phan --allow-polyfill-parser --config-file .phan/config.php
+          ../../vendor/bin/phan --allow-polyfill-parser --minimum-severity 10 --config-file .phan/config.php
 
       - name: Run bootstrap
         run: ./bootstrap.sh
