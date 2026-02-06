@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -31,16 +30,7 @@ class SimpleJSONProtocolTest(unittest.TestCase):
     protocol_factory = TJSONProtocol.TSimpleJSONProtocolFactory()
 
     def _assertDictEqual(self, a, b, msg=None):
-        if hasattr(self, 'assertDictEqual'):
-            # assertDictEqual only in Python 2.7. Depends on your machine.
-            self.assertDictEqual(a, b, msg)
-            return
-
-        # Substitute implementation not as good as unittest library's
-        self.assertEquals(len(a), len(b), msg)
-        for k, v in a.iteritems():
-            self.assertTrue(k in b, msg)
-            self.assertEquals(b.get(k), v, msg)
+        self.assertDictEqual(a, b, msg)
 
     def _serialize(self, obj):
         trans = TTransport.TMemoryBuffer()

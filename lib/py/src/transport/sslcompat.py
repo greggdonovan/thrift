@@ -1,107 +1,69 @@
 #
-# licensed to the apache software foundation (asf) under one
-# or more contributor license agreements. see the notice file
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
-# regarding copyright ownership. the asf licenses this file
-# to you under the apache license, version 2.0 (the
-# "license"); you may not use this file except in compliance
-# with the license. you may obtain a copy of the license at
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/license-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-# unless required by applicable law or agreed to in writing,
-# software distributed under the license is distributed on an
-# "as is" basis, without warranties or conditions of any
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
 #
 
-import logging
-import sys
+"""SSL compatibility utilities for Thrift.
 
-from thrift.transport.TTransport import TTransportException
+For Python 3.10+, hostname verification is handled by OpenSSL during the
+TLS handshake when SSLContext.check_hostname is True. This module provides
+TLS version enforcement utilities.
+"""
 
-logger = logging.getLogger(__name__)
+import ssl
+
+# Minimum TLS version for all Thrift SSL connections
+MINIMUM_TLS_VERSION = ssl.TLSVersion.TLSv1_2
 
 
-def legacy_validate_callback(cert, hostname):
-    """legacy method to validate the peer's SSL certificate, and to check
-    the commonName of the certificate to ensure it matches the hostname we
-    used to make this connection.  Does not support subjectAltName records
-    in certificates.
+def enforce_minimum_tls(context):
+    """Enforce TLS 1.2 or higher on an SSLContext.
 
-    raises TTransportException if the certificate fails validation.
+    This function modifies the context in-place to ensure that TLS 1.2 or higher
+    is used. It raises ValueError if the context's maximum_version is set to a
+    version lower than TLS 1.2.
+
+    Args:
+        context: An ssl.SSLContext to enforce minimum TLS version on
     """
-    if 'subject' not in cert:
-        raise TTransportException(
-            TTransportException.NOT_OPEN,
-            'No SSL certificate found from %s' % hostname)
-    fields = cert['subject']
-    for field in fields:
-        # ensure structure we get back is what we expect
-        if not isinstance(field, tuple):
-            continue
-        cert_pair = field[0]
-        if len(cert_pair) < 2:
-            continue
-        cert_key, cert_value = cert_pair[0:2]
-        if cert_key != 'commonName':
-            continue
-        certhost = cert_value
-        # this check should be performed by some sort of Access Manager
-        if certhost == hostname:
-            # success, cert commonName matches desired hostname
-            return
-        else:
-            raise TTransportException(
-                TTransportException.UNKNOWN,
-                'Hostname we connected to "%s" doesn\'t match certificate '
-                'provided commonName "%s"' % (hostname, certhost))
-    raise TTransportException(
-        TTransportException.UNKNOWN,
-        'Could not validate SSL certificate from host "%s".  Cert=%s'
-        % (hostname, cert))
+    if context.minimum_version < MINIMUM_TLS_VERSION:
+        context.minimum_version = MINIMUM_TLS_VERSION
+    if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+            context.maximum_version < MINIMUM_TLS_VERSION):
+        raise ValueError('TLS maximum_version must be TLS 1.2 or higher.')
 
 
-def _optional_dependencies():
-    try:
-        import ipaddress  # noqa
-        logger.debug('ipaddress module is available')
-        ipaddr = True
-    except ImportError:
-        logger.warning('ipaddress module is unavailable')
-        ipaddr = False
+def validate_minimum_tls(context):
+    """Validate that an SSLContext uses TLS 1.2 or higher.
 
-    if sys.hexversion < 0x030500F0:
-        try:
-            from backports.ssl_match_hostname import match_hostname, __version__ as ver
-            ver = list(map(int, ver.split('.')))
-            logger.debug('backports.ssl_match_hostname module is available')
-            match = match_hostname
-            if ver[0] * 10 + ver[1] >= 35:
-                return ipaddr, match
-            else:
-                logger.warning('backports.ssl_match_hostname module is too old')
-                ipaddr = False
-        except ImportError:
-            logger.warning('backports.ssl_match_hostname is unavailable')
-            ipaddr = False
-    try:
-        from ssl import match_hostname
-        logger.debug('ssl.match_hostname is available')
-        match = match_hostname
-    except ImportError:
-        # https://docs.python.org/3/whatsnew/3.12.html:
-        # "Remove the ssl.match_hostname() function. It was deprecated in Python
-        # 3.7. OpenSSL performs hostname matching since Python 3.7, Python no
-        # longer uses the ssl.match_hostname() function.""
-        if sys.version_info[0] > 3 or (sys.version_info[0] == 3 and sys.version_info[1] >= 12):
-            match = lambda cert, hostname: True
-        else:
-            logger.warning('using legacy validation callback')
-            match = legacy_validate_callback
-    return ipaddr, match
+    Unlike enforce_minimum_tls, this function does not modify the context.
+    It raises ValueError if the context is configured to use TLS versions
+    lower than 1.2.
 
+    Args:
+        context: An ssl.SSLContext to validate
 
-_match_has_ipaddress, _match_hostname = _optional_dependencies()
+    Raises:
+        ValueError: If the context allows TLS versions below 1.2
+    """
+    if context.minimum_version < MINIMUM_TLS_VERSION:
+        raise ValueError(
+            'ssl_context.minimum_version must be TLS 1.2 or higher.')
+    if (context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and
+            context.maximum_version < MINIMUM_TLS_VERSION):
+        raise ValueError(
+            'ssl_context.maximum_version must be TLS 1.2 or higher.')

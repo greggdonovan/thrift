@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -93,9 +92,6 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
-    ssl_deps = []
-    if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
     tornado_deps = ['tornado>=6.3.0']
     twisted_deps = ['twisted>=24.3.0', 'zope.interface>=6.1']
 
@@ -109,10 +105,9 @@ def run_setup(with_binary):
           url='http://thrift.apache.org',
           license='Apache License 2.0',
           extras_require={
-              'ssl': ssl_deps,
               'tornado': tornado_deps,
               'twisted': twisted_deps,
-              'all': ssl_deps + tornado_deps + twisted_deps,
+              'all': tornado_deps + twisted_deps,
           },
           packages=[
               'thrift',
@@ -121,12 +116,18 @@ def run_setup(with_binary):
               'thrift.server',
           ],
           package_dir={'thrift': 'src'},
+          python_requires='>=3.10',
           classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
               'Programming Language :: Python :: 3',
+              'Programming Language :: Python :: 3.10',
+              'Programming Language :: Python :: 3.11',
+              'Programming Language :: Python :: 3.12',
+              'Programming Language :: Python :: 3.13',
+              'Programming Language :: Python :: 3.14',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],

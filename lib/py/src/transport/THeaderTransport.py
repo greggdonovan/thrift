@@ -37,7 +37,7 @@ HEADER_MAGIC = 0x0FFF
 HARD_MAX_FRAME_SIZE = 0x3FFFFFFF
 
 
-class THeaderClientType(object):
+class THeaderClientType:
     HEADERS = 0x00
 
     FRAMED_BINARY = 0x01
@@ -47,16 +47,16 @@ class THeaderClientType(object):
     UNFRAMED_COMPACT = 0x04
 
 
-class THeaderSubprotocolID(object):
+class THeaderSubprotocolID:
     BINARY = 0x00
     COMPACT = 0x02
 
 
-class TInfoHeaderType(object):
+class TInfoHeaderType:
     KEY_VALUE = 0x01
 
 
-class THeaderTransformID(object):
+class THeaderTransformID:
     ZLIB = 0x01
 
 

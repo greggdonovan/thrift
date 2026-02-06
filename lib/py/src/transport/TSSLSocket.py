@@ -21,74 +21,63 @@ import logging
 import os
 import socket
 import ssl
-import sys
 import warnings
 
-from .sslcompat import _match_has_ipaddress
+from .sslcompat import (
+    validate_minimum_tls,
+    MINIMUM_TLS_VERSION,
+)
 from thrift.transport import TSocket
 from thrift.transport.TTransport import TTransportException
-
-_match_hostname = lambda cert, hostname: True
 
 logger = logging.getLogger(__name__)
 warnings.filterwarnings(
     'default', category=DeprecationWarning, module=__name__)
 
 
-class TSSLBase(object):
-    # SSLContext is not available for Python < 2.7.9
-    _has_ssl_context = sys.hexversion >= 0x020709F0
-
-    # ciphers argument is not available for Python < 2.7.0
-    _has_ciphers = sys.hexversion >= 0x020700F0
-
-    # For python >= 2.7.9, use latest TLS that both client and server
-    # supports.
-    # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
-    # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
-    # unavailable.
-    # For python < 3.6, use SSLv23 since TLS is not available
-    if sys.version_info < (3, 6):
-        _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
-            ssl.PROTOCOL_TLSv1
-    else:
-        _default_protocol = ssl.PROTOCOL_TLS_CLIENT if _has_ssl_context else \
-            ssl.PROTOCOL_TLSv1
+class TSSLBase:
+    _minimum_tls_version = MINIMUM_TLS_VERSION
 
     def _init_context(self, ssl_version):
-        if self._has_ssl_context:
-            self._context = ssl.SSLContext(ssl_version)
-            if self._context.protocol == ssl.PROTOCOL_SSLv23:
-                self._context.options |= ssl.OP_NO_SSLv2
-                self._context.options |= ssl.OP_NO_SSLv3
+        """Initialize SSL context with the given version.
+
+        Args:
+            ssl_version: Minimum TLS version to accept. Must be
+                        ssl.TLSVersion.TLSv1_2 or ssl.TLSVersion.TLSv1_3.
+                        Higher versions are negotiated when available.
+                        Deprecated protocol constants are not supported.
+        """
+        if not isinstance(ssl_version, ssl.TLSVersion):
+            raise ValueError(
+                'ssl_version must be ssl.TLSVersion.TLSv1_2 or ssl.TLSVersion.TLSv1_3. '
+                'Deprecated protocol constants (PROTOCOL_*) are not supported.'
+            )
+        if ssl_version < self._minimum_tls_version:
+            raise ValueError(
+                'TLS 1.0/1.1 are not supported; use ssl.TLSVersion.TLSv1_2 or higher.'
+            )
+
+        if self._server_side:
+            protocol = ssl.PROTOCOL_TLS_SERVER
         else:
-            self._context = None
-            self._ssl_version = ssl_version
+            protocol = ssl.PROTOCOL_TLS_CLIENT
+        self._context = ssl.SSLContext(protocol)
+        self._context.minimum_version = ssl_version
+        # Don't set maximum_version - allow negotiation up to newest TLS
 
     @property
     def _should_verify(self):
-        if self._has_ssl_context:
+        if self._custom_context:
             return self._context.verify_mode != ssl.CERT_NONE
-        else:
-            return self.cert_reqs != ssl.CERT_NONE
+        return self.cert_reqs != ssl.CERT_NONE
 
     @property
     def ssl_version(self):
-        if self._has_ssl_context:
-            return self.ssl_context.protocol
-        else:
-            return self._ssl_version
+        return self.ssl_context.protocol
 
     @property
     def ssl_context(self):
         return self._context
-
-    SSL_VERSION = _default_protocol
-    """
-  Default SSL version.
-  For backwards compatibility, it can be modified.
-  Use __init__ keyword argument "ssl_version" instead.
-  """
 
     def _deprecated_arg(self, args, kwargs, pos, key):
         if len(args) <= pos:
@@ -112,37 +101,22 @@ class TSSLBase(object):
             return True
         return False
 
-    def __getattr__(self, key):
-        if key == 'SSL_VERSION':
-            warnings.warn(
-                'SSL_VERSION is deprecated.'
-                'please use ssl_version attribute instead.',
-                DeprecationWarning, stacklevel=2)
-            return self.ssl_version
-
     def __init__(self, server_side, host, ssl_opts):
         self._server_side = server_side
-        if TSSLBase.SSL_VERSION != self._default_protocol:
-            warnings.warn(
-                'SSL_VERSION is deprecated.'
-                'please use ssl_version keyword argument instead.',
-                DeprecationWarning, stacklevel=2)
         self._context = ssl_opts.pop('ssl_context', None)
         self._server_hostname = None
         if not self._server_side:
             self._server_hostname = ssl_opts.pop('server_hostname', host)
         if self._context:
             self._custom_context = True
+            validate_minimum_tls(self._context)
             if ssl_opts:
                 raise ValueError(
                     'Incompatible arguments: ssl_context and %s'
                     % ' '.join(ssl_opts.keys()))
-            if not self._has_ssl_context:
-                raise ValueError(
-                    'ssl_context is not available for this version of Python')
         else:
             self._custom_context = False
-            ssl_version = ssl_opts.pop('ssl_version', TSSLBase.SSL_VERSION)
+            ssl_version = ssl_opts.pop('ssl_version', self._minimum_tls_version)
             self._init_context(ssl_version)
             self.cert_reqs = ssl_opts.pop('cert_reqs', ssl.CERT_REQUIRED)
             self.ca_certs = ssl_opts.pop('ca_certs', None)
@@ -176,35 +150,28 @@ class TSSLBase(object):
         self._certfile = certfile
 
     def _wrap_socket(self, sock):
-        if self._has_ssl_context:
-            if not self._custom_context:
-                self.ssl_context.verify_mode = self.cert_reqs
-                if self.certfile:
-                    self.ssl_context.load_cert_chain(self.certfile,
-                                                     self.keyfile)
-                if self.ciphers:
-                    self.ssl_context.set_ciphers(self.ciphers)
-                if self.ca_certs:
-                    self.ssl_context.load_verify_locations(self.ca_certs)
-            return self.ssl_context.wrap_socket(
-                sock, server_side=self._server_side,
-                server_hostname=self._server_hostname)
-        else:
-            ssl_opts = {
-                'ssl_version': self._ssl_version,
-                'server_side': self._server_side,
-                'ca_certs': self.ca_certs,
-                'keyfile': self.keyfile,
-                'certfile': self.certfile,
-                'cert_reqs': self.cert_reqs,
-            }
+        if not self._custom_context:
+            if self._server_side:
+                # Server contexts never perform hostname checks.
+                self.ssl_context.check_hostname = False
+            else:
+                # For client sockets, use OpenSSL hostname checking when we
+                # require a verified server certificate. OpenSSL handles
+                # hostname validation during the TLS handshake.
+                self.ssl_context.check_hostname = (
+                    self.cert_reqs in (ssl.CERT_REQUIRED, ssl.CERT_OPTIONAL) and
+                    bool(self._server_hostname)
+                )
+            self.ssl_context.verify_mode = self.cert_reqs
+            if self.certfile:
+                self.ssl_context.load_cert_chain(self.certfile, self.keyfile)
             if self.ciphers:
-                if self._has_ciphers:
-                    ssl_opts['ciphers'] = self.ciphers
-                else:
-                    logger.warning(
-                        'ciphers is specified but ignored due to old Python version')
-            return ssl.wrap_socket(sock, **ssl_opts)
+                self.ssl_context.set_ciphers(self.ciphers)
+            if self.ca_certs:
+                self.ssl_context.load_verify_locations(self.ca_certs)
+        return self.ssl_context.wrap_socket(
+            sock, server_side=self._server_side,
+            server_hostname=self._server_hostname)
 
 
 class TSSLSocket(TSocket.TSocket, TSSLBase):
@@ -226,22 +193,20 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         """Positional arguments: ``host``, ``port``, ``unix_socket``
 
         Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``,
-                           ``ssl_version``, ``ca_certs``,
-                           ``ciphers`` (Python 2.7.0 or later),
-                           ``server_hostname`` (Python 2.7.9 or later)
+                           ``ssl_version`` (minimum TLS version, defaults to 1.2),
+                           ``ca_certs``, ``ciphers``, ``server_hostname``
         Passed to ssl.wrap_socket. See ssl.wrap_socket documentation.
 
-        Alternative keyword arguments: (Python 2.7.9 or later)
+        Alternative keyword arguments:
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
           ``server_hostname``: Passed to SSLContext.wrap_socket
 
         Common keyword argument:
-          ``validate_callback`` (cert, hostname) -> None:
-              Called after SSL handshake. Can raise when hostname does not
-              match the cert.
           ``socket_keepalive`` enable TCP keepalive, default off.
+
+        Note: Hostname verification is handled by OpenSSL during the TLS
+        handshake when cert_reqs=ssl.CERT_REQUIRED and server_hostname is set.
         """
-        self.is_valid = False
         self.peercert = None
 
         if args:
@@ -268,12 +233,13 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
 
         unix_socket = kwargs.pop('unix_socket', None)
         socket_keepalive = kwargs.pop('socket_keepalive', False)
-        self._validate_callback = kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, False, host, kwargs)
         TSocket.TSocket.__init__(self, host, port, unix_socket,
                                  socket_keepalive=socket_keepalive)
 
     def close(self):
+        if not self.handle:
+            return
         try:
             self.handle.settimeout(0.001)
             self.handle = self.handle.unwrap()
@@ -306,15 +272,10 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
 
     def open(self):
         super(TSSLSocket, self).open()
+        # Hostname verification is handled by OpenSSL during the TLS handshake
+        # when check_hostname=True is set on the SSLContext.
         if self._should_verify:
             self.peercert = self.handle.getpeercert()
-            try:
-                self._validate_callback(self.peercert, self._server_hostname)
-                self.is_valid = True
-            except TTransportException:
-                raise
-            except Exception as ex:
-                raise TTransportException(message=str(ex), inner=ex)
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
@@ -331,18 +292,17 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
     def __init__(self, host=None, port=9090, *args, **kwargs):
         """Positional arguments: ``host``, ``port``, ``unix_socket``
 
-        Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``, ``ssl_version``,
-                           ``ca_certs``, ``ciphers`` (Python 2.7.0 or later)
+        Keyword arguments: ``keyfile``, ``certfile``, ``cert_reqs``,
+                           ``ssl_version`` (minimum TLS version, defaults to 1.2),
+                           ``ca_certs``, ``ciphers``
         See ssl.wrap_socket documentation.
 
-        Alternative keyword arguments: (Python 2.7.9 or later)
+        Alternative keyword arguments:
           ``ssl_context``: ssl.SSLContext to be used for SSLContext.wrap_socket
-          ``server_hostname``: Passed to SSLContext.wrap_socket
 
-        Common keyword argument:
-          ``validate_callback`` (cert, hostname) -> None:
-              Called after SSL handshake. Can raise when hostname does not
-              match the cert.
+        For mTLS (mutual TLS), set cert_reqs=ssl.CERT_REQUIRED and provide
+        ca_certs to verify client certificates. Client certificate validation
+        checks that the certificate is signed by a trusted CA.
         """
         if args:
             if len(args) > 3:
@@ -356,17 +316,12 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             # Preserve existing behaviors for default values
             if 'cert_reqs' not in kwargs:
                 kwargs['cert_reqs'] = ssl.CERT_NONE
-            if'certfile' not in kwargs:
+            if 'certfile' not in kwargs:
                 kwargs['certfile'] = 'cert.pem'
 
         unix_socket = kwargs.pop('unix_socket', None)
-        self._validate_callback = \
-            kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
-        if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
-                             'module to verify client certificate')
 
     def setCertfile(self, certfile):
         """Set or change the server certificate file used to wrap new
@@ -398,18 +353,8 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
             # other exception handling.  (but TSimpleServer dies anyway)
             return None
 
-        if self._should_verify:
-            client.peercert = client.getpeercert()
-            try:
-                self._validate_callback(client.peercert, addr[0])
-                client.is_valid = True
-            except Exception:
-                logger.warning('Failed to validate client certificate address: %s',
-                               addr[0], exc_info=True)
-                client.close()
-                plain_client.close()
-                return None
-
+        # For mTLS, OpenSSL validates that the client certificate is signed
+        # by a trusted CA during the handshake (when cert_reqs=CERT_REQUIRED).
         result = TSocket.TSocket()
         result.handle = client
         return result

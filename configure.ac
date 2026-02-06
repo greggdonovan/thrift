@@ -128,7 +128,6 @@ if test "$enable_libs" = "no"; then
   with_java="no"
   with_kotlin="no"
   with_python="no"
-  with_py3="no"
   with_ruby="no"
   with_haxe="no"
   with_netstd="no"
@@ -286,7 +285,7 @@ fi
 AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 
 # Find python regardless of with_python value, because it's needed by make cross
-AM_PATH_PYTHON(2.6,, :)
+AM_PATH_PYTHON(3.10,, :)
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
   if test -n "$PYTHON"; then
@@ -299,25 +298,6 @@ if test "$with_python" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
 AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
-
-# Find "python3" executable.
-# It's distro specific and far from ideal but needed to cross test py2-3 at once.
-# TODO: find "python2" if it's 3.x
-have_py3="no"
-AX_THRIFT_LIB(py3, [Py3], yes)
-if test "$with_py3" = "yes"; then
-  # if $PYTHON is 2.x then search for python 3. otherwise, $PYTHON is already 3.x
-  if $PYTHON --version 2>&1 | grep -q "Python 2"; then
-    AC_PATH_PROGS([PYTHON3], [python3 python3.8 python38 python3.7 python37 python3.6 python36 python3.5 python35 python3.4 python34])
-    if test -n "$PYTHON3"; then
-      have_py3="yes"
-    fi
-  elif $PYTHON --version 2>&1 | grep -q "Python 3"; then
-    have_py3="yes"
-    PYTHON3=$PYTHON
-  fi
-fi
-AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
 
 AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
@@ -873,8 +853,6 @@ if test "$have_kotlin" = "yes" ; then MAYBE_KOTLIN="kotlin" ; else MAYBE_KOTLIN=
 AC_SUBST([MAYBE_KOTLIN])
 if test "$have_python" = "yes" ; then MAYBE_PYTHON="py" ; else MAYBE_PYTHON="" ; fi
 AC_SUBST([MAYBE_PYTHON])
-if test "$have_py3" = "yes" ; then MAYBE_PY3="py3" ; else MAYBE_PY3="" ; fi
-AC_SUBST([MAYBE_PY3])
 if test "$have_ruby" = "yes" ; then MAYBE_RUBY="rb" ; else MAYBE_RUBY="" ; fi
 AC_SUBST([MAYBE_RUBY])
 if test "$have_perl" = "yes" ; then MAYBE_PERL="perl" ; else MAYBE_PERL="" ; fi
@@ -924,7 +902,6 @@ echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
 echo "Building Python Library ...... : $have_python"
-echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
 echo "Building Swift Library ....... : $have_swift"
@@ -1036,10 +1013,6 @@ if test "$have_python" = "yes" ; then
   echo "Python Library:"
   echo "   Using Python .............. : $PYTHON"
   echo "   Using Python version ...... : $($PYTHON --version 2>&1)"
-  if test "$have_py3" = "yes" ; then
-  echo "   Using Python3 ............. : $PYTHON3"
-  echo "   Using Python3 version ..... : $($PYTHON3 --version)"
-  fi
   if test "$have_trial" = "yes"; then
   echo "   Using trial ............... : $TRIAL"
   fi

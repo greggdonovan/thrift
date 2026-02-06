@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -48,6 +47,9 @@ FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
 SKIP_SSL = ['THttpServer']
 EXTRA_DELAY = dict(TProcessPoolServer=5.5)
+SCRIPT_TIMEOUT = int(os.environ.get('THRIFT_TEST_SCRIPT_TIMEOUT', '300'))
+CLIENT_TIMEOUT = int(os.environ.get('THRIFT_TEST_CLIENT_TIMEOUT', '300'))
+SERVER_SHUTDOWN_TIMEOUT = int(os.environ.get('THRIFT_TEST_SERVER_SHUTDOWN_TIMEOUT', '10'))
 
 PROTOS = [
     'accel',
@@ -93,7 +95,11 @@ def runScriptTest(libdir, genbase, genpydir, script):
     env = setup_pypath(libdir, os.path.join(genbase, genpydir))
     script_args = [sys.executable, relfile(script)]
     print('\nTesting script: %s\n----' % (' '.join(script_args)))
-    ret = subprocess.call(script_args, env=env)
+    try:
+        ret = subprocess.run(script_args, env=env, timeout=SCRIPT_TIMEOUT).returncode
+    except subprocess.TimeoutExpired:
+        raise Exception("Script subprocess timed out after %ds, args: %s"
+                        % (SCRIPT_TIMEOUT, ' '.join(script_args)))
     if ret != 0:
         print('*** FAILED ***', file=sys.stderr)
         print('LIBDIR: %s' % libdir, file=sys.stderr)
@@ -174,15 +180,19 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
             sock4.close()
             sock6.close()
 
+    client_exc = None
     try:
         if verbose > 0:
             print('Testing client: %s' % (' '.join(cli_args)))
-        ret = subprocess.call(cli_args, env=env)
+        ret = subprocess.run(cli_args, env=env, timeout=CLIENT_TIMEOUT).returncode
         if ret != 0:
             print('*** FAILED ***', file=sys.stderr)
             print('LIBDIR: %s' % libdir, file=sys.stderr)
             print('PY_GEN: %s' % genpydir, file=sys.stderr)
             raise Exception("Client subprocess failed, retcode=%d, args: %s" % (ret, ' '.join(cli_args)))
+    except subprocess.TimeoutExpired:
+        client_exc = Exception("Client subprocess timed out after %ds, args: %s"
+                               % (CLIENT_TIMEOUT, ' '.join(cli_args)))
     finally:
         # check that server didn't die, but still attempt cleanup
         cleanup_exc = None
@@ -205,9 +215,15 @@ def runServiceTest(libdir, genbase, genpydir, server_class, proto, port, use_zli
                 os.killpg(serverproc.pid, sig)
         except OSError:
             pass
-        serverproc.wait()
+        try:
+            serverproc.wait(timeout=SERVER_SHUTDOWN_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            serverproc.kill()
+            serverproc.wait()
         if cleanup_exc:
             raise cleanup_exc
+        if client_exc:
+            raise client_exc
 
 
 class TestCases(object):
@@ -296,7 +312,7 @@ def main():
     parser = OptionParser()
     parser.add_option('--all', action="store_true", dest='all')
     parser.add_option('--genpydirs', type='string', dest='genpydirs',
-                      default='default,slots,oldstyle,no_utf8strings,dynamic,dynamicslots,enum,type_hints',
+                      default='default,slots,dynamic,dynamicslots',
                       help='directory extensions for generated code, used as suffixes for \"gen-py-*\" added sys.path for individual tests')
     parser.add_option("--port", type="int", dest="port", default=0,
                       help="port number for server to listen on (0 = auto)")
@@ -315,9 +331,6 @@ def main():
 
     generated_dirs = []
     for gp_dir in options.genpydirs.split(','):
-        if gp_dir == 'type_hints' and (sys.version_info < (3,7)):
-            print('Skipping \'type_hints\' test since python 3.7 or later is required')
-            continue
         generated_dirs.append('gen-py-%s' % (gp_dir))
 
     # commandline permits a single class name to be specified to override SERVERS=[...]

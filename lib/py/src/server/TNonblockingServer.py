@@ -92,7 +92,7 @@ def socket_exception(func):
     return read
 
 
-class Message(object):
+class Message:
     def __init__(self, offset, len_, header):
         self.offset = offset
         self.len = len_
@@ -104,7 +104,7 @@ class Message(object):
         return self.offset + self.len
 
 
-class Connection(object):
+class Connection:
     """Basic class is represented connection.
 
     It can be in state:
@@ -234,7 +234,7 @@ class Connection(object):
         self.socket.close()
 
 
-class TNonblockingServer(object):
+class TNonblockingServer:
     """Non-blocking server."""
 
     def __init__(self,
@@ -266,6 +266,9 @@ class TNonblockingServer(object):
         if self.prepared:
             return
         self.socket.listen()
+        if self.poll:
+            self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)
+            self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)
         for _ in range(self.threads):
             thread = Worker(self.tasks)
             thread.daemon = True
@@ -323,17 +326,14 @@ class TNonblockingServer(object):
         """Does poll on open connections, if available."""
         remaining = []
 
-        self.poll.register(self.socket.handle.fileno(), select.POLLIN | select.POLLRDNORM)
-        self.poll.register(self._read.fileno(), select.POLLIN | select.POLLRDNORM)
-
         for i, connection in list(self.clients.items()):
             if connection.is_readable():
                 self.poll.register(connection.fileno(), select.POLLIN | select.POLLRDNORM | select.POLLERR | select.POLLHUP | select.POLLNVAL)
                 if connection.remaining or connection.received:
                     remaining.append(connection.fileno())
-            if connection.is_writeable():
+            elif connection.is_writeable():
                 self.poll.register(connection.fileno(), select.POLLOUT | select.POLLWRNORM)
-            if connection.is_closed():
+            elif connection.is_closed():
                 try:
                     self.poll.unregister(i)
                 except KeyError:
@@ -403,6 +403,16 @@ class TNonblockingServer(object):
         for _ in range(self.threads):
             self.tasks.put([None, None, None, None, None])
         self.socket.close()
+        if self._read:
+            try:
+                self._read.close()
+            finally:
+                self._read = None
+        if self._write:
+            try:
+                self._write.close()
+            finally:
+                self._write = None
         self.prepared = False
 
     def serve(self):

@@ -24,6 +24,7 @@ import http.server as BaseHTTPServer
 from thrift.Thrift import TMessageType
 from thrift.server import TServer
 from thrift.transport import TTransport
+from thrift.transport.sslcompat import enforce_minimum_tls
 
 
 class ResponseException(Exception):
@@ -117,10 +118,14 @@ class THttpServer(TServer.TServer):
         self.httpd = server_class(server_address, RequestHander)
 
         if (kwargs.get('cafile') or kwargs.get('cert_file') or kwargs.get('key_file')):
-            context = ssl.create_default_context(cafile=kwargs.get('cafile'))
-            context.check_hostname = False
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            if kwargs.get('cafile'):
+                context.load_verify_locations(cafile=kwargs.get('cafile'))
+                context.verify_mode = ssl.CERT_REQUIRED
+            else:
+                context.verify_mode = ssl.CERT_NONE
             context.load_cert_chain(kwargs.get('cert_file'), kwargs.get('key_file'))
-            context.verify_mode = ssl.CERT_REQUIRED if kwargs.get('cafile') else ssl.CERT_NONE
+            enforce_minimum_tls(context)
             self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
 
     def serve(self):

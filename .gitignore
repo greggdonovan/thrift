@@ -57,6 +57,12 @@ project.lock.json
 .vscode
 .vs
 
+/.venv*
+/build-cmake/
+/lib/py/src/protocol/*.so
+# Generated from test/test_thrift_file/TestServer.thrift during make check
+/lib/py/test/TestServer/
+
 /aclocal/libtool.m4
 /aclocal/lt*.m4
 /autoscan.log

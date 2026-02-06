@@ -107,7 +107,7 @@ AM_CONDITIONAL(WITH_PHP, [test "$have_php" = "yes"])
 
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes"; then
-  AM_PATH_PYTHON(2.4,, :)
+  AM_PATH_PYTHON(3.10,, :)
   if test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
     have_python="yes"
   fi

@@ -22,7 +22,6 @@ import logging
 import os
 import socket
 import sys
-import platform
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -159,8 +158,7 @@ class TSocket(TSocketBase):
     def read(self, sz):
         try:
             buff = self.handle.recv(sz)
-        # TODO: remove socket.timeout when 3.10 becomes the earliest version of python supported.
-        except (socket.timeout, TimeoutError) as e:
+        except TimeoutError as e:
             raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
         except socket.error as e:
             if (e.args[0] == errno.ECONNRESET and
@@ -171,7 +169,7 @@ class TSocket(TSocketBase):
                 # in lib/cpp/src/transport/TSocket.cpp.
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
-                buff = ''
+                buff = b''
             else:
                 raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
@@ -236,16 +234,14 @@ class TServerSocket(TSocketBase, TServerTransportBase):
                 eno, message = err.args
                 if eno == errno.ECONNREFUSED:
                     os.unlink(res[4])
+            finally:
+                tmp.close()
 
         self.handle = s = socket.socket(res[0], res[1])
         if s.family is socket.AF_INET6:
-            if platform.system() == 'Windows' and sys.version_info < (3, 8):
-                logger.warning('Windows socket defaulting to IPv4 for Python < 3.8: See https://github.com/python/cpython/issues/73701')
-            else:
-                s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if hasattr(s, 'settimeout'):
-            s.settimeout(None)
+        s.settimeout(None)
         s.bind(res[4])
         s.listen(self._backlog)
 

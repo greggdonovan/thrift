@@ -23,14 +23,17 @@ import time
 import os
 import platform
 import ssl
-import sys
 import tempfile
 import threading
 import unittest
 import warnings
+import gc
 from contextlib import contextmanager
 
 import _import_local_thrift  # noqa
+
+from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
+from thrift.transport.TTransport import TTransportException
 
 SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
@@ -42,6 +45,8 @@ CLIENT_KEY_NO_IP = os.path.join(ROOT_DIR, 'test', 'keys', 'client.key')
 CLIENT_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.crt')
 CLIENT_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.key')
 CLIENT_CA = os.path.join(ROOT_DIR, 'test', 'keys', 'CA.pem')
+EXPIRED_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'expired.crt')
+EXPIRED_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'expired.key')
 
 TEST_CIPHERS = 'DES-CBC3-SHA:ECDHE-RSA-AES128-GCM-SHA256'
 
@@ -107,21 +112,6 @@ class ServerAcceptor(threading.Thread):
         self._server.close()
 
 
-# Python 2.6 compat
-class AssertRaises(object):
-    def __init__(self, expected):
-        self._expected = expected
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if not exc_type or not issubclass(exc_type, self._expected):
-            raise Exception('fail')
-        return True
-
-
-@unittest.skip("failing SSL test to be fixed in subsequent pull request")
 class TSSLSocketTest(unittest.TestCase):
     def _server_socket(self, **kwargs):
         return TSSLServerSocket(port=0, **kwargs)
@@ -151,25 +141,29 @@ class TSSLSocketTest(unittest.TestCase):
                     client.write(b"hello")
                     client.read(5)  # b"there"
         finally:
+            try:
+                client.close()
+            except Exception:
+                pass
             logging.disable(logging.NOTSET)
 
     def _assert_raises(self, exc):
-        if sys.hexversion >= 0x020700F0:
-            return self.assertRaises(exc)
-        else:
-            return AssertRaises(exc)
+        return self.assertRaises(exc)
 
     def _assert_connection_success(self, server, path=None, **client_args):
         with self._connectable_client(server, path=path, **client_args) as (acc, client):
+            opened = False
             try:
                 self.assertFalse(client.isOpen())
                 client.open()
+                opened = True
                 self.assertTrue(client.isOpen())
                 client.write(b"hello")
                 self.assertEqual(client.read(5), b"there")
                 self.assertTrue(acc.client is not None)
             finally:
-                client.close()
+                if opened:
+                    client.close()
 
     # deprecated feature
     def test_deprecation(self):
@@ -232,6 +226,24 @@ class TSSLSocketTest(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    def test_unix_socket_listen_closes_probe_socket(self):
+        if platform.system() == 'Windows':
+            print('skipping test_unix_socket_listen_closes_probe_socket')
+            return
+        fd, path = tempfile.mkstemp()
+        os.close(fd)
+        os.unlink(path)
+        server = self._server_socket(unix_socket=path, keyfile=SERVER_KEY, certfile=SERVER_CERT)
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error', category=ResourceWarning)
+                server.listen()
+                gc.collect()
+        finally:
+            server.close()
+            if os.path.exists(path):
+                os.unlink(path)
+
     def test_server_cert(self):
         server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
@@ -243,6 +255,15 @@ class TSSLSocketTest(unittest.TestCase):
         server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
         self._assert_connection_success(server, cert_reqs=ssl.CERT_NONE)
 
+    def test_server_hostname_mismatch(self):
+        server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
+        self._assert_connection_failure(
+            server,
+            cert_reqs=ssl.CERT_REQUIRED,
+            ca_certs=SERVER_CERT,
+            server_hostname='notlocalhost',
+        )
+
     def test_set_server_cert(self):
         server = self._server_socket(keyfile=SERVER_KEY, certfile=CLIENT_CERT)
         with self._assert_raises(Exception):
@@ -253,114 +274,200 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
 
     def test_client_cert(self):
-        if not _match_has_ipaddress:
-            print('skipping test_client_cert')
-            return
+        # Client presents wrong cert (not trusted by server's CA)
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
             certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
-        self._assert_connection_failure(server, cert_reqs=ssl.CERT_NONE, certfile=SERVER_CERT, keyfile=SERVER_KEY)
+        self._assert_connection_failure(
+            server, cert_reqs=ssl.CERT_NONE, certfile=SERVER_CERT, keyfile=SERVER_KEY)
+
+        # Client presents valid cert signed by trusted CA
+        # Note: We no longer validate client cert SAN/CN against client IP address.
+        # mTLS just verifies the cert is signed by a trusted CA.
+        server = self._server_socket(
+            cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
+            certfile=SERVER_CERT, ca_certs=CLIENT_CERT_NO_IP)
+        self._assert_connection_success(
+            server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT_NO_IP, keyfile=CLIENT_KEY_NO_IP)
 
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
-            certfile=SERVER_CERT, ca_certs=CLIENT_CA)
-        self._assert_connection_failure(server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT_NO_IP, keyfile=CLIENT_KEY_NO_IP)
-
-        server = self._server_socket(
-            cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
-            certfile=SERVER_CERT, ca_certs=CLIENT_CA)
-        self._assert_connection_success(server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT, keyfile=CLIENT_KEY)
+            certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
+        self._assert_connection_success(
+            server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT, keyfile=CLIENT_KEY)
 
         server = self._server_socket(
             cert_reqs=ssl.CERT_OPTIONAL, keyfile=SERVER_KEY,
-            certfile=SERVER_CERT, ca_certs=CLIENT_CA)
-        self._assert_connection_success(server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT, keyfile=CLIENT_KEY)
+            certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
+        self._assert_connection_success(
+            server, cert_reqs=ssl.CERT_NONE, certfile=CLIENT_CERT, keyfile=CLIENT_KEY)
 
     def test_ciphers(self):
-        server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS)
-        self._assert_connection_success(server, ca_certs=SERVER_CERT, ciphers=TEST_CIPHERS)
+        tls12 = ssl.TLSVersion.TLSv1_2
+        server = self._server_socket(
+            keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
+        self._assert_connection_success(
+            server, ca_certs=SERVER_CERT, ciphers=TEST_CIPHERS, ssl_version=tls12)
 
-        if not TSSLSocket._has_ciphers:
-            # unittest.skip is not available for Python 2.6
-            print('skipping test_ciphers')
-            return
+        # NULL cipher tests don't work reliably on Windows where the SSL
+        # library may ignore invalid cipher specifications rather than failing.
+        # On other platforms, we must force TLS 1.2 only (not just minimum) to
+        # prevent TLS 1.3 from negotiating with its own cipher suites that
+        # aren't affected by set_ciphers('NULL').
+        if platform.system() != 'Windows':
+            # Create server with TLS 1.2 only (no TLS 1.3 fallback)
+            server_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            server_ctx.minimum_version = tls12
+            server_ctx.maximum_version = tls12
+            server_ctx.load_cert_chain(SERVER_CERT, SERVER_KEY)
+            server = self._server_socket(ssl_context=server_ctx)
+
+            # Create client with NULL ciphers - should fail to connect
+            client_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            client_ctx.minimum_version = tls12
+            client_ctx.maximum_version = tls12
+            client_ctx.check_hostname = False
+            client_ctx.verify_mode = ssl.CERT_REQUIRED
+            client_ctx.load_verify_locations(SERVER_CERT)
+            client_ctx.set_ciphers('NULL')
+            self._assert_connection_failure(server, ssl_context=client_ctx)
+
+            # Same test but server also specifies ciphers
+            server_ctx2 = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            server_ctx2.minimum_version = tls12
+            server_ctx2.maximum_version = tls12
+            server_ctx2.load_cert_chain(SERVER_CERT, SERVER_KEY)
+            server_ctx2.set_ciphers(TEST_CIPHERS)
+            server = self._server_socket(ssl_context=server_ctx2)
+            self._assert_connection_failure(server, ssl_context=client_ctx)
+
+    def test_reject_deprecated_protocol_constants(self):
+        """Verify that deprecated PROTOCOL_* constants are rejected."""
+        # Our implementation requires ssl.TLSVersion enum values, not the
+        # deprecated PROTOCOL_* constants. This test verifies the error message.
+        with self._assert_raises(ValueError):
+            self._server_socket(
+                keyfile=SERVER_KEY,
+                certfile=SERVER_CERT,
+                ssl_version=ssl.PROTOCOL_TLS,
+            )
+        with self._assert_raises(ValueError):
+            TSSLSocket(
+                'localhost',
+                0,
+                cert_reqs=ssl.CERT_NONE,
+                ssl_version=ssl.PROTOCOL_TLS_CLIENT,
+            )
+
+    def test_reject_legacy_tls_versions(self):
+        """Verify that TLS 1.0 and 1.1 are rejected."""
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            legacy_versions = (ssl.TLSVersion.TLSv1, ssl.TLSVersion.TLSv1_1)
+        for version in legacy_versions:
+            with self._assert_raises(ValueError):
+                self._server_socket(
+                    keyfile=SERVER_KEY,
+                    certfile=SERVER_CERT,
+                    ssl_version=version,
+                )
+            with self._assert_raises(ValueError):
+                TSSLSocket(
+                    'localhost',
+                    0,
+                    cert_reqs=ssl.CERT_NONE,
+                    ssl_version=version,
+                )
+
+    def test_default_context_minimum_tls(self):
+        client = TSSLSocket('localhost', 0, cert_reqs=ssl.CERT_NONE)
+        try:
+            self.assertGreaterEqual(
+                client.ssl_context.minimum_version,
+                ssl.TLSVersion.TLSv1_2,
+            )
+            if client.ssl_context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+                self.assertGreaterEqual(
+                    client.ssl_context.maximum_version,
+                    ssl.TLSVersion.TLSv1_2,
+                )
+        finally:
+            client.close()
+
         server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
-        self._assert_connection_failure(server, ca_certs=SERVER_CERT, ciphers='NULL')
+        try:
+            self.assertGreaterEqual(
+                server.ssl_context.minimum_version,
+                ssl.TLSVersion.TLSv1_2,
+            )
+            if server.ssl_context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+                self.assertGreaterEqual(
+                    server.ssl_context.maximum_version,
+                    ssl.TLSVersion.TLSv1_2,
+                )
+        finally:
+            server.close()
 
-        server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ciphers=TEST_CIPHERS)
-        self._assert_connection_failure(server, ca_certs=SERVER_CERT, ciphers='NULL')
+    def test_tls12_supported(self):
+        server = self._server_socket(
+            keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.TLSVersion.TLSv1_2)
+        self._assert_connection_success(
+            server, ca_certs=SERVER_CERT, ssl_version=ssl.TLSVersion.TLSv1_2)
 
-    def test_ssl2_and_ssl3_disabled(self):
-        if not hasattr(ssl, 'PROTOCOL_SSLv3'):
-            print('PROTOCOL_SSLv3 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv3)
-
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv3)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT)
-
-        if not hasattr(ssl, 'PROTOCOL_SSLv2'):
-            print('PROTOCOL_SSLv2 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv2)
-
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_SSLv2)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT)
-
-    def test_newer_tls(self):
-        if not TSSLSocket._has_ssl_context:
-            # unittest.skip is not available for Python 2.6
-            print('skipping test_newer_tls')
-            return
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
-            print('PROTOCOL_TLSv1_2 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-            self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_1'):
-            print('PROTOCOL_TLSv1_1 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
-            self._assert_connection_success(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
-
-        if not hasattr(ssl, 'PROTOCOL_TLSv1_1') or not hasattr(ssl, 'PROTOCOL_TLSv1_2'):
-            print('PROTOCOL_TLSv1_1 and/or PROTOCOL_TLSv1_2 is not available')
-        else:
-            server = self._server_socket(keyfile=SERVER_KEY, certfile=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_2)
-            self._assert_connection_failure(server, ca_certs=SERVER_CERT, ssl_version=ssl.PROTOCOL_TLSv1_1)
+    def test_tls12_context_no_deprecation_warning(self):
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'error',
+                category=DeprecationWarning,
+                module=r'thrift\.transport\.TSSLSocket',
+            )
+            server = self._server_socket(
+                keyfile=SERVER_KEY,
+                certfile=SERVER_CERT,
+                ssl_version=ssl.TLSVersion.TLSv1_2,
+            )
+            self._assert_connection_success(
+                server,
+                ca_certs=SERVER_CERT,
+                ssl_version=ssl.TLSVersion.TLSv1_2,
+            )
 
     def test_ssl_context(self):
-        if not TSSLSocket._has_ssl_context:
-            # unittest.skip is not available for Python 2.6
-            print('skipping test_ssl_context')
-            return
         server_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        server_context.minimum_version = ssl.TLSVersion.TLSv1_2
         server_context.load_cert_chain(SERVER_CERT, SERVER_KEY)
-        server_context.load_verify_locations(CLIENT_CA)
+        server_context.load_verify_locations(CLIENT_CERT)
         server_context.verify_mode = ssl.CERT_REQUIRED
         server = self._server_socket(ssl_context=server_context)
 
         client_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        client_context.minimum_version = ssl.TLSVersion.TLSv1_2
         client_context.load_cert_chain(CLIENT_CERT, CLIENT_KEY)
         client_context.load_verify_locations(SERVER_CERT)
         client_context.verify_mode = ssl.CERT_REQUIRED
 
         self._assert_connection_success(server, ssl_context=client_context)
 
+    def test_ssl_context_requires_tls12(self):
+        client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            client_context.minimum_version = ssl.TLSVersion.TLSv1_1
+        with self._assert_raises(ValueError):
+            TSSLSocket('localhost', 0, ssl_context=client_context)
 
-# Add a dummy test because starting from python 3.12, if all tests in a test
-# file are skipped that's considered an error.
-class DummyTest(unittest.TestCase):
-    def test_dummy(self):
-        self.assertEqual(0, 0)
+    def test_expired_certificate_rejected(self):
+        """Verify that expired server certificates are rejected."""
+        if not os.path.exists(EXPIRED_CERT):
+            self.skipTest('expired.crt not found in test/keys/')
+        server = self._server_socket(keyfile=EXPIRED_KEY, certfile=EXPIRED_CERT)
+        self._assert_connection_failure(
+            server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=EXPIRED_CERT)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
-    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
     from thrift.transport.TTransport import TTransportException
 
     unittest.main()

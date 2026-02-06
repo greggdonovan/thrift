@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -30,28 +30,40 @@ sys.path.insert(0, local_libpath())
 from thrift.protocol import TProtocol, TProtocolDecorator
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+DEFAULT_TIMEOUT_MS = int(os.environ.get('THRIFT_TEST_CLIENT_TIMEOUT_MS', '20000'))
 
 
 class AbstractTest(unittest.TestCase):
     def setUp(self):
         if options.trans == 'http':
-            uri = '{0}://{1}:{2}{3}'.format(('https' if options.ssl else 'http'),
-                                            options.host,
-                                            options.port,
-                                            (options.http_path if options.http_path else '/'))
-            if options.ssl:
+            if options.domain_socket:
+                # Use Unix domain socket for HTTP transport
+                self.transport = THttpClient.THttpClient(
+                    '', unix_socket=options.domain_socket,
+                    path=(options.http_path if options.http_path else '/'))
+            elif options.ssl:
+                uri = '{0}://{1}:{2}{3}'.format('https',
+                                                options.host,
+                                                options.port,
+                                                (options.http_path if options.http_path else '/'))
                 __cafile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "CA.pem")
                 __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.crt")
                 __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.key")
                 self.transport = THttpClient.THttpClient(uri, cafile=__cafile, cert_file=__certfile, key_file=__keyfile)
             else:
+                uri = '{0}://{1}:{2}{3}'.format('http',
+                                                options.host,
+                                                options.port,
+                                                (options.http_path if options.http_path else '/'))
                 self.transport = THttpClient.THttpClient(uri)
+            self.transport.setTimeout(DEFAULT_TIMEOUT_MS)
         else:
             if options.ssl:
                 from thrift.transport import TSSLSocket
                 socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
             else:
                 socket = TSocket.TSocket(options.host, options.port, options.domain_socket)
+            socket.setTimeout(DEFAULT_TIMEOUT_MS)
             # frame or buffer depending upon args
             self.transport = TTransport.TBufferedTransport(socket)
             if options.trans == 'framed':
@@ -256,31 +268,20 @@ class AbstractTest(unittest.TestCase):
     def testException__traceback__(self):
         print('testException__traceback__')
         self.client.testException('Safe')
-        expect_slots = uses_slots = False
-        expect_dynamic = uses_dynamic = False
         try:
             self.client.testException('Xception')
             self.fail("should have gotten exception")
         except Xception as x:
-            uses_slots = hasattr(x, '__slots__')
-            uses_dynamic = (not isinstance(x, TException))
-            # We set expected values here so that we get clean tracebackes when
-            # the assertions fail.
+            # Verify that __traceback__ can be set on exceptions.
+            # This is required for proper Python 3 exception chaining to work
+            # (e.g., with contextlib.contextmanager, multiprocessing.Pool, etc.)
+            # Immutable exceptions now allow __traceback__, __context__,
+            # __cause__, and __suppress_context__ to be modified.
             try:
-                x.__traceback__ = x.__traceback__
-                # If `__traceback__` was set without errors than we expect that
-                # the slots option was used and that dynamic classes were not.
-                expect_slots = True
-                expect_dynamic = False
-            except Exception as e:
-                self.assertTrue(isinstance(e, TypeError))
-                # There are no other meaningful tests we can preform because we
-                # are unable to determine the desired state of either `__slots__`
-                # or `dynamic`.
-                return
-
-        self.assertEqual(expect_slots, uses_slots)
-        self.assertEqual(expect_dynamic, uses_dynamic)
+                original_tb = x.__traceback__
+                x.__traceback__ = original_tb
+            except TypeError:
+                self.fail("__traceback__ should be settable on exceptions")
 
     def testOneway(self):
         print('testOneway')

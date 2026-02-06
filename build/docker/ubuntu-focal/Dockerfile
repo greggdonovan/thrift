@@ -254,16 +254,37 @@ RUN apt-get install -y --no-install-recommends \
       re2c \
       composer
 
+# Python 3.10 built from source (Focal ships with 3.8, but we require 3.10+)
+ENV PYTHON_VERSION=3.10.14
 RUN apt-get install -y --no-install-recommends \
-      `# Python3 dependencies` \
-      python3-all \
-      python3-all-dbg \
-      python3-all-dev \
-      python3-pip \
-      python3-setuptools \
-      python3-wheel
-
-RUN python3 -m pip install --no-cache-dir --upgrade "tornado>=6.3.0" "twisted>=24.3.0" "zope.interface>=6.1"
+      `# Python build dependencies` \
+      libbz2-dev \
+      libffi-dev \
+      libgdbm-dev \
+      liblzma-dev \
+      libncurses5-dev \
+      libreadline-dev \
+      libsqlite3-dev \
+      libssl-dev \
+      tk-dev \
+      uuid-dev \
+      xz-utils && \
+    cd /tmp && \
+    wget -q https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
+    tar xzf Python-${PYTHON_VERSION}.tgz && \
+    cd Python-${PYTHON_VERSION} && \
+    ./configure --enable-optimizations --with-ensurepip=install && \
+    make -j$(nproc) && \
+    make altinstall && \
+    cd / && rm -rf /tmp/Python-${PYTHON_VERSION}* && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.10 1 && \
+    python3.10 -m pip install --upgrade pip && \
+    pip3.10 install --no-cache-dir \
+      setuptools \
+      wheel \
+      tornado>=6.3.0 \
+      twisted>=24.3.0 \
+      zope.interface>=6.1
 
 RUN apt-get install -y --no-install-recommends \
       `# Ruby dependencies` \
@@ -281,7 +302,6 @@ USER root
 RUN apt-get install -yq \
       libedit-dev \
       libz3-dev \
-      libpython2-dev \
       libxml2-dev && \
       cd / && \
       wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz && \

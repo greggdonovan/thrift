@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,9 +18,7 @@
 # under the License.
 #
 
-import sys
-
-from setuptools import Extension, setup
+from setuptools import setup
 
 setup(name='thrift_fb303',
       version='1.0.0',
@@ -34,12 +31,18 @@ setup(name='thrift_fb303',
           'fb303',
           'fb303_scripts',
       ],
+      python_requires='>=3.10',
       classifiers=[
           'Development Status :: 7 - Inactive',
           'Environment :: Console',
           'Intended Audience :: Developers',
           'Programming Language :: Python',
-          'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
+          'Programming Language :: Python :: 3.13',
+          'Programming Language :: Python :: 3.14',
           'Topic :: Software Development :: Libraries',
           'Topic :: System :: Networking'
       ],

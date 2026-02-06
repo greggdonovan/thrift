@@ -16,8 +16,6 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
-PYVERS := $(shell pyversions -r)
-
 export CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
 export CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
 export CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
@@ -53,10 +51,8 @@ $(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
 
 	# Python library
 	cd $(CURDIR)/lib/py && \
-    for py in $(PYVERS); do  \
-        $$py setup.py build; \
-        $$py-dbg setup.py build; \
-    done
+		python3 setup.py build && \
+		python3-dbg setup.py build
 
 	# PHP
 	cd $(CURDIR)/lib/php/src/ext/thrift_protocol && \
@@ -91,7 +87,7 @@ clean:
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp
 
-	cd $(CURDIR)/lib/py && python setup.py clean --all
+	cd $(CURDIR)/lib/py && python3 setup.py clean --all
 
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
@@ -153,18 +149,8 @@ install-arch:
 
 	# Python
 	cd $(CURDIR)/lib/py && \
-	python2 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift && \
-	python2-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift-dbg && \
 	python3 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift && \
 	python3-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift-dbg
-
-	find $(CURDIR)/debian/python-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
-	find $(CURDIR)/debian/python-thrift-dbg -name "__pycache__" -print0 | xargs -0 rm -fr
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.py[co]" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
-	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
-	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
 
 	find $(CURDIR)/debian/python3-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
 	find $(CURDIR)/debian/python3-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
@@ -201,7 +187,6 @@ binary-common:
 	dh_installman
 	dh_link
 	dh_strip -plibthrift0 --dbg-package=libthrift0-dbg
-	dh_strip -ppython-thrift --dbg-package=python-thrift-dbg
 	dh_strip -ppython3-thrift --dbg-package=python3-thrift-dbg
 	dh_strip -pthrift-compiler
 	dh_compress

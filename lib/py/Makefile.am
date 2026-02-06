@@ -19,25 +19,30 @@
 AUTOMAKE_OPTIONS = serial-tests
 DESTDIR ?= /
 
-if WITH_PY3
-py3-build:
-	$(PYTHON3) setup.py build
-py3-test: py3-build
-	$(PYTHON3) test/thrift_json.py
-	$(PYTHON3) test/thrift_transport.py
-	$(PYTHON3) test/test_sslsocket.py
-	$(PYTHON3) test/thrift_TBinaryProtocol.py
-	$(PYTHON3) test/thrift_TZlibTransport.py
-	$(PYTHON3) test/thrift_TCompactProtocol.py
-	$(PYTHON3) test/thrift_TNonblockingServer.py
-	$(PYTHON3) test/thrift_TSerializer.py
-else
-py3-build:
-py3-test:
-endif
-
-all-local: py3-build
+py-build:
 	$(PYTHON) setup.py build
+py-test: py-build
+	$(PYTHON) test/thrift_json.py
+	$(PYTHON) test/thrift_transport.py
+	$(PYTHON) test/test_sslcontext_hostname.py
+	$(PYTHON) test/test_sslsocket.py
+	$(PYTHON) test/test_socket.py
+	$(PYTHON) test/thrift_TBinaryProtocol.py
+	$(PYTHON) test/thrift_TZlibTransport.py
+	$(PYTHON) test/thrift_TCompactProtocol.py
+	$(PYTHON) test/thrift_TNonblockingServer.py
+	$(PYTHON) test/thrift_TSerializer.py
+	$(PYTHON) test/test_type_check.py
+py-security:
+	@command -v uv >/dev/null 2>&1 || { \
+		echo "Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	}
+	uv tool run bandit -r src --severity-level medium --confidence-level medium
+	uv tool run semgrep scan --config p/security-audit --config p/python \
+		--severity WARNING --severity ERROR --metrics off src test
+
+all-local: py-build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
 	${THRIFT} --gen py ../../test/v0.16/FuzzTestNoUuid.thrift
 
@@ -48,16 +53,7 @@ all-local: py3-build
 install-exec-hook:
 	$(PYTHON) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
-check-local: all py3-test
-	$(PYTHON) test/thrift_json.py
-	$(PYTHON) test/thrift_transport.py
-	$(PYTHON) test/test_sslsocket.py
-	$(PYTHON) test/test_socket.py
-	$(PYTHON) test/thrift_TBinaryProtocol.py
-	$(PYTHON) test/thrift_TZlibTransport.py
-	$(PYTHON) test/thrift_TCompactProtocol.py
-	$(PYTHON) test/thrift_TNonblockingServer.py
-	$(PYTHON) test/thrift_TSerializer.py
+check-local: all py-test py-security
 
 
 clean-local:

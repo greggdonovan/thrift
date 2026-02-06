@@ -18,7 +18,7 @@
 #
 
 
-class TType(object):
+class TType:
     STOP = 0
     VOID = 1
     BOOL = 2
@@ -59,14 +59,14 @@ class TType(object):
     )
 
 
-class TMessageType(object):
+class TMessageType:
     CALL = 1
     REPLY = 2
     EXCEPTION = 3
     ONEWAY = 4
 
 
-class TProcessor(object):
+class TProcessor:
     """Base class for processor, which works on two streams."""
 
     def process(self, iprot, oprot):

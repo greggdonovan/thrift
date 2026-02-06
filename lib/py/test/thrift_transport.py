@@ -17,11 +17,20 @@
 # under the License.
 #
 
-import unittest
 import os
+import ssl
+import unittest
+import warnings
 
 import _import_local_thrift  # noqa
-from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+from thrift.server import THttpServer as THttpServerModule
+from thrift.transport import THttpClient, TTransport
+
+SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+SERVER_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'server.crt')
+SERVER_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'server.key')
 
 
 class TestTFileObjectTransport(unittest.TestCase):
@@ -64,6 +73,46 @@ class TestMemoryBuffer(unittest.TestCase):
         self.assertEqual(value.decode('utf-8'), data)
         self.assertEqual(value_r.decode('utf-8'), data)
         buffer_r.close()
+
+
+class TestHttpTls(unittest.TestCase):
+    def test_http_client_minimum_tls(self):
+        client = THttpClient.THttpClient('https://localhost:8443/')
+        self.assertGreaterEqual(client.context.minimum_version, ssl.TLSVersion.TLSv1_2)
+        if client.context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+            self.assertGreaterEqual(client.context.maximum_version, ssl.TLSVersion.TLSv1_2)
+
+    def test_http_client_rejects_legacy_context(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            context.minimum_version = ssl.TLSVersion.TLSv1_1
+        with self.assertRaises(ValueError):
+            THttpClient.THttpClient('https://localhost:8443/', ssl_context=context)
+
+    def test_http_server_minimum_tls(self):
+
+        class DummyProcessor(object):
+            def on_message_begin(self, _on_begin):
+                return None
+
+            def process(self, _iprot, _oprot):
+                return None
+
+        server = THttpServerModule.THttpServer(
+            DummyProcessor(),
+            ('localhost', 0),
+            TBinaryProtocol.TBinaryProtocolFactory(),
+            cert_file=SERVER_CERT,
+            key_file=SERVER_KEY,
+        )
+        try:
+            context = server.httpd.socket.context
+            self.assertGreaterEqual(context.minimum_version, ssl.TLSVersion.TLSv1_2)
+            if context.maximum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED:
+                self.assertGreaterEqual(context.maximum_version, ssl.TLSVersion.TLSv1_2)
+        finally:
+            server.shutdown()
 
 
 if __name__ == '__main__':

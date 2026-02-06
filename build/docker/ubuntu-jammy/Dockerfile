@@ -274,7 +274,6 @@ USER root
 RUN apt-get install -yq \
   libedit-dev \
   libz3-dev \
-  libpython2-dev \
   libxml2-dev && \
   cd / && \
   wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2204/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu22.04.tar.gz && \

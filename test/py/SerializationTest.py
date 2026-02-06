@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -299,8 +298,7 @@ class AbstractTest(unittest.TestCase):
         self.assertEqual(0, serde_parent.item)
         self.assertEqual(4, len(serde_parent.children))
         for child in serde_parent.children:
-            # Cannot use assertIsInstance in python 2.6?
-            self.assertTrue(isinstance(child, RecTree))
+            self.assertIsInstance(child, RecTree)
 
     def _buildLinkedList(self):
         head = cur = RecList(item=0)
@@ -435,7 +433,7 @@ class SerializersTest(unittest.TestCase):
                 for num, name in enum_class._VALUES_TO_NAMES.items():
                     yield (num, name)
             else:
-                # assume Python 3.4+ IntEnum-based
+                # assume Python 3.10+ IntEnum-based
                 from enum import IntEnum
                 self.assertTrue((issubclass(enum_class, IntEnum)))
                 for num in enum_class:

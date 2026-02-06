@@ -23,7 +23,7 @@ If you would like to build Apache Thrift libraries for other programming languag
  * Ruby
 	* ruby-full ruby-dev ruby-rspec rake rubygems bundler
  * Python
-	* python-all python-all-dev python-all-dbg
+	* python3-all python3-all-dev python3-all-dbg python3-setuptools (3.10+)
  * Perl
 	* libbit-vector-perl libclass-accessor-class-perl
  * Php, install

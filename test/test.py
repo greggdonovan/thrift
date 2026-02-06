@@ -37,10 +37,10 @@ import sys
 
 import crossrunner
 
-# 3.3 introduced subprocess timeouts on waiting for child
-req_version = (3, 3)
+# Thrift requires Python 3.10+ for the test harness.
+req_version = (3, 10)
 cur_version = sys.version_info
-assert (cur_version >= req_version), "Python 3.3 or later is required for proper operation."
+assert (cur_version >= req_version), "Python 3.10 or later is required for proper operation."
 
 
 ROOT_DIR = os.path.dirname(os.path.realpath(os.path.dirname(__file__)))

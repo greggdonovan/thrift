@@ -28,6 +28,7 @@ import urllib.parse
 import urllib.request
 import http.client
 
+from .sslcompat import enforce_minimum_tls, validate_minimum_tls
 from .TTransport import TTransportBase
 
 
@@ -63,11 +64,14 @@ class THttpClient(TTransportBase):
                 self.port = parsed.port or http.client.HTTP_PORT
             elif self.scheme == 'https':
                 self.port = parsed.port or http.client.HTTPS_PORT
-                if (cafile or cert_file or key_file) and not ssl_context:
-                    self.context = ssl.create_default_context(cafile=cafile)
-                    self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
-                else:
+                if ssl_context is not None:
+                    validate_minimum_tls(ssl_context)
                     self.context = ssl_context
+                else:
+                    self.context = ssl.create_default_context(cafile=cafile)
+                    if cert_file or key_file:
+                        self.context.load_cert_chain(certfile=cert_file, keyfile=key_file)
+                    enforce_minimum_tls(self.context)
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
@@ -102,7 +106,7 @@ class THttpClient(TTransportBase):
         ap = "%s:%s" % (urllib.parse.unquote(proxy.username),
                         urllib.parse.unquote(proxy.password))
         cr = base64.b64encode(ap.encode()).strip()
-        return "Basic " + six.ensure_str(cr)
+        return "Basic " + cr.decode("ascii")
 
     def using_proxy(self):
         return self.realhost is not None
@@ -112,9 +116,11 @@ class THttpClient(TTransportBase):
             self.__http = http.client.HTTPConnection(self.host, self.port,
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http.client.HTTPSConnection(self.host, self.port,
-                                                      timeout=self.__timeout,
-                                                      context=self.context)
+            # Python 3.10+ uses an explicit SSLContext; TLS 1.2+ enforced in __init__.
+            self.__http = http.client.HTTPSConnection(  # nosem
+                self.host, self.port,
+                timeout=self.__timeout,
+                context=self.context)
         if self.using_proxy():
             self.__http.set_tunnel(self.realhost, self.realport,
                                    {"Proxy-Authorization": self.proxy_auth})

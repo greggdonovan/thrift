@@ -28,8 +28,8 @@
 // TODO(dreiss): defval appears to be unused.  Look into removing it.
 // TODO(dreiss): Make parse_spec_args recursive, and cache the output
 //               permanently in the object.  (Malloc and orphan.)
-// TODO(dreiss): Why do we need cStringIO for reading, why not just char*?
-//               Can cStringIO let us work with a BufferedTransport?
+// TODO(dreiss): Why do we need BytesIO for reading, why not just char*?
+//               Can BytesIO let us work with a BufferedTransport?
 // TODO(dreiss): Don't ignore the rv from cwrite (maybe).
 
 // Doing a benchmark shows that interning actually makes a difference, amazingly.
@@ -70,7 +70,7 @@ static PyObject* encode_impl(PyObject* args) {
 
 static inline long as_long_then_delete(PyObject* value, long default_value) {
   ScopedPyObject scope(value);
-  long v = PyInt_AsLong(value);
+  long v = PyLong_AsLong(value);
   if (INT_CONV_ERROR_OCCURRED(v)) {
     PyErr_Clear();
     return default_value;
@@ -145,8 +145,6 @@ static PyMethodDef ThriftFastBinaryMethods[] = {
     {nullptr, nullptr, 0, nullptr} /* Sentinel */
 };
 
-#if PY_MAJOR_VERSION >= 3
-
 static struct PyModuleDef ThriftFastBinaryDef = {PyModuleDef_HEAD_INIT,
                                                  "thrift.protocol.fastbinary",
                                                  nullptr,
@@ -161,21 +159,9 @@ static struct PyModuleDef ThriftFastBinaryDef = {PyModuleDef_HEAD_INIT,
 
 PyObject* PyInit_fastbinary() {
 
-#else
-
-#define INITERROR return;
-
-void initfastbinary() {
-
-  PycString_IMPORT;
-  if (PycStringIO == nullptr)
-    INITERROR
-
-#endif
-
 #define INIT_INTERN_STRING(value)                                                                  \
   do {                                                                                             \
-    INTERN_STRING(value) = PyString_InternFromString(#value);                                      \
+    INTERN_STRING(value) = PyUnicode_InternFromString(#value);                                     \
     if (!INTERN_STRING(value))                                                                     \
       INITERROR                                                                                    \
   } while (0)
@@ -188,12 +174,7 @@ void initfastbinary() {
   INIT_INTERN_STRING(trans);
 #undef INIT_INTERN_STRING
 
-  PyObject* module =
-#if PY_MAJOR_VERSION >= 3
-      PyModule_Create(&ThriftFastBinaryDef);
-#else
-      Py_InitModule("thrift.protocol.fastbinary", ThriftFastBinaryMethods);
-#endif
+  PyObject* module = PyModule_Create(&ThriftFastBinaryDef);
   if (module == nullptr)
     INITERROR;
 
@@ -201,8 +182,6 @@ void initfastbinary() {
   PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
 
-#if PY_MAJOR_VERSION >= 3
   return module;
-#endif
 }
 }
