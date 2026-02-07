@@ -21,7 +21,7 @@
  * details.
  */
 
-namespace java thrift.test.optiontypejdk8
+namespace java thrift.test.optiontypeoptional
 
 struct Person {
   1: required i64 id;

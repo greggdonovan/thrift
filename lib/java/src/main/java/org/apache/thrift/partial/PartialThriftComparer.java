@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.thrift.TBase;
 import org.apache.thrift.protocol.TType;
@@ -132,8 +133,8 @@ public class PartialThriftComparer<T extends TBase> {
 
       for (Object o : data.fields.values()) {
         ThriftMetadata.ThriftObject field = (ThriftMetadata.ThriftObject) o;
-        Object f1 = t1.getFieldValue(field.fieldId);
-        Object f2 = t2.getFieldValue(field.fieldId);
+        Object f1 = unwrapOptional(t1.getFieldValue(field.fieldId));
+        Object f2 = unwrapOptional(t2.getFieldValue(field.fieldId));
         overallResult = overallResult && this.areEqual(field, f1, f2, sb);
       }
 
@@ -309,15 +310,23 @@ public class PartialThriftComparer<T extends TBase> {
       return ComparisonResult.EQUAL;
     }
 
-    if (o1 == null) {
-      appendResult(data, sb, "o1 (null) != o2");
-    }
-
-    if (o2 == null) {
-      appendResult(data, sb, "o1 != o2 (null)");
+    if (o1 == null || o2 == null) {
+      if (o1 == null) {
+        appendResult(data, sb, "o1 (null) != o2");
+      } else {
+        appendResult(data, sb, "o1 != o2 (null)");
+      }
+      return ComparisonResult.NOT_EQUAL;
     }
 
     return ComparisonResult.UNKNOWN;
+  }
+
+  private Object unwrapOptional(Object value) {
+    if (value instanceof Optional) {
+      return ((Optional<?>) value).orElse(null);
+    }
+    return value;
   }
 
   private boolean checkSizeEquality(

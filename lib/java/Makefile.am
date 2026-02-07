@@ -66,7 +66,6 @@ EXTRA_DIST = \
 	gradle \
 	CMakeLists.txt \
 	coding_standards.md \
-	android \
 	src \
 	code_quality_tools \
 	README.md

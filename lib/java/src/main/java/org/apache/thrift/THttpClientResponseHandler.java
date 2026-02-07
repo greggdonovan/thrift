@@ -56,10 +56,7 @@ public class THttpClientResponseHandler implements HttpClientResponseHandler<Inp
     return baos.toByteArray();
   }
 
-  /**
-   * copy from org.apache.http.util.EntityUtils#consume. Android has it's own httpcore that doesn't
-   * have a consume.
-   */
+  /** Ensures the entity's input stream is fully consumed and closed. */
   private static void consume(final HttpEntity entity) throws IOException {
     if (entity == null) {
       return;

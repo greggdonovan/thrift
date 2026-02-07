@@ -44,8 +44,6 @@ import org.junit.jupiter.api.Test;
 
 public class ThriftStructProcessorTest {
 
-  private PartialThriftTestData testData = new PartialThriftTestData();
-
   @Test
   public void testStruct() throws TException {
     List<ThriftField> fields = ThriftField.fromNames(Collections.singletonList("i32Field"));

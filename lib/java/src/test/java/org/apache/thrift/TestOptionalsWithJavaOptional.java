@@ -25,10 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
-import thrift.test.optiontypejdk8.Person;
+import thrift.test.optiontypeoptional.Person;
 
-// Tests and documents behavior for the JDK8 "Option<T>" type
-public class TestOptionalsWithJdk8 {
+// Tests and documents behavior for the Optional<T> type
+public class TestOptionalsWithJavaOptional {
 
   @Test
   public void testConstruction() {

@@ -19,140 +19,152 @@
 
 // Following Gradle best practices to keep build logic organized
 
+import javax.inject.Inject
+import org.gradle.api.tasks.Internal
+import org.gradle.process.ExecOperations
+
 // Generated code locations for Unit tests
 ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
-ext.genOptionTypeJdk8Src = file("$buildDir/gen-option-type-jdk8")
+ext.genOptionTypeSrc = file("$buildDir/gen-option-type")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
 ext.genDefinitionOrderTestASrc = file("$buildDir/resources/test/definition-order-test/a")
 ext.genDefinitionOrderTestBSrc = file("$buildDir/resources/test/definition-order-test/b")
 
 // Add the generated code directories to the test source set
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc, genOptionTypeJdk8Src
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genOptionTypeSrc, genUnsafeSrc
 }
 
 // ----------------------------------------------------------------------------
 // Code generation for Unit Testing
 
-// A callable closure to make this easier
-ext.thriftCompile = { Task task, String thriftFileName, String generator = 'java:jakarta_annotations', File outputDir = genSrc ->
+// Abstract task class that can inject ExecOperations for Gradle 9.x compatibility
+abstract class ThriftGeneratorTask extends DefaultTask {
+    @Inject
+    abstract ExecOperations getExecOperations()
+
+    @Internal
+    List<Map<String, Object>> thriftCompilations = []
+    @Internal
+    ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream()
+
+    void addCompilation(File thriftFile, String generator, File outputDir) {
+        thriftCompilations << [thriftFile: thriftFile, generator: generator, outputDir: outputDir]
+        inputs.file thriftFile
+        outputs.dir outputDir
+    }
+
+    @TaskAction
+    void generate() {
+        thriftCompilations.each { compilation ->
+            compilation.outputDir.mkdirs()
+            def result = execOperations.exec {
+                executable project.file(project.thriftCompiler)
+                args '--gen', compilation.generator
+                args '-out', compilation.outputDir
+                args compilation.thriftFile
+                standardOutput = outputBuffer
+                errorOutput = outputBuffer
+                ignoreExitValue = true
+            }
+            if (result.exitValue != 0) {
+                println outputBuffer.toString()
+                throw new GradleException("Thrift compiler failed with exit code ${result.exitValue}")
+            }
+        }
+    }
+}
+
+// Helper to find thrift file
+ext.findThriftFile = { String thriftFileName ->
     def thriftFile = file("$thriftRoot/test/$thriftFileName")
     if (!thriftFile.exists()) {
         thriftFile = file("$projectDir/src/test/resources/$thriftFileName")
         assert thriftFile.exists(), "can't find $thriftFile"
     }
-
-    task.inputs.file thriftFile
-    task.outputs.dir outputDir
-
-    task.doLast {
-        outputDir.mkdirs()
-        def result = exec {
-            executable file(thriftCompiler)
-            args '--gen', generator
-            args '-out', outputDir
-            args thriftFile
-            standardOutput = task.outputBuffer
-            errorOutput = task.outputBuffer
-            ignoreExitValue = true
-        }
-        if (result.exitValue != 0) {
-            // Only show the Thrift compiler output on failures, cuts down on noise!
-            println task.outputBuffer.toString()
-            result.rethrowFailure()
-        }
-    }
+    return thriftFile
 }
 
-task generate(group: 'Build') {
+def generateTask = tasks.register('generate') {
+    group = 'Build'
     description = 'Generate all unit test Thrift sources'
-    compileTestJava.dependsOn it
 }
 
-task generateJava(group: 'Build') {
+def generateJavaTask = tasks.register('generateJava', ThriftGeneratorTask) {
     description = 'Generate the thrift gen-java source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'ThriftTest.thrift')
-    thriftCompile(it, 'JavaTypes.thrift')
-    thriftCompile(it, 'DebugProtoTest.thrift')
-    thriftCompile(it, 'DoubleConstantsTest.thrift')
-    thriftCompile(it, 'OptionalRequiredTest.thrift')
-    thriftCompile(it, 'ManyOptionals.thrift')
-    thriftCompile(it, 'JavaDeepCopyTest.thrift')
-    thriftCompile(it, 'EnumContainersTest.thrift')
-    thriftCompile(it, 'JavaBinaryDefault.thrift')
-    thriftCompile(it, 'VoidMethExceptionsTest.thrift')
-    thriftCompile(it, 'JavaAnnotationTest.thrift')
-    thriftCompile(it, 'partial/thrift_test_schema.thrift')
-    thriftCompile(it, 'FuzzTest.thrift')
+    addCompilation(findThriftFile('ThriftTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('JavaTypes.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('DebugProtoTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('DoubleConstantsTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('OptionalRequiredTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('ManyOptionals.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('JavaDeepCopyTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('EnumContainersTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('JavaBinaryDefault.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('VoidMethExceptionsTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('JavaAnnotationTest.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('partial/thrift_test_schema.thrift'), 'java', genSrc)
+    addCompilation(findThriftFile('FuzzTest.thrift'), 'java', genSrc)
 }
 
-task generateOptionalTypeJava(group: 'Build') {
-    description = 'Generate the thrift gen-option-type-jdk8 source'
-    generate.dependsOn it
+def generateOptionTypeJavaTask = tasks.register('generateOptionTypeJava', ThriftGeneratorTask) {
+    description = 'Generate the thrift gen-option-type source'
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'JavaOptionTypeJdk8Test.thrift', 'java:option_type=jdk8,jakarta_annotations', genOptionTypeJdk8Src)
+    addCompilation(findThriftFile('JavaOptionTypeOptionalTest.thrift'), 'java:option_type=jdk8', genOptionTypeSrc)
 }
 
-task generateBeanJava(group: 'Build') {
+def generateBeanJavaTask = tasks.register('generateBeanJava', ThriftGeneratorTask) {
     description = 'Generate the thrift gen-javabean source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel,future_iface,jakarta_annotations', genBeanSrc)
+    addCompilation(findThriftFile('JavaBeansTest.thrift'), 'java:beans,nocamel,future_iface', genBeanSrc)
 }
 
-task generateReuseJava(group: 'Build') {
+def generateReuseJavaTask = tasks.register('generateReuseJava', ThriftGeneratorTask) {
     description = 'Generate the thrift gen-javareuse source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel,future_iface,jakarta_annotations', genFullCamelSrc)
+    addCompilation(findThriftFile('FullCamelTest.thrift'), 'java:fullcamel,future_iface', genFullCamelSrc)
 }
 
-task generateFullCamelJava(group: 'Build') {
+def generateFullCamelJavaTask = tasks.register('generateFullCamelJava', ThriftGeneratorTask) {
     description = 'Generate the thrift gen-fullcamel source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse_objects,jakarta_annotations', genReuseSrc)
+    addCompilation(findThriftFile('ReuseObjects.thrift'), 'java:reuse_objects', genReuseSrc)
 }
 
-task generateUnsafeBinariesJava(group: 'Build') {
+def generateUnsafeBinariesJavaTask = tasks.register('generateUnsafeBinariesJava', ThriftGeneratorTask) {
     description = 'Generate the thrift gen-unsafebinaries source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries,jakarta_annotations', genUnsafeSrc)
+    addCompilation(findThriftFile('UnsafeTypes.thrift'), 'java:unsafe_binaries', genUnsafeSrc)
 }
 
-task generateWithAnnotationMetadata(group: 'Build') {
+def generateWithAnnotationMetadataTask = tasks.register('generateWithAnnotationMetadata', ThriftGeneratorTask) {
     description = 'Generate with annotation enabled and add to the default source'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
-
-    thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata,jakarta_annotations', genSrc)
+    addCompilation(findThriftFile('JavaAnnotationTest.thrift'), 'java:annotations_as_metadata', genSrc)
 }
 
-task generateJavaDefinitionOrderTestJava(group: 'Build') {
+def generateJavaDefinitionOrderTestJavaTask = tasks.register('generateJavaDefinitionOrderTestJava', ThriftGeneratorTask) {
     description = 'Generate fields defined in different order and add to build dir so we can compare them'
-    generate.dependsOn it
 
-    ext.outputBuffer = new ByteArrayOutputStream()
+    addCompilation(findThriftFile('JavaDefinitionOrderA.thrift'), 'java', genDefinitionOrderTestASrc)
+    addCompilation(findThriftFile('JavaDefinitionOrderB.thrift'), 'java', genDefinitionOrderTestBSrc)
+}
 
-    thriftCompile(it, 'JavaDefinitionOrderA.thrift', 'java:jakarta_annotations', genDefinitionOrderTestASrc)
-    thriftCompile(it, 'JavaDefinitionOrderB.thrift', 'java:jakarta_annotations', genDefinitionOrderTestBSrc)
+tasks.named('compileTestJava') {
+    dependsOn generateTask
+}
+
+tasks.named('generate') {
+    dependsOn generateJavaTask
+    dependsOn generateOptionTypeJavaTask
+    dependsOn generateBeanJavaTask
+    dependsOn generateReuseJavaTask
+    dependsOn generateFullCamelJavaTask
+    dependsOn generateUnsafeBinariesJavaTask
+    dependsOn generateWithAnnotationMetadataTask
+    dependsOn generateJavaDefinitionOrderTestJavaTask
 }
