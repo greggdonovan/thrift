@@ -199,15 +199,14 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
     sb.append(this.getClass().getSimpleName());
     sb.append(" ");
 
-    F field = getSetField();
-    if (field != null) {
+    if (getSetField() != null) {
       Object v = getFieldValue();
-      sb.append(getFieldDesc(field).name);
+      sb.append(getFieldDesc(getSetField()).name);
       sb.append(":");
       if (v instanceof ByteBuffer bb) {
         TBaseHelper.toString(bb, sb);
       } else {
-        sb.append(String.valueOf(v));
+        sb.append(v.toString());
       }
     }
     sb.append(">");
@@ -251,12 +250,11 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      TFieldIdEnum setField = struct.getSetField();
-      if (setField == null || struct.getFieldValue() == null) {
+      if (struct.getSetField() == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
       oprot.writeStructBegin(struct.getStructDesc());
-      oprot.writeFieldBegin(struct.getFieldDesc(setField));
+      oprot.writeFieldBegin(struct.getFieldDesc(struct.setField_));
       struct.standardSchemeWriteValue(oprot);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
@@ -285,11 +283,10 @@ public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
 
     @Override
     public void write(TProtocol oprot, TUnion struct) throws TException {
-      TFieldIdEnum setField = struct.getSetField();
-      if (setField == null || struct.getFieldValue() == null) {
+      if (struct.getSetField() == null || struct.getFieldValue() == null) {
         throw new TProtocolException("Cannot write a TUnion with no set value!");
       }
-      oprot.writeI16(setField.getThriftFieldId());
+      oprot.writeI16(struct.setField_.getThriftFieldId());
       struct.tupleSchemeWriteValue(oprot);
     }
   }

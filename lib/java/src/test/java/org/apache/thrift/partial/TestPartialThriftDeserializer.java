@@ -43,7 +43,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({"UnusedVariable"})
 public class TestPartialThriftDeserializer {
 
   private ThriftSerDe serde = new ThriftSerDe();
