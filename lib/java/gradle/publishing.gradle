@@ -51,7 +51,7 @@ publishing {
             pom {
                 name = 'Apache Thrift'
                 description = 'Thrift is a software framework for scalable cross-language services development.'
-                url = 'http://thrift.apache.org'
+                url = 'https://thrift.apache.org/'
                 licenses {
                     license {
                         name = 'The Apache Software License, Version 2.0'
@@ -71,11 +71,9 @@ publishing {
                     connection = 'scm:git:https://github.com/apache/thrift.git'
                     developerConnection = 'scm:git:git@github.com:apache/thrift.git'
                 }
-                withXml {
-                    def root = asNode()
-                    def props = root.appendNode('properties')
-                    props.appendNode('maven.compiler.release', '17')
-                }
+                properties = [
+                    'maven.compiler.release': '17'
+                ]
             }
         }
     }
