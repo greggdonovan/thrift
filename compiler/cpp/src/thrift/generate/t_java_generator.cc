@@ -2350,13 +2350,15 @@ void t_java_generator::generate_generic_field_getters_setters(std::ostream& out,
   // create the setter
 
   indent(out) << java_override_annotation() << '\n';
-  indent(out) << "public void setFieldValue(_Fields field, java.lang.Object value) {" << '\n';
+  indent(out) << "public void setFieldValue(_Fields field, " << java_nullable_annotation()
+              << " java.lang.Object value) {" << '\n';
   indent(out) << "  switch (field) {" << '\n';
   out << setter_stream.str();
   indent(out) << "  }" << '\n';
   indent(out) << "}" << '\n' << '\n';
 
   // create the getter
+  indent(out) << java_nullable_annotation() << '\n';
   indent(out) << java_override_annotation() << '\n';
   indent(out) << "public java.lang.Object getFieldValue(_Fields field) {" << '\n';
   indent_up();
@@ -2502,6 +2504,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << '\n';
         }
+        indent(out) << java_nullable_annotation() << '\n';
         indent(out) << "public java.util.Iterator<" << type_name(element_type, true, false)
                     << "> get" << cap_name;
         out << get_cap_name("iterator() {") << '\n';
@@ -2621,6 +2624,9 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << '\n';
         }
+        if (type_can_be_null(type)) {
+          indent(out) << java_nullable_annotation() << '\n';
+        }
         indent(out) << "public " << type_name(type);
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2672,6 +2678,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       out << type_name(tstruct);
     }
     out << " set" << cap_name << "("
+        << (type_can_be_null(type) ? (java_nullable_annotation() + " ") : "")
         << type_name(type)
         << " " << make_valid_java_identifier(field_name) << ") {" << '\n';
     indent_up();
@@ -4678,6 +4685,9 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
   // TODO(mcslee): do we ever need to initialize the field?
   string result = "";
   t_type* ttype = get_true_type(tfield->get_type());
+  if (type_can_be_null(ttype)) {
+    result += java_nullable_annotation() + " ";
+  }
   result += type_name(tfield->get_type()) + " " + make_valid_java_identifier(tfield->get_name());
   if (init) {
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
