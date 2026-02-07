@@ -34,22 +34,8 @@ ext.genDefinitionOrderTestASrc = file("$buildDir/resources/test/definition-order
 ext.genDefinitionOrderTestBSrc = file("$buildDir/resources/test/definition-order-test/b")
 
 // Add the generated code directories to the test source set
-// Exclude package-info.java from secondary gen directories to avoid duplicate package annotation errors
 sourceSets {
     test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genOptionTypeSrc, genUnsafeSrc
-    test.java.filter.exclude { element ->
-        // Exclude package-info.java from non-primary generated directories to avoid conflicts
-        def file = element.file
-        def isPackageInfo = file.name == 'package-info.java'
-        // Normalize separators so this works on Unix and Windows paths.
-        def normalizedPath = file.path.replace('\\', '/')
-        def isSecondaryGenDir = normalizedPath.contains('/gen-javabean/') ||
-                                normalizedPath.contains('/gen-javareuse/') ||
-                                normalizedPath.contains('/gen-fullcamel/') ||
-                                normalizedPath.contains('/gen-option-type/') ||
-                                normalizedPath.contains('/gen-unsafe/')
-        return isPackageInfo && isSecondaryGenDir
-    }
 }
 
 // ----------------------------------------------------------------------------
