@@ -43,11 +43,6 @@ java {
     withSourcesJar()
 }
 
-// skip shadow jar from publishing. Workaround for https://github.com/johnrengelman/shadow/issues/651
-components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
-    skip()
-}
-
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -56,7 +51,7 @@ publishing {
             pom {
                 name = 'Apache Thrift'
                 description = 'Thrift is a software framework for scalable cross-language services development.'
-                url = 'http://thrift.apache.org'
+                url = 'https://thrift.apache.org/'
                 licenses {
                     license {
                         name = 'The Apache Software License, Version 2.0'
@@ -76,6 +71,9 @@ publishing {
                     connection = 'scm:git:https://github.com/apache/thrift.git'
                     developerConnection = 'scm:git:git@github.com:apache/thrift.git'
                 }
+                properties = [
+                    'maven.compiler.release': '17'
+                ]
             }
         }
     }
@@ -94,12 +92,10 @@ publishing {
 
 // Signing configuration, optional, only when release and publish is activated
 signing {
-    required { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
+    required = { !version.endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish") }
     sign publishing.publications.mavenJava
 }
 
 javadoc {
-    if(JavaVersion.current().isJava9Compatible()) {
-        options.addBooleanOption('html5', true)
-    }
+    options.addBooleanOption('html5', true)
 }

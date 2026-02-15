@@ -28,8 +28,8 @@ repositories { mavenCentral() }
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.10.2")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation("org.apache.thrift:libthrift:INCLUDED")
     testImplementation(kotlin("test"))
 }
@@ -37,14 +37,14 @@ dependencies {
 kotlin { jvmToolchain { languageVersion.set(JavaLanguageVersion.of(17)) } }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        jvmTarget = JvmTarget.JVM_1_8
-        freeCompilerArgs = listOf("-Xjdk-release=1.8")
+        jvmTarget = JvmTarget.JVM_17
+        freeCompilerArgs = listOf("-Xjdk-release=17")
     }
 }
 

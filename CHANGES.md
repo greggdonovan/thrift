@@ -1,5 +1,17 @@
 # Apache Thrift Changelog
 
+## 0.23.0
+
+### Java
+
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Set JDK 17 as minimum Java version
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Remove `android_legacy`, `java5`, and `option_type=thrift` generator flags
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Delete `org.apache.thrift.Option` class; `java.util.Optional` is now the default via `--gen java:option_type=jdk8`
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Default to Jakarta annotations (`jakarta.annotation.Generated`); opt out with `--gen java:javax_annotations`
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Upgrade SLF4J 1.7.x to 2.0.x; require SLF4J 2.0+ at runtime
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Upgrade Gradle 8.x to 9.x; drop ant build support
+- [THRIFT-5919](https://issues.apache.org/jira/browse/THRIFT-5919) - Remove Android library (`lib/java/android/`); never published to Maven Central, unmaintained since 2015
+
 ## 0.22.0
 
 ### Build Process

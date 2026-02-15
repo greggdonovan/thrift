@@ -208,13 +208,10 @@ fi
 AX_THRIFT_LIB(java, [Java], yes)
 if test "$with_java" = "yes";  then
   AX_JAVAC_AND_JAVA
-  AC_PATH_PROG([ANT], [ant])
   AC_PATH_PROG([GRADLE], [gradle])
-  AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
-  AC_SUBST(ANT_FLAGS)
   AC_SUBST(GRADLE_OPTS)
-  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" && test "x$GRADLE" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$GRADLE" != "x" ; then
     have_java="yes"
   fi
 fi
